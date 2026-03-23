@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080a0f">
+<title>AI English Tutor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080a0f;--sur:#111420;--sur2:#181b28;--sur3:#1e2235;
+  --brd:#252840;--brd2:#2e3350;
+  --ac:#5effc4;--acD:rgba(94,255,196,.1);
+  --ac2:#7c6fff;--ac3:#ff6b9d;
+  --warn:#ffb547;--danger:#ff5e6d;
+  --t:#eef0f8;--t2:#a8adc8;--t3:#5a6080;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif}
+#app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--bg)}
+#app::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 45% at 20% 5%,rgba(94,255,196,.05) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 35% at 85% 95%,rgba(124,111,255,.05) 0%,transparent 70%)}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;
+  border-bottom:1px solid var(--brd);background:rgba(8,10,15,.96);
+  backdrop-filter:blur(20px);position:relative;z-index:5;flex-shrink:0}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.3px}
+.logo em{color:var(--ac);font-style:normal}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.streak{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--warn);background:rgba(255,181,71,.1);padding:4px 10px;border-radius:20px}
+.lang-btn{font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px;border:1px solid var(--brd);background:var(--sur2);line-height:1}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 16px 84px;position:relative;z-index:1}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+
+/* NAV */
+.nav{display:flex;position:relative;z-index:5;background:rgba(13,15,23,.97);
+  border-top:1px solid var(--brd);
+  padding:8px 0 max(10px,env(safe-area-inset-bottom));flex-shrink:0}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;
+  font-size:10px;font-weight:500;color:var(--t3);padding:4px 0;transition:color .2s}
+.nb.on{color:var(--ac)}
+.ni{font-size:20px;line-height:1;transition:transform .2s}
+.nb.on .ni{transform:scale(1.15)}
+
+/* SCREEN */
+.sc{animation:fu .22s ease}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.sh-t{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px;margin-bottom:3px}
+.sh-s{font-size:13px;color:var(--t2);margin-bottom:18px}
+
+/* CARDS */
+.card{background:var(--sur);border:1px solid var(--brd);border-radius:16px;padding:15px;margin-bottom:11px}
+.csm{padding:11px 13px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 18px;border-radius:10px;font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .18s;white-space:nowrap}
+.bp{background:var(--ac);color:#080a0f;font-weight:700}
+.bp:hover{background:#3ffdb6;transform:translateY(-1px);box-shadow:0 4px 18px rgba(94,255,196,.3)}
+.bp:active{transform:translateY(0)}
+.bs{background:var(--sur2);color:var(--t);border:1px solid var(--brd2)}
+.bs:hover{border-color:var(--ac);color:var(--ac)}
+.bg_{background:transparent;color:var(--t2);border:1px solid var(--brd)}
+.bg_:hover{color:var(--t);border-color:var(--brd2)}
+.bd{background:rgba(255,94,109,.1);color:var(--danger);border:1px solid rgba(255,94,109,.25)}
+.bsm{padding:6px 12px;font-size:12px;border-radius:8px}
+.bfu{width:100%}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+
+/* INPUT */
+.inp{width:100%;background:var(--sur2);border:1px solid var(--brd2);border-radius:10px;
+  padding:10px 13px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--ac)}
+.inp::placeholder{color:var(--t3)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.bg{background:rgba(94,255,196,.12);color:var(--ac)}
+.bv{background:rgba(124,111,255,.12);color:var(--ac2)}
+.bp2{background:rgba(255,107,157,.12);color:var(--ac3)}
+
+/* WORD LIST */
+.wli{display:flex;align-items:center;gap:11px;background:var(--sur);border:1px solid var(--brd);
+  border-radius:14px;padding:12px 13px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.wli:active{border-color:var(--ac);background:var(--sur2)}
+.wli-en{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
+.wli-ru{font-size:12px;color:var(--t2);margin-top:2px}
+.wli-ex{font-size:11px;color:var(--t3);margin-top:3px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+.ib{background:none;border:none;cursor:pointer;font-size:16px;padding:4px;border-radius:6px;line-height:1}
+.ib:active{background:var(--sur3)}
+
+/* PILLS */
+.pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;
+  white-space:nowrap;border:1px solid var(--brd);background:var(--sur2);color:var(--t3);transition:all .15s}
+.pill.on{background:var(--ac);color:#080a0f;border-color:var(--ac);font-weight:700}
+
+/* SEARCH */
+.sw{position:relative;margin-bottom:13px}
+.sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t3);pointer-events:none}
+.sinp{padding-left:33px}
+
+/* DIVIDER */
+.div{height:1px;background:var(--brd);margin:13px 0}
+
+/* PROGRESS BAR */
+.pb-w{background:var(--sur2);border-radius:20px;height:5px;overflow:hidden;margin-bottom:16px}
+.pb-f{height:100%;border-radius:20px;background:var(--ac);transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+/* AI LOADER */
+.ail{display:flex;align-items:center;gap:8px;color:var(--t2);font-size:13px;padding:12px 0}
+.dots{display:flex;gap:4px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--ac);animation:dp 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.7)}40%{opacity:1;transform:scale(1)}}
+
+/* TTS BUTTON */
+.ttsb{display:inline-flex;align-items:center;gap:4px;background:var(--acD);
+  border:1px solid rgba(94,255,196,.2);color:var(--ac);border-radius:20px;
+  padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.ttsb:hover{background:rgba(94,255,196,.2)}
+.ttsb.sp{animation:tpulse 1s ease-in-out infinite}
+@keyframes tpulse{0%,100%{box-shadow:0 0 0 0 rgba(94,255,196,.4)}50%{box-shadow:0 0 0 5px rgba(94,255,196,0)}}
+
+/* FAB */
+.fab{position:fixed;bottom:max(78px,calc(env(safe-area-inset-bottom)+68px));right:18px;
+  width:52px;height:52px;border-radius:50%;background:var(--ac);color:#080a0f;
+  font-size:26px;display:flex;align-items:center;justify-content:center;
+  border:none;cursor:pointer;z-index:20;box-shadow:0 4px 22px rgba(94,255,196,.4);transition:all .2s}
+.fab:active{transform:scale(.93)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;display:flex;align-items:flex-end}
+.modal{background:var(--sur);border:1px solid var(--brd);border-radius:22px 22px 0 0;
+  padding:20px 18px max(36px,calc(env(safe-area-inset-bottom)+20px));
+  width:100%;max-height:90vh;overflow-y:auto;animation:su .3s cubic-bezier(.4,0,.2,1)}
+.modal::-webkit-scrollbar{width:3px}
+.modal::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+.mhandle{width:32px;height:4px;background:var(--brd2);border-radius:2px;margin:0 auto 18px}
+@keyframes su{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* FLASHCARD */
+.fc-wrap{perspective:1200px;height:220px;margin-bottom:18px;cursor:pointer;user-select:none}
+.fc{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1)}
+.fc.flip{transform:rotateY(180deg)}
+.fc-f{position:absolute;inset:0;backface-visibility:hidden;background:var(--sur);
+  border:1px solid var(--brd);border-radius:18px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.fc-b{transform:rotateY(180deg);background:var(--sur2);border-color:rgba(94,255,196,.25)}
+
+/* PRACTICE MODE */
+.mc{display:flex;align-items:center;gap:12px;background:var(--sur);border:1px solid var(--brd);
+  border-radius:14px;padding:16px;margin-bottom:9px;cursor:pointer;transition:all .2s}
+.mc:active{border-color:var(--ac);background:var(--sur2)}
+.mc-ico{width:48px;height:48px;border-radius:13px;background:var(--sur2);
+  display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+
+/* OPTIONS */
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.opt{padding:12px 10px;background:var(--sur2);border:1px solid var(--brd);border-radius:9px;
+  color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .18s;text-align:left;width:100%}
+.opt:active{border-color:var(--ac2);color:var(--ac2)}
+.opt.cor{background:rgba(94,255,196,.1);border-color:var(--ac);color:var(--ac);font-weight:600}
+.opt.wrg{background:rgba(255,94,109,.1);border-color:var(--danger);color:var(--danger)}
+
+/* RESULT BOX */
+.rb{background:var(--sur2);border-radius:10px;padding:13px;border-left:3px solid var(--ac)}
+.rb.err{border-left-color:var(--danger)}
+
+/* READING */
+.rtext{font-size:15px;line-height:2.1;color:var(--t2)}
+.hw{color:var(--ac);font-weight:600;cursor:pointer;border-bottom:1px dashed rgba(94,255,196,.4)}
+
+/* STAT */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.scrd{background:var(--sur);border:1px solid var(--brd);border-radius:14px;padding:14px;text-align:center}
+.sv{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1}
+.sl{font-size:10px;color:var(--t3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+
+/* TOGGLE */
+.tog{width:42px;height:23px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tog-k{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .2s}
+
+/* BLANK */
+.blank{display:inline-block;min-width:100px;padding:0 5px;border-bottom:2px solid var(--ac);color:var(--ac);font-style:italic}
+
+/* ONBOARDING */
+.ob{width:100%;height:100vh;max-width:430px;margin:0 auto;display:flex;flex-direction:column;
+  align-items:center;background:var(--bg);overflow-y:auto;padding:0 20px max(40px,env(safe-area-inset-bottom))}
+.ob::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 90% 55% at 50% -5%,rgba(94,255,196,.08) 0%,transparent 65%),
+             radial-gradient(ellipse 60% 40% at 80% 100%,rgba(124,111,255,.07) 0%,transparent 70%)}
+.ob-hero{width:100%;text-align:center;padding:52px 0 30px;position:relative;z-index:1}
+.ob-globe{font-size:60px;margin-bottom:16px;display:block;filter:drop-shadow(0 0 28px rgba(94,255,196,.25))}
+.ob-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.5px}
+.ob-logo em{color:var(--ac);font-style:normal}
+.ob-sub{font-size:14px;color:var(--t2);line-height:1.6;max-width:290px;margin:10px auto 0}
+.ob-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;text-align:center}
+.ob-sw{position:relative;margin-bottom:14px;width:100%}
+.ob-sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t3);pointer-events:none}
+.ob-sinp{width:100%;background:var(--sur2);border:1px solid var(--brd2);border-radius:10px;
+  padding:10px 13px 10px 34px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.ob-sinp:focus{border-color:var(--ac)}
+.ob-sinp::placeholder{color:var(--t3)}
+.lg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;position:relative;z-index:1}
+.lc{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--sur);
+  border:2px solid var(--brd);border-radius:14px;padding:13px 6px 10px;cursor:pointer;transition:all .2s}
+.lc:active{background:var(--sur2)}
+.lc.sel{border-color:var(--ac);background:rgba(94,255,196,.06)}
+.lc-f{font-size:26px;line-height:1}
+.lc-n{font-size:11px;font-weight:600;color:var(--t2);text-align:center;line-height:1.3}
+.lc.sel .lc-n{color:var(--ac)}
+.ob-cta{width:100%;margin-top:18px;position:relative;z-index:1}
+
+/* UTILS */
+.row{display:flex;align-items:center;gap:8px}
+.rb2{display:flex;align-items:center;justify-content:space-between}
+.fw7{font-weight:700}.fw6{font-weight:600}
+.fs13{font-size:13px}.fs12{font-size:12px}.fs11{font-size:11px}
+.c2{color:var(--t2)}.c3{color:var(--t3)}.ca{color:var(--ac)}
+.syne{font-family:'Syne',sans-serif}
+.italic{font-style:italic}
+.mt1{margin-top:6px}.mt2{margin-top:10px}.mt3{margin-top:16px}
+.mb1{margin-bottom:6px}.mb2{margin-bottom:10px}.mb3{margin-bottom:16px}
+.se{text-align:center;padding:44px 16px 20px}
+.empty{text-align:center;padding:44px 16px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// LANGUAGES & UI STRINGS
+// ═══════════════════════════════════════════
+const LANGS=[
+  {code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},
+  {code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},
+  {code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},
+  {code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},
+  {code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},
+  {code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},
+  {code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},
+  {code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},
+  {code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},
+  {code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},
+  {code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},
+  {code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},
+  {code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},
+  {code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},
+  {code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"},
+];
+
+const UI={
+  ru:{dict:"Словарь",practice:"Практика",progress:"Прогресс",words:"слов",hard:"трудных",
+    search:"Поиск…",addWord:"Добавить слово",save:"💾 Сохранить",cancel:"✕ Отмена",
+    listen:"Слушать",slow:"Медленно",translate:"Перевод",example:"Пример",
+    synonymsBtn:"✨ Синонимы и примеры",deleteQ:"Удалить слово?",
+    markHard:"☆ В трудные",unmarkHard:"⭐ Трудное",close:"Закрыть",delete:"🗑 Удалить",
+    back:"← Назад",next:"Следующее →",finish:"Завершить",again:"🔄 Ещё раз",
+    check:"Проверить",newText:"📄 Новый текст",showTr:"Показать перевод 👁",
+    dontKnow:"❌ Не знаю",know:"✅ Знаю",learned:"слов выучено!",
+    correct:"✅ Правильно!",wrongAns:"❌ Верный ответ:",right:"правильных ответов",
+    wordEN:"Слово (английский)",transcr:"Транскрипция",level:"Уровень",
+    exEN:"Пример (EN)",exTr:"Перевод примера",onlyHard:"Только трудные слова",
+    notFound:"Слов не найдено",addHint:"Добавь слово кнопкой ＋",
+    aiThink:"AI думает…",aiGen:"AI генерирует задание…",aiWrite:"AI пишет текст…",
+    aiSyn:"AI ищет синонимы…",aiGet:"AI получает данные…",
+    insertWord:"Вставь слово:",tapTr:"Нажми на слово для перевода",
+    questions:"Вопросы по тексту",statsSub:"Твоя статистика",
+    inDict:"В словаре",hardW:"Трудных",streakL:"Дней подряд",exCount:"Упражнений",
+    byLevel:"📊 По уровням",hardList:"⭐ Трудные слова",achiev:"🏆 Достижения",
+    changeLang:"Сменить язык",streakDays:"3 дня",
+    modeCards:"Flashcards",modeCardsSub:"Карточки — вспомни перевод",
+    modeFill:"Вставь слово",modeFillSub:"Пропуск в предложении",
+    modeRead:"AI‑текст",modeReadSub:"Читай и понимай в контексте",
+    minWords:"Добавь минимум 2 слова"},
+  es:{dict:"Diccionario",practice:"Práctica",progress:"Progreso",words:"palabras",hard:"difíciles",
+    search:"Buscar…",addWord:"Agregar palabra",save:"💾 Guardar",cancel:"✕ Cancelar",
+    listen:"Escuchar",slow:"Despacio",translate:"Traducción",example:"Ejemplo",
+    synonymsBtn:"✨ Sinónimos",deleteQ:"¿Eliminar?",markHard:"☆ Difícil",unmarkHard:"⭐ Difícil",
+    close:"Cerrar",delete:"🗑 Eliminar",back:"← Atrás",next:"Siguiente →",finish:"Terminar",
+    again:"🔄 Otra vez",check:"Comprobar",newText:"📄 Nuevo texto",showTr:"Ver traducción 👁",
+    dontKnow:"❌ No sé",know:"✅ Lo sé",learned:"palabras!",correct:"✅ ¡Correcto!",
+    wrongAns:"❌ Respuesta:",right:"correctas",wordEN:"Palabra (inglés)",transcr:"Transcripción",
+    level:"Nivel",exEN:"Ejemplo (EN)",exTr:"Traducción",onlyHard:"Solo difíciles",
+    notFound:"No hay palabras",addHint:"Agrega con ＋",aiThink:"IA pensando…",aiGen:"IA generando…",
+    aiWrite:"IA escribiendo…",aiSyn:"IA buscando…",aiGet:"IA obteniendo…",
+    insertWord:"Inserta:",tapTr:"Toca una palabra",questions:"Preguntas",statsSub:"Estadísticas",
+    inDict:"Diccionario",hardW:"Difíciles",streakL:"Días seguidos",exCount:"Ejercicios",
+    byLevel:"📊 Niveles",hardList:"⭐ Difíciles",achiev:"🏆 Logros",changeLang:"Cambiar idioma",
+    streakDays:"3 días",modeCards:"Flashcards",modeCardsSub:"Tarjetas",modeFill:"Completar",
+    modeFillSub:"Palabra faltante",modeRead:"Texto IA",modeReadSub:"Lee en contexto",
+    minWords:"Agrega mínimo 2 palabras"},
+  fr:{dict:"Dictionnaire",practice:"Pratique",progress:"Progrès",words:"mots",hard:"difficiles",
+    search:"Rechercher…",addWord:"Ajouter un mot",save:"💾 Enregistrer",cancel:"✕ Annuler",
+    listen:"Écouter",slow:"Lentement",translate:"Traduction",example:"Exemple",
+    synonymsBtn:"✨ Synonymes",deleteQ:"Supprimer?",markHard:"☆ Difficile",unmarkHard:"⭐ Difficile",
+    close:"Fermer",delete:"🗑 Supprimer",back:"← Retour",next:"Suivant →",finish:"Terminer",
+    again:"🔄 Encore",check:"Vérifier",newText:"📄 Nouveau texte",showTr:"Voir 👁",
+    dontKnow:"❌ Je ne sais pas",know:"✅ Je sais",learned:"mots appris!",correct:"✅ Correct!",
+    wrongAns:"❌ Réponse:",right:"correctes",wordEN:"Mot (anglais)",transcr:"Transcription",
+    level:"Niveau",exEN:"Exemple (EN)",exTr:"Traduction",onlyHard:"Mots difficiles",
+    notFound:"Aucun mot",addHint:"Ajoutez avec ＋",aiThink:"IA réfléchit…",aiGen:"IA génère…",
+    aiWrite:"IA écrit…",aiSyn:"IA cherche…",aiGet:"IA récupère…",
+    insertWord:"Insérez:",tapTr:"Appuyez sur un mot",questions:"Questions",statsSub:"Statistiques",
+    inDict:"Dictionnaire",hardW:"Difficiles",streakL:"Jours de suite",exCount:"Exercices",
+    byLevel:"📊 Niveaux",hardList:"⭐ Difficiles",achiev:"🏆 Réalisations",changeLang:"Changer",
+    streakDays:"3 jours",modeCards:"Flashcards",modeCardsSub:"Cartes",modeFill:"Compléter",
+    modeFillSub:"Mot manquant",modeRead:"Texte IA",modeReadSub:"Lire en contexte",
+    minWords:"Ajoutez au moins 2 mots"},
+  de:{dict:"Wörterbuch",practice:"Übung",progress:"Fortschritt",words:"Wörter",hard:"schwierig",
+    search:"Suchen…",addWord:"Wort hinzufügen",save:"💾 Speichern",cancel:"✕ Abbrechen",
+    listen:"Anhören",slow:"Langsam",translate:"Übersetzung",example:"Beispiel",
+    synonymsBtn:"✨ Synonyme",deleteQ:"Löschen?",markHard:"☆ Schwierig",unmarkHard:"⭐ Schwierig",
+    close:"Schließen",delete:"🗑 Löschen",back:"← Zurück",next:"Weiter →",finish:"Beenden",
+    again:"🔄 Nochmal",check:"Prüfen",newText:"📄 Neuer Text",showTr:"Zeigen 👁",
+    dontKnow:"❌ Weiß nicht",know:"✅ Weiß ich",learned:"Wörter gelernt!",correct:"✅ Richtig!",
+    wrongAns:"❌ Antwort:",right:"richtige",wordEN:"Wort (Englisch)",transcr:"Transkription",
+    level:"Niveau",exEN:"Beispiel (EN)",exTr:"Übersetzung",onlyHard:"Nur schwierige",
+    notFound:"Keine Wörter",addHint:"Mit ＋ hinzufügen",aiThink:"KI denkt…",aiGen:"KI generiert…",
+    aiWrite:"KI schreibt…",aiSyn:"KI sucht…",aiGet:"KI lädt…",
+    insertWord:"Einsetzen:",tapTr:"Wort antippen",questions:"Fragen",statsSub:"Statistiken",
+    inDict:"Wörterbuch",hardW:"Schwierig",streakL:"Tage in Folge",exCount:"Übungen",
+    byLevel:"📊 Niveau",hardList:"⭐ Schwierige",achiev:"🏆 Erfolge",changeLang:"Sprache",
+    streakDays:"3 Tage",modeCards:"Flashcards",modeCardsSub:"Karten",modeFill:"Lückentext",
+    modeFillSub:"Fehlendes Wort",modeRead:"KI‑Text",modeReadSub:"Im Kontext",
+    minWords:"Mindestens 2 Wörter"},
+};
+function T(lang,k){return(UI[lang]||UI.ru)[k]||(UI.ru)[k]||k}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let S={
+  screen:'onboard', // onboard | main
+  lang: null,
+  tab:'dict',
+  words:[
+    {id:1,word:"resilience",translation:"стойкость, упругость",transcription:"/rɪˈzɪliəns/",level:"B2",example:"Her resilience inspired everyone around her.",exampleRu:"Её стойкость вдохновила всех вокруг.",hard:false},
+    {id:2,word:"ambiguous",translation:"неоднозначный",transcription:"/æmˈbɪɡjuəs/",level:"C1",example:"The instructions were ambiguous and unclear.",exampleRu:"Инструкции были неоднозначными.",hard:true},
+    {id:3,word:"eloquent",translation:"красноречивый",transcription:"/ˈeləkwənt/",level:"C1",example:"She gave an eloquent speech that moved everyone.",exampleRu:"Она произнесла красноречивую речь.",hard:false},
+    {id:4,word:"persevere",translation:"упорствовать",transcription:"/ˌpɜːrsɪˈvɪr/",level:"B2",example:"You must persevere through challenges to succeed.",exampleRu:"Нужно упорно преодолевать трудности.",hard:false},
+    {id:5,word:"nuance",translation:"нюанс, тонкость",transcription:"/ˈnjuːɑːns/",level:"C1",example:"Understanding the nuance of language takes practice.",exampleRu:"Понимание тонкостей требует практики.",hard:true},
+  ],
+  filter:'All', search:'',
+  adding:false, detail:null,
+  practiceMode:null,
+  session:null,
+  showLangPicker:false,
+  obSearch:'', obSel:null,
+};
+
+function setState(patch){Object.assign(S,patch);render()}
+
+// ═══════════════════════════════════════════
+// TTS — works in real browser on phone!
+// ═══════════════════════════════════════════
+function speak(word, slow=false){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(word);
+  u.lang='en-US'; u.rate=slow?0.6:0.9; u.pitch=1;
+  // load voices
+  const trySpeak=()=>{
+    const voices=speechSynthesis.getVoices();
+    const v=voices.find(v=>v.lang.startsWith('en')&&(v.name.includes('Google')||v.name.includes('Samantha')||v.name.includes('Alex')))
+           ||voices.find(v=>v.lang.startsWith('en'));
+    if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  };
+  if(speechSynthesis.getVoices().length>0){trySpeak();}
+  else{speechSynthesis.onvoiceschanged=()=>{trySpeak();speechSynthesis.onvoiceschanged=null};}
+}
+
+// ═══════════════════════════════════════════
+// AI
+// ═══════════════════════════════════════════
+async function callAI(prompt, lang){
+  const L=LANGS.find(l=>l.code===lang)||LANGS[0];
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',max_tokens:1000,
+      system:`You are an English tutor AI. User's native language is ${L.nameEn}. ALL translations and explanations MUST be in ${L.nameEn}. Respond with valid JSON only. No markdown, no extra text.`,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  const d=await r.json();
+  return (d.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function lvlBadge(l){
+  const c=l?.startsWith('C')?'bp2':l?.startsWith('B')?'bv':'bg';
+  return `<span class="badge ${c}">${l}</span>`;
+}
+function loader(txt){
+  return `<div class="ail"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>${txt}</div>`;
+}
+function ttsRow(word, lang){
+  const w=word.replace(/'/g,"\\'");
+  return `<div class="row mb2">
+    <button class="ttsb" onclick="speak('${w}')">🔊 ${T(lang,'listen')}</button>
+    <button class="ttsb" onclick="speak('${w}',true)">🐢 ${T(lang,'slow')}</button>
+  </div>`;
+}
+function e(id){return document.getElementById(id)}
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function render(){
+  const app=document.getElementById('app');
+  if(S.screen==='onboard'){app.innerHTML=renderOnboard();return;}
+  app.innerHTML=`
+    <header class="hdr">
+      <div class="logo">AI <em>English</em> Tutor</div>
+      <div class="hdr-right">
+        <div class="streak">🔥 ${T(S.lang,'streakDays')}</div>
+        <button class="lang-btn" onclick="setState({showLangPicker:true})" title="${T(S.lang,'changeLang')}">
+          ${LANGS.find(l=>l.code===S.lang)?.flag||'🌍'}
+        </button>
+      </div>
+    </header>
+    <main class="content" id="main-content">
+      ${renderMain()}
+    </main>
+    <nav class="nav">
+      ${['dict','practice','progress'].map((id,i)=>{
+        const icons=['📖','🏋️','📊'];
+        const labels=[T(S.lang,'dict'),T(S.lang,'practice'),T(S.lang,'progress')];
+        return `<button class="nb${S.tab===id&&!S.adding?' on':''}" onclick="switchTab('${id}')">
+          <span class="ni">${icons[i]}</span>${labels[i]}
+        </button>`;
+      }).join('')}
+    </nav>
+    ${S.tab==='dict'&&!S.adding?`<button class="fab" onclick="setState({adding:true})">＋</button>`:''}
+    ${S.showLangPicker?renderLangModal():''}
+    ${S.detail?renderWordModal():''}
+  `;
+}
+
+function renderMain(){
+  if(S.adding)return renderAddWord();
+  if(S.tab==='dict')return renderDict();
+  if(S.tab==='practice')return renderPractice();
+  if(S.tab==='progress')return renderProgress();
+  return '';
+}
+
+function switchTab(tab){setState({tab,adding:false,practiceMode:null,session:null,detail:null})}
+
+// ═══════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════
+function renderOnboard(){
+  const list=LANGS.filter(l=>
+    l.name.toLowerCase().includes((S.obSearch||'').toLowerCase())||
+    l.nameEn.toLowerCase().includes((S.obSearch||'').toLowerCase())
+  );
+  const chosen=LANGS.find(l=>l.code===S.obSel);
+  return `
+  <div class="ob">
+    <div class="ob-hero">
+      <span class="ob-globe">🌍</span>
+      <div class="ob-logo">AI <em>English</em> Tutor</div>
+      <div class="ob-sub">Learn English with AI-powered flashcards, exercises &amp; texts.<br>
+        <span style="color:var(--t3);font-size:13px">Choose your native language to start</span>
+      </div>
+    </div>
+    <div style="width:100%;position:relative;z-index:1;margin-bottom:10px">
+      <div class="ob-lbl">Select your native language</div>
+      <div class="ob-sw">
+        <span class="ob-sico">🔍</span>
+        <input class="ob-sinp" placeholder="Search language…" value="${S.obSearch||''}"
+          oninput="S.obSearch=this.value;render()">
+      </div>
+      <div class="lg">
+        ${list.map(l=>`
+          <div class="lc${S.obSel===l.code?' sel':''}" onclick="S.obSel='${l.code}';render()">
+            <div class="lc-f">${l.flag}</div>
+            <div class="lc-n">${l.name}</div>
+            ${S.obSel===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':''}
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="ob-cta">
+      <button class="btn bp bfu" style="padding:14px;font-size:15px;border-radius:14px"
+        ${!S.obSel?'disabled':''} onclick="startApp()">
+        ${chosen?`${chosen.flag} &nbsp;Start with ${chosen.name}`:'Choose a language ↑'}
+      </button>
+      ${chosen?`<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--t3)">Translations will appear in <strong style="color:var(--t2)">${chosen.name}</strong></div>`:''}
+    </div>
+  </div>`;
+}
+
+function startApp(){
+  if(!S.obSel)return;
+  setState({screen:'main',lang:S.obSel,tab:'dict'});
+}
+
+// ═══════════════════════════════════════════
+// LANG MODAL
+// ═══════════════════════════════════════════
+function renderLangModal(){
+  return `
+  <div class="overlay" onclick="closeLangModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="mhandle"></div>
+      <div class="rb2 mb3">
+        <div class="syne fw7" style="font-size:18px">${T(S.lang,'changeLang')}</div>
+        <button class="btn bg_ bsm" onclick="setState({showLangPicker:false})">✕</button>
+      </div>
+      <div class="lg" style="max-height:360px;overflow-y:auto;gap:7px">
+        ${LANGS.map(l=>`
+          <div class="lc${S.lang===l.code?' sel':''}" onclick="setState({lang:'${l.code}',showLangPicker:false})">
+            <div class="lc-f">${l.flag}</div>
+            <div class="lc-n">${l.name}</div>
+            ${S.lang===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':''}
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+function closeLangModal(e){if(e.target.classList.contains('overlay'))setState({showLangPicker:false})}
+
+// ═══════════════════════════════════════════
+// DICTIONARY
+// ═══════════════════════════════════════════
+function renderDict(){
+  const lang=S.lang;
+  const list=S.words.filter(w=>{
+    const m=w.word.toLowerCase().includes(S.search.toLowerCase())||w.translation.toLowerCase().includes(S.search.toLowerCase());
+    if(S.filter==='All')return m;
+    if(S.filter==='⭐')return m&&w.hard;
+    return m&&w.level===S.filter;
+  });
+  return `<div class="sc">
+    <div class="sh-t">${T(lang,'dict')}</div>
+    <div class="sh-s">${S.words.length} ${T(lang,'words')} · ${S.words.filter(w=>w.hard).length} ${T(lang,'hard')}</div>
+    <div class="sw">
+      <span class="sico">🔍</span>
+      <input class="inp sinp" placeholder="${T(lang,'search')}" value="${S.search}"
+        oninput="S.search=this.value;render()">
+    </div>
+    <div class="pills">
+      ${['All','⭐','B1','B2','C1'].map(f=>`
+        <button class="pill${S.filter===f?' on':''}" onclick="S.filter='${f}';render()">
+          ${f==='⭐'?`⭐ ${T(lang,'hard')}`:f}
+        </button>`).join('')}
+    </div>
+    ${list.length===0?`
+      <div class="empty">
+        <div style="font-size:48px;margin-bottom:12px">📭</div>
+        <div class="syne fw7 fs13 mb1">${T(lang,'notFound')}</div>
+        <div class="fs12 c3">${T(lang,'addHint')}</div>
+      </div>`
+    :list.map(w=>`
+      <div class="wli" onclick="openWord(${w.id})">
+        <div style="flex:1;min-width:0">
+          <div class="row mb1"><span class="wli-en">${w.word}</span>${lvlBadge(w.level)}</div>
+          <div class="wli-ru">${w.translation}</div>
+          ${w.example?`<div class="wli-ex">"${w.example.slice(0,52)}…"</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button class="ib" onclick="event.stopPropagation();speak('${w.word.replace(/'/g,"\\'")}')">🔊</button>
+          <button class="ib" onclick="event.stopPropagation();toggleHard(${w.id})">${w.hard?'⭐':'☆'}</button>
+          <button class="ib" onclick="event.stopPropagation();deleteWord(${w.id})">🗑</button>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function openWord(id){setState({detail:S.words.find(w=>w.id===id)})}
+function toggleHard(id){S.words=S.words.map(w=>w.id===id?{...w,hard:!w.hard}:w);render()}
+function deleteWord(id){if(confirm(T(S.lang,'deleteQ'))){S.words=S.words.filter(w=>w.id!==id);render()}}
+
+// ═══════════════════════════════════════════
+// WORD MODAL
+// ═══════════════════════════════════════════
+function renderWordModal(){
+  const w=S.detail; const lang=S.lang;
+  return `
+  <div class="overlay" onclick="closeWordModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="mhandle"></div>
+      <div class="rb2 mb2">
+        <div>
+          <div class="syne fw7" style="font-size:26px">${w.word}</div>
+          <div class="fs12 c3 mt1">${w.transcription}</div>
+        </div>
+        ${lvlBadge(w.level)}
+      </div>
+      ${ttsRow(w.word,lang)}
+      <div class="card csm mb2">
+        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${T(lang,'translate')}</div>
+        <div class="fw6 fs13">${w.translation}</div>
+      </div>
+      <div class="card csm mb3">
+        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${T(lang,'example')}</div>
+        <div class="fs12 c2 italic" style="line-height:1.7">${w.example}</div>
+        <div class="fs11 c3 mt1">${w.exampleRu}</div>
+      </div>
+      <button class="btn bs bfu mb2" onclick="fetchExtras()">✨ ${T(lang,'synonymsBtn').replace('✨','').trim()}</button>
+      <div id="extras-area"></div>
+      <div class="div"></div>
+      <div class="row" style="flex-wrap:wrap;gap:7px">
+        <button class="btn bg_ bsm" onclick="toggleHardModal()">${w.hard?T(lang,'unmarkHard'):T(lang,'markHard')}</button>
+        <button class="btn bd bsm" onclick="deleteWordModal()">🗑 ${T(lang,'delete').replace('🗑','').trim()}</button>
+        <button class="btn bg_ bsm" style="margin-left:auto" onclick="setState({detail:null})">${T(lang,'close')}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function closeWordModal(e){if(e.target.classList.contains('overlay'))setState({detail:null})}
+function toggleHardModal(){S.words=S.words.map(w=>w.id===S.detail.id?{...w,hard:!w.hard}:w);S.detail={...S.detail,hard:!S.detail.hard};render()}
+function deleteWordModal(){if(confirm(T(S.lang,'deleteQ'))){S.words=S.words.filter(w=>w.id!==S.detail.id);setState({detail:null})}}
+
+async function fetchExtras(){
+  const area=e('extras-area'); if(!area)return;
+  area.innerHTML=loader(T(S.lang,'aiSyn'));
+  try{
+    const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
+    const raw=await callAI(`Word: "${S.detail.word}"\nAll text in ${L.nameEn}.\nReturn ONLY JSON:\n{"examples":["s1","s2","s3"],"synonyms":[{"word":"w1","translation":"r1"},{"word":"w2","translation":"r2"},{"word":"w3","translation":"r3"}]}`,S.lang);
+    const d=JSON.parse(raw);
+    area.innerHTML=`
+      <div class="sc">
+        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">More examples</div>
+        ${d.examples.map(ex=>`
+          <div style="padding:7px 0;border-bottom:1px solid var(--brd);font-size:12px;color:var(--t2);font-style:italic;line-height:1.6">
+            ${ex} <button class="ttsb" style="font-size:10px;padding:2px 7px;margin-left:6px" onclick="speak('${ex.replace(/'/g,"\\'")}')">🔊</button>
+          </div>`).join('')}
+        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin:12px 0 8px">Synonyms</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          ${d.synonyms.map(s=>`
+            <div style="background:var(--sur2);border:1px solid var(--brd);border-radius:9px;padding:6px 11px;cursor:pointer" onclick="speak('${s.word}')">
+              <div class="fw6 fs12">${s.word} 🔊</div>
+              <div class="fs11 c3">${s.translation}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }catch{area.innerHTML=`<div class="rb err fs12">AI error. Try again.</div>`;}
+}
+
+// ═══════════════════════════════════════════
+// ADD WORD
+// ═══════════════════════════════════════════
+let _addData=null;
+function renderAddWord(){
+  const lang=S.lang;
+  return `<div class="sc">
+    <div class="rb2 mb3">
+      <div class="syne fw7" style="font-size:20px">${T(lang,'addWord')}</div>
+      <button class="btn bg_ bsm" onclick="setState({adding:false})">${T(lang,'cancel')}</button>
+    </div>
+    <div style="margin-bottom:13px">
+      <label style="display:block;font-size:10px;font-weight:600;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">${T(lang,'wordEN')}</label>
+      <div class="row">
+        <input id="new-word" class="inp" style="flex:1" placeholder="Enter word…"
+          onkeydown="if(event.key==='Enter')fetchWordAI()">
+        <button class="btn bp bsm" style="margin-left:8px" onclick="fetchWordAI()">✨ AI</button>
+      </div>
+    </div>
+    <div id="add-result"></div>
+  </div>`;
+}
+
+async function fetchWordAI(){
+  const wordEl=e('new-word'); if(!wordEl)return;
+  const word=wordEl.value.trim(); if(!word)return;
+  const area=e('add-result'); if(!area)return;
+  area.innerHTML=loader(T(S.lang,'aiGet'));
+  const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
+  try{
+    const raw=await callAI(`Word: "${word}"\nReturn ONLY JSON (translations in ${L.nameEn}):\n{"translation":"in ${L.nameEn}","transcription":"IPA","level":"B1","example_en":"sentence","example_ru":"sentence translation in ${L.nameEn}"}`,S.lang);
+    _addData=JSON.parse(raw);
+    renderAddForm(word);
+  }catch{
+    _addData={translation:'',transcription:'',level:'B1',example_en:'',example_ru:''};
+    area.innerHTML=`<div class="rb err fs12 mb2">AI error. Fill manually.</div>`;
+    renderAddForm(word);
+  }
+}
+
+function renderAddForm(word){
+  const area=e('add-result'); if(!area||!_addData)return;
+  const lang=S.lang; const d=_addData;
+  area.innerHTML=`<div class="sc">
+    ${[[T(lang,'translate'),'f-tr','translation'],[T(lang,'transcr'),'f-ts','transcription'],[T(lang,'exEN'),'f-ex','example_en'],[T(lang,'exTr'),'f-exr','example_ru']].map(([lbl,id,k])=>`
+      <div style="margin-bottom:11px">
+        <label style="display:block;font-size:10px;font-weight:600;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">${lbl}</label>
+        <input id="${id}" class="inp" value="${(d[k]||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">
+      </div>`).join('')}
+    <div style="margin-bottom:11px">
+      <label style="display:block;font-size:10px;font-weight:600;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">${T(lang,'level')}</label>
+      <select id="f-lv" class="inp">
+        ${['A1','A2','B1','B2','C1','C2'].map(l=>`<option${l===d.level?' selected':''}>${l}</option>`).join('')}
+      </select>
+    </div>
+    ${ttsRow(word,lang)}
+    <button class="btn bp bfu mt1" onclick="saveWord('${word.replace(/'/g,"\\'")}')">
+      ${T(lang,'save')}
+    </button>
+  </div>`;
+}
+
+function saveWord(word){
+  const newWord={
+    id:Date.now(),word,
+    translation:e('f-tr')?.value||'',
+    transcription:e('f-ts')?.value||'',
+    level:e('f-lv')?.value||'B1',
+    example:e('f-ex')?.value||'',
+    exampleRu:e('f-exr')?.value||'',
+    hard:false,
+  };
+  S.words=[newWord,...S.words];
+  setState({adding:false});
+}
+
+// ═══════════════════════════════════════════
+// PRACTICE
+// ═══════════════════════════════════════════
+let _hardOnly=false;
+
+function renderPractice(){
+  const lang=S.lang;
+  const avail=_hardOnly?S.words.filter(w=>w.hard):S.words;
+  if(S.practiceMode==='flash')return renderFlash();
+  if(S.practiceMode==='fill')return renderFill();
+  if(S.practiceMode==='read')return renderRead();
+  return `<div class="sc">
+    <div class="sh-t">${T(lang,'practice')}</div>
+    <div class="sh-s" style="margin-bottom:14px">Choose a training mode</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--sur);border:1px solid var(--brd);border-radius:14px;padding:12px 14px;margin-bottom:14px">
+      <div>
+        <div class="fw6 fs13">${T(lang,'onlyHard')}</div>
+        <div class="fs11 c3">${S.words.filter(w=>w.hard).length} ${T(lang,'words')} ⭐</div>
+      </div>
+      <button class="tog" style="background:${_hardOnly?'var(--ac)':'var(--brd2)'}" onclick="toggleHardOnly()">
+        <div class="tog-k" style="left:${_hardOnly?22:3}px"></div>
+      </button>
+    </div>
+    ${avail.length<2?`
+      <div class="empty">
+        <div style="font-size:44px;margin-bottom:12px">📚</div>
+        <div class="syne fw7 fs13 mb1">${T(lang,'minWords')}</div>
+      </div>`:`
+    <div class="mc" onclick="startMode('flash')">
+      <div class="mc-ico">🃏</div>
+      <div style="flex:1">
+        <div class="syne fw7 fs13">${T(lang,'modeCards')}</div>
+        <div class="fs12 c2 mt1">${T(lang,'modeCardsSub')}</div>
+      </div>
+      <span class="c3" style="font-size:18px">›</span>
+    </div>
+    <div class="mc" onclick="startMode('fill')">
+      <div class="mc-ico">✏️</div>
+      <div style="flex:1">
+        <div class="syne fw7 fs13">${T(lang,'modeFill')}</div>
+        <div class="fs12 c2 mt1">${T(lang,'modeFillSub')}</div>
+      </div>
+      <span class="c3" style="font-size:18px">›</span>
+    </div>
+    <div class="mc" onclick="startMode('read')">
+      <div class="mc-ico">📄</div>
+      <div style="flex:1">
+        <div class="syne fw7 fs13">${T(lang,'modeRead')}</div>
+        <div class="fs12 c2 mt1">${T(lang,'modeReadSub')}</div>
+      </div>
+      <span class="c3" style="font-size:18px">›</span>
+    </div>`}
+  </div>`;
+}
+
+function toggleHardOnly(){_hardOnly=!_hardOnly;render()}
+
+function startMode(mode){
+  const avail=_hardOnly?S.words.filter(w=>w.hard):S.words;
+  const words=[...avail].sort(()=>Math.random()-.5);
+  S.practiceMode=mode;
+  S.session={words,idx:0,score:0,done:false,extra:[],exercise:null,loading:false,selected:null,flipped:false,readText:null,readLoading:false,readAnswers:{},readChecked:false,readTip:null};
+  render();
+  if(mode==='fill')loadFillExercise();
+  if(mode==='read')loadReadText();
+}
+
+// ── FLASHCARDS ──────────────────────────────
+function renderFlash(){
+  const s=S.session; const lang=S.lang;
+  if(s.done)return renderSessionEnd();
+  const all=[...s.words,...s.extra];
+  const w=all[s.idx];
+  return `<div class="sc">
+    <div class="rb2 mb2">
+      <button class="btn bg_ bsm" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
+      <span class="fs12 c3">${s.idx+1}/${all.length} · ✅${s.score}</span>
+    </div>
+    <div class="pb-w"><div class="pb-f" style="width:${s.idx/all.length*100}%"></div></div>
+    <div class="fc-wrap" onclick="flipCard()">
+      <div class="fc${s.flipped?' flip':''}">
+        <div class="fc-f">
+          <div class="fs11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">English · tap to flip</div>
+          <div class="syne fw7" style="font-size:34px;letter-spacing:-.5px;margin-bottom:6px">${w?.word}</div>
+          <div class="fs13 c2">${w?.transcription}</div>
+        </div>
+        <div class="fc-f fc-b">
+          <div class="fs11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">${T(lang,'translate')}</div>
+          <div class="syne fw7 ca" style="font-size:22px;margin-bottom:8px">${w?.translation}</div>
+          <div class="fs12 c2 italic" style="line-height:1.6">"${w?.example||''}"</div>
+        </div>
+      </div>
+    </div>
+    ${ttsRow(w?.word||'',lang)}
+    ${s.flipped?`
+    <div class="row" style="gap:8px">
+      <button class="btn bd bfu" onclick="answerFlash('no')">${T(lang,'dontKnow')}</button>
+      <button class="btn bp bfu" onclick="answerFlash('yes')">${T(lang,'know')}</button>
+    </div>`:`
+    <button class="btn bs bfu" onclick="flipCard()">${T(lang,'showTr')}</button>`}
+  </div>`;
+}
+
+function flipCard(){S.session.flipped=!S.session.flipped;render()}
+
+function answerFlash(r){
+  const s=S.session;
+  if(r==='yes')s.score++;
+  if(r==='no')s.extra.push(s.words[s.idx]||s.extra[s.idx-s.words.length]);
+  s.flipped=false;
+  const all=[...s.words,...s.extra];
+  if(s.idx+1>=all.length)s.done=true;
+  else s.idx++;
+  render();
+}
+
+// ── FILL BLANK ──────────────────────────────
+function renderFill(){
+  const s=S.session; const lang=S.lang;
+  if(s.done)return renderSessionEnd();
+  const w=s.words[s.idx];
+  const ex=s.exercise;
+  let sentHtml='';
+  if(ex&&ex.sentence.includes('_______')){
+    const[b,a]=ex.sentence.split('_______');
+    sentHtml=`${b}<span class="blank">${s.selected||'_______'}</span>${a}`;
+  }else if(ex){sentHtml=ex.sentence;}
+  return `<div class="sc">
+    <div class="rb2 mb2">
+      <button class="btn bg_ bsm" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
+      <span class="fs12 c3">${s.idx+1}/${s.words.length} · ✅${s.score}</span>
+    </div>
+    <div class="pb-w"><div class="pb-f" style="width:${s.idx/s.words.length*100}%"></div></div>
+    <div class="card mb3">
+      <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">
+        ${T(lang,'insertWord')} <span class="ca">${w?.translation}</span>
+      </div>
+      ${s.loading?loader(T(lang,'aiGen')):ex?`<div class="syne fw7" style="font-size:17px;line-height:1.8">${sentHtml}</div>`:''}
+    </div>
+    ${!s.loading&&ex?`
+    <div class="opts">
+      ${ex.options.map(opt=>`
+        <button class="opt${s.selected?(opt===ex.answer?' cor':opt===s.selected?' wrg':''):''}"
+          onclick="chooseFill('${opt.replace(/'/g,"\\'")}')">
+          ${opt}
+        </button>`).join('')}
+    </div>
+    ${s.selected?`
+    <div class="rb${s.selected===ex.answer?'':' err'} sc" style="margin-bottom:0">
+      <div class="fw7 mb1">${s.selected===ex.answer?T(lang,'correct'):`${T(lang,'wrongAns')} "${ex.answer}"`}</div>
+      <div class="fs12 c2">${ex.explanation||''}</div>
+      ${ttsRow(ex.answer,lang)}
+    </div>
+    <button class="btn bp bfu mt2" onclick="nextFill()">
+      ${s.idx+1>=s.words.length?T(lang,'finish'):T(lang,'next')}
+    </button>`:''}`:''
+    }
+  </div>`;
+}
+
+async function loadFillExercise(){
+  const s=S.session; const w=s.words[s.idx];
+  if(!w)return;
+  s.loading=true;s.exercise=null;s.selected=null;render();
+  const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
+  try{
+    const raw=await callAI(`Word: "${w.word}" (meaning: ${w.translation})\nExplanation in ${L.nameEn}.\nReturn ONLY JSON:\n{"sentence":"The _______ was clear.","answer":"${w.word}","options":["${w.word}","wrong1","wrong2","wrong3"],"explanation":"in ${L.nameEn}"}`,S.lang);
+    const d=JSON.parse(raw);
+    d.options=d.options.sort(()=>Math.random()-.5);
+    s.exercise=d;
+  }catch{
+    s.exercise={sentence:`She showed great _______ throughout the process.`,answer:w.word,options:[w.word,'courage','silence','effort'].sort(()=>Math.random()-.5),explanation:`"${w.word}" — ${w.translation}`};
+  }
+  s.loading=false;render();
+}
+
+function chooseFill(opt){
+  const s=S.session; if(s.selected)return;
+  s.selected=opt;
+  if(opt===s.exercise.answer)s.score++;
+  render();
+}
+
+function nextFill(){
+  const s=S.session;
+  s.idx++;
+  if(s.idx>=s.words.length){s.done=true;render();return;}
+  s.exercise=null;s.selected=null;
+  render();
+  loadFillExercise();
+}
+
+// ── READING ─────────────────────────────────
+function renderRead(){
+  const s=S.session; const lang=S.lang;
+  const wlist=s.words.slice(0,5);
+  let textHtml='';
+  if(s.readText){
+    textHtml=s.readText.text.split(/(\s+)/).map(tok=>{
+      const clean=tok.replace(/[.,!?;:]/g,'').toLowerCase();
+      const found=wlist.find(w=>w.word.toLowerCase()===clean);
+      if(found)return `<span class="hw" onclick="showReadTip('${found.word.replace(/'/g,"\\'")}','${found.translation.replace(/'/g,"\\'")}','${(found.transcription||'').replace(/'/g,"\\'")}')"> ${tok}</span>`;
+      return tok;
+    }).join('');
+  }
+  return `<div class="sc">
+    <div class="rb2 mb2">
+      <button class="btn bg_ bsm" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
+      <button class="btn bs bsm" onclick="loadReadText()" ${s.readLoading?'disabled':''}>${T(lang,'newText')}</button>
+    </div>
+    <div class="card mb2">
+      <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">📄 AI‑text · ${T(lang,'tapTr')}</div>
+      ${s.readLoading?loader(T(lang,'aiWrite')):`<div class="rtext">${textHtml}</div>`}
+    </div>
+    ${s.readTip?`
+    <div class="card csm mb2 sc" style="border-color:var(--ac)">
+      <div class="rb2">
+        <div><span class="syne fw7 fs13">${s.readTip.word}</span> · <span class="ca fs12">${s.readTip.translation}</span></div>
+        <button class="ib" onclick="S.session.readTip=null;render()">✕</button>
+      </div>
+      <div class="c3 fs11 italic mt1">${s.readTip.transcription}</div>
+      ${ttsRow(s.readTip.word,lang)}
+    </div>`:''}
+    ${s.readText?.questions&&!s.readLoading?`
+    <div class="syne fw7 fs13 mb2">${T(lang,'questions')}</div>
+    ${s.readText.questions.map((q,qi)=>`
+      <div class="card mb2">
+        <div class="fw6 fs13 mb2">${q.q}</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          ${q.options.map(opt=>`
+            <button class="opt${s.readChecked?(opt===q.correct?' cor':s.readAnswers[qi]===opt?' wrg':''):''}"
+              style="${!s.readChecked&&s.readAnswers[qi]===opt?'border-color:var(--ac2);color:var(--ac2)':''}"
+              onclick="pickReadAns(${qi},'${opt.replace(/'/g,"\\'")}')">
+              ${opt}
+            </button>`).join('')}
+        </div>
+      </div>`).join('')}
+    ${!s.readChecked?`
+    <button class="btn bp bfu" onclick="checkRead()"
+      ${Object.keys(s.readAnswers).length<s.readText.questions.length?'disabled':''}>${T(lang,'check')}</button>`:`
+    <div class="rb" style="text-align:center">
+      <div class="syne fw7 ca" style="font-size:48px">${s.readText.questions.filter((_,i)=>s.readAnswers[i]===s.readText.questions[i].correct).length}/${s.readText.questions.length}</div>
+      <div class="fs12 c3 mt1">${T(lang,'right')}</div>
+      <button class="btn bs bsm mt2" onclick="loadReadText()">${T(lang,'newText')}</button>
+    </div>`}`:''}
+  </div>`;
+}
+
+function showReadTip(word,translation,transcription){S.session.readTip={word,translation,transcription};render()}
+function pickReadAns(qi,opt){if(S.session.readChecked)return;S.session.readAnswers[qi]=opt;render()}
+function checkRead(){S.session.readChecked=true;render()}
+
+async function loadReadText(){
+  const s=S.session;
+  s.readLoading=true;s.readText=null;s.readAnswers={};s.readChecked=false;s.readTip=null;render();
+  const wlist=s.words.slice(0,5);
+  const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
+  try{
+    const raw=await callAI(`Words: ${wlist.map(w=>w.word).join(', ')}\nWrite English text (100-130 words, B2) using ALL words.\nQuestions and options in ${L.nameEn}.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}`,S.lang);
+    const d=JSON.parse(raw);
+    d.highlighted=wlist.map(w=>w.word);
+    s.readText=d;
+  }catch{
+    s.readText={text:`In today's world, resilience is a key quality. When facing ambiguous situations, it is important to persevere. An eloquent speaker communicates with great nuance.`,questions:[{q:"What is a key quality?",options:["Patience","Resilience","Speed","Luck"],correct:"Resilience"}]};
+  }
+  s.readLoading=false;render();
+}
+
+// ── SESSION END ─────────────────────────────
+function renderSessionEnd(){
+  const s=S.session; const lang=S.lang;
+  return `<div class="sc">
+    <button class="btn bg_ bsm mb3" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
+    <div class="se">
+      <div class="syne fw7" style="font-size:72px;color:var(--ac);line-height:1">${s.score}</div>
+      <div class="syne fw7 fs13 mt1">${T(lang,'learned')}</div>
+      <div class="fs12 c3 mt1">of ${s.words.length}</div>
+      <div class="row mt3" style="justify-content:center;gap:10px">
+        <button class="btn bp" onclick="startMode('${S.practiceMode}')">${T(lang,'again')}</button>
+        <button class="btn bs" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════
+function renderProgress(){
+  const lang=S.lang;
+  const total=S.words.length, hard=S.words.filter(w=>w.hard).length;
+  const byLvl=['A1','A2','B1','B2','C1','C2'].map(l=>({l,n:S.words.filter(w=>w.level===l).length})).filter(x=>x.n>0);
+  return `<div class="sc">
+    <div class="sh-t">${T(lang,'progress')}</div>
+    <div class="sh-s">${T(lang,'statsSub')}</div>
+    <div class="sg">
+      <div class="scrd"><div class="sv ca">${total}</div><div class="sl">${T(lang,'inDict')}</div></div>
+      <div class="scrd"><div class="sv" style="color:var(--warn)">${hard}</div><div class="sl">${T(lang,'hardW')}</div></div>
+      <div class="scrd"><div class="sv" style="color:var(--ac3)">🔥3</div><div class="sl">${T(lang,'streakL')}</div></div>
+      <div class="scrd"><div class="sv" style="color:var(--ac2)">12</div><div class="sl">${T(lang,'exCount')}</div></div>
+    </div>
+    ${byLvl.length?`
+    <div class="card mb2">
+      <div class="fw6 fs13 mb3">${T(lang,'byLevel')}</div>
+      ${byLvl.map(({l,n})=>`
+        <div class="mb2">
+          <div class="rb2 mb1">
+            <div class="row">${lvlBadge(l)}<span class="fs11 c3">${n} ${T(lang,'words')}</span></div>
+            <span class="fs11 c3">${Math.round(n/total*100)}%</span>
+          </div>
+          <div class="pb-w" style="height:4px">
+            <div class="pb-f" style="width:${n/total*100}%;background:${l.startsWith('C')?'var(--ac3)':l.startsWith('B')?'var(--ac2)':'var(--ac)'}"></div>
+          </div>
+        </div>`).join('')}
+    </div>`:''}
+    ${hard?`
+    <div class="card mb2">
+      <div class="fw6 fs13 mb2">${T(lang,'hardList')}</div>
+      ${S.words.filter(w=>w.hard).map(w=>`
+        <div class="rb2" style="padding:8px 0;border-bottom:1px solid var(--brd)">
+          <div class="row"><span class="fw6 fs13">${w.word}</span><span class="c3 fs12">${w.translation}</span></div>
+          <div class="row" style="gap:5px">${lvlBadge(w.level)}<button class="ib" style="font-size:13px" onclick="speak('${w.word.replace(/'/g,"\\'")}')">🔊</button></div>
+        </div>`).join('')}
+    </div>`:''}
+    <div class="card">
+      <div class="fw6 fs13 mb2">${T(lang,'achiev')}</div>
+      ${[
+        {i:'📖',l:'First word added',done:total>=1},
+        {i:'📚',l:'10 words in dictionary',done:total>=10},
+        {i:'🔥',l:'3-day streak',done:true},
+        {i:'⭐',l:'First hard word',done:hard>=1},
+        {i:'🎯',l:'First exercise completed',done:true},
+      ].map(a=>`
+        <div class="row" style="padding:8px 0;border-bottom:1px solid var(--brd);gap:11px">
+          <span style="font-size:20px;filter:${a.done?'none':'grayscale(1) opacity(.3)'}">${a.i}</span>
+          <span class="fs12" style="color:${a.done?'var(--t)':'var(--t3)'}">${a.l}</span>
+          ${a.done?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':''}
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
