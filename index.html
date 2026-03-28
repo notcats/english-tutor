@@ -4,1080 +4,571 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080a0f">
-<title>AI English Tutor</title>
+<title>AI Language Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
-:root{
-  --bg:#080a0f;--sur:#111420;--sur2:#181b28;--sur3:#1e2235;
-  --brd:#252840;--brd2:#2e3350;
-  --ac:#5effc4;--acD:rgba(94,255,196,.1);
-  --ac2:#7c6fff;--ac3:#ff6b9d;
-  --warn:#ffb547;--danger:#ff5e6d;
-  --t:#eef0f8;--t2:#a8adc8;--t3:#5a6080;
-}
+:root{--bg:#080a0f;--sur:#111420;--sur2:#181b28;--sur3:#1e2235;--brd:#252840;--brd2:#2e3350;--ac:#5effc4;--acD:rgba(94,255,196,.1);--ac2:#7c6fff;--ac3:#ff6b9d;--warn:#ffb547;--danger:#ff5e6d;--t:#eef0f8;--t2:#a8adc8;--t3:#5a6080}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif}
 #app{max-width:430px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--bg)}
-#app::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 70% 45% at 20% 5%,rgba(94,255,196,.05) 0%,transparent 70%),
-             radial-gradient(ellipse 50% 35% at 85% 95%,rgba(124,111,255,.05) 0%,transparent 70%)}
-
-/* HEADER */
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;
-  border-bottom:1px solid var(--brd);background:rgba(8,10,15,.96);
-  backdrop-filter:blur(20px);position:relative;z-index:5;flex-shrink:0}
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.3px}
-.logo em{color:var(--ac);font-style:normal}
-.hdr-right{display:flex;align-items:center;gap:8px}
-.streak{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--warn);background:rgba(255,181,71,.1);padding:4px 10px;border-radius:20px}
-.lang-btn{font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px;border:1px solid var(--brd);background:var(--sur2);line-height:1}
-
-/* CONTENT */
-.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 16px 84px;position:relative;z-index:1}
-.content::-webkit-scrollbar{width:3px}
-.content::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
-
-/* NAV */
-.nav{display:flex;position:relative;z-index:5;background:rgba(13,15,23,.97);
-  border-top:1px solid var(--brd);
-  padding:8px 0 max(10px,env(safe-area-inset-bottom));flex-shrink:0}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-  background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;
-  font-size:10px;font-weight:500;color:var(--t3);padding:4px 0;transition:color .2s}
-.nb.on{color:var(--ac)}
-.ni{font-size:20px;line-height:1;transition:transform .2s}
-.nb.on .ni{transform:scale(1.15)}
-
-/* SCREEN */
+#app::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 45% at 20% 5%,rgba(94,255,196,.05) 0%,transparent 70%),radial-gradient(ellipse 50% 35% at 85% 95%,rgba(124,111,255,.05) 0%,transparent 70%)}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--brd);background:rgba(8,10,15,.96);backdrop-filter:blur(20px);position:relative;z-index:5;flex-shrink:0}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.3px}.logo em{color:var(--ac);font-style:normal}
+.hdr-r{display:flex;align-items:center;gap:6px}
+.streak{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--warn);background:rgba(255,181,71,.1);padding:3px 8px;border-radius:20px}
+.ava{width:30px;height:30px;border-radius:50%;border:2px solid var(--ac);cursor:pointer;background:var(--sur2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ac);flex-shrink:0;overflow:hidden}
+.ava img{width:100%;height:100%;object-fit:cover}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 14px 80px;position:relative;z-index:1;-webkit-overflow-scrolling:touch}
+.content::-webkit-scrollbar{width:3px}.content::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+.nav{display:flex;position:relative;z-index:5;background:rgba(13,15,23,.97);border-top:1px solid var(--brd);padding:6px 0 max(10px,env(safe-area-inset-bottom));flex-shrink:0}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;color:var(--t3);padding:3px 0;transition:color .2s}
+.nb.on{color:var(--ac)}.ni{font-size:19px;line-height:1}.nb.on .ni{transform:scale(1.1)}
 .sc{animation:fu .22s ease}
 @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.sh-t{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px;margin-bottom:3px}
-.sh-s{font-size:13px;color:var(--t2);margin-bottom:18px}
-
-/* CARDS */
-.card{background:var(--sur);border:1px solid var(--brd);border-radius:16px;padding:15px;margin-bottom:11px}
-.csm{padding:11px 13px}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  padding:10px 18px;border-radius:10px;font-family:'DM Sans',sans-serif;
-  font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .18s;white-space:nowrap}
-.bp{background:var(--ac);color:#080a0f;font-weight:700}
-.bp:hover{background:#3ffdb6;transform:translateY(-1px);box-shadow:0 4px 18px rgba(94,255,196,.3)}
-.bp:active{transform:translateY(0)}
-.bs{background:var(--sur2);color:var(--t);border:1px solid var(--brd2)}
-.bs:hover{border-color:var(--ac);color:var(--ac)}
-.bg_{background:transparent;color:var(--t2);border:1px solid var(--brd)}
-.bg_:hover{color:var(--t);border-color:var(--brd2)}
+.sht{font-family:'Syne',sans-serif;font-weight:800;font-size:21px;letter-spacing:-.5px;margin-bottom:3px}
+.shs{font-size:12px;color:var(--t2);margin-bottom:16px}
+.card{background:var(--sur);border:1px solid var(--brd);border-radius:14px;padding:13px;margin-bottom:10px}
+.csm{padding:10px 12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 16px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .18s;white-space:nowrap}
+.bp{background:var(--ac);color:#080a0f;font-weight:700}.bp:hover{background:#3ffdb6;transform:translateY(-1px)}.bp:active{transform:translateY(0)}
+.bs{background:var(--sur2);color:var(--t);border:1px solid var(--brd2)}.bs:hover{border-color:var(--ac)}
+.bg_{background:transparent;color:var(--t2);border:1px solid var(--brd)}.bg_:hover{color:var(--t)}
 .bd{background:rgba(255,94,109,.1);color:var(--danger);border:1px solid rgba(255,94,109,.25)}
-.bsm{padding:6px 12px;font-size:12px;border-radius:8px}
-.bfu{width:100%}
-.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
-
-/* INPUT */
-.inp{width:100%;background:var(--sur2);border:1px solid var(--brd2);border-radius:10px;
-  padding:10px 13px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
-.inp:focus{border-color:var(--ac)}
-.inp::placeholder{color:var(--t3)}
-
-/* BADGE */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
-.bg{background:rgba(94,255,196,.12);color:var(--ac)}
-.bv{background:rgba(124,111,255,.12);color:var(--ac2)}
-.bp2{background:rgba(255,107,157,.12);color:var(--ac3)}
-
-/* WORD LIST */
-.wli{display:flex;align-items:center;gap:11px;background:var(--sur);border:1px solid var(--brd);
-  border-radius:14px;padding:12px 13px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.bsm{padding:5px 11px;font-size:12px;border-radius:8px}.bfu{width:100%}.btn:disabled{opacity:.35;cursor:not-allowed}
+.inp{width:100%;background:var(--sur2);border:1px solid var(--brd2);border-radius:10px;padding:10px 12px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--ac)}.inp::placeholder{color:var(--t3)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
+.bgr{background:rgba(94,255,196,.12);color:var(--ac)}.bv{background:rgba(124,111,255,.12);color:var(--ac2)}.bpk{background:rgba(255,107,157,.12);color:var(--ac3)}.byw{background:rgba(255,181,71,.12);color:var(--warn)}
+.wli{display:flex;align-items:center;gap:10px;background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:11px 12px;margin-bottom:7px;cursor:pointer;transition:all .2s}
 .wli:active{border-color:var(--ac);background:var(--sur2)}
-.wli-en{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
-.wli-ru{font-size:12px;color:var(--t2);margin-top:2px}
-.wli-ex{font-size:11px;color:var(--t3);margin-top:3px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
-.ib{background:none;border:none;cursor:pointer;font-size:16px;padding:4px;border-radius:6px;line-height:1}
-.ib:active{background:var(--sur3)}
-
-/* PILLS */
-.pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;scrollbar-width:none}
-.pills::-webkit-scrollbar{display:none}
-.pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;
-  white-space:nowrap;border:1px solid var(--brd);background:var(--sur2);color:var(--t3);transition:all .15s}
+.wen{font-family:'Syne',sans-serif;font-weight:700;font-size:14px}.wru{font-size:12px;color:var(--t2);margin-top:2px}
+.wex{font-size:11px;color:var(--t3);margin-top:2px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:185px}
+.wgr{font-size:10px;color:var(--ac);margin-top:2px}
+.ib{background:none;border:none;cursor:pointer;font-size:15px;padding:3px;border-radius:5px;line-height:1}
+.pills{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none}.pills::-webkit-scrollbar{display:none}
+.pill{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;border:1px solid var(--brd);background:var(--sur2);color:var(--t3);transition:all .15s}
 .pill.on{background:var(--ac);color:#080a0f;border-color:var(--ac);font-weight:700}
-
-/* SEARCH */
-.sw{position:relative;margin-bottom:13px}
-.sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t3);pointer-events:none}
-.sinp{padding-left:33px}
-
-/* DIVIDER */
-.div{height:1px;background:var(--brd);margin:13px 0}
-
-/* PROGRESS BAR */
-.pb-w{background:var(--sur2);border-radius:20px;height:5px;overflow:hidden;margin-bottom:16px}
-.pb-f{height:100%;border-radius:20px;background:var(--ac);transition:width .5s cubic-bezier(.4,0,.2,1)}
-
-/* AI LOADER */
-.ail{display:flex;align-items:center;gap:8px;color:var(--t2);font-size:13px;padding:12px 0}
-.dots{display:flex;gap:4px}
-.dot{width:5px;height:5px;border-radius:50%;background:var(--ac);animation:dp 1.2s ease-in-out infinite}
+.sw{position:relative;margin-bottom:12px}.sico{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t3);pointer-events:none}.sinp{padding-left:32px}
+.divl{height:1px;background:var(--brd);margin:12px 0}
+.pbw{background:var(--sur2);border-radius:20px;height:5px;overflow:hidden;margin-bottom:14px}
+.pbf{height:100%;border-radius:20px;background:var(--ac);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.ail{display:flex;align-items:center;gap:7px;color:var(--t2);font-size:12px;padding:10px 0}
+.dots{display:flex;gap:4px}.dot{width:5px;height:5px;border-radius:50%;background:var(--ac);animation:dp 1.2s ease-in-out infinite}
 .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
 @keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.7)}40%{opacity:1;transform:scale(1)}}
-
-/* TTS BUTTON */
-.ttsb{display:inline-flex;align-items:center;gap:4px;background:var(--acD);
-  border:1px solid rgba(94,255,196,.2);color:var(--ac);border-radius:20px;
-  padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
-.ttsb:hover{background:rgba(94,255,196,.2)}
-.ttsb.sp{animation:tpulse 1s ease-in-out infinite}
-@keyframes tpulse{0%,100%{box-shadow:0 0 0 0 rgba(94,255,196,.4)}50%{box-shadow:0 0 0 5px rgba(94,255,196,0)}}
-
-/* FAB */
-.fab{position:fixed;bottom:max(78px,calc(env(safe-area-inset-bottom)+68px));right:18px;
-  width:52px;height:52px;border-radius:50%;background:var(--ac);color:#080a0f;
-  font-size:26px;display:flex;align-items:center;justify-content:center;
-  border:none;cursor:pointer;z-index:20;box-shadow:0 4px 22px rgba(94,255,196,.4);transition:all .2s}
+.ttsb{display:inline-flex;align-items:center;gap:3px;background:var(--acD);border:1px solid rgba(94,255,196,.2);color:var(--ac);border-radius:20px;padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.micb{display:inline-flex;align-items:center;gap:3px;background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.25);color:var(--ac3);border-radius:20px;padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.micb.rec{background:rgba(255,107,157,.3)}
+.fab{position:fixed;bottom:max(72px,calc(env(safe-area-inset-bottom)+62px));right:16px;width:50px;height:50px;border-radius:50%;background:var(--ac);color:#080a0f;font-size:24px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;z-index:20;box-shadow:0 4px 22px rgba(94,255,196,.4);transition:all .2s}
 .fab:active{transform:scale(.93)}
-
-/* MODAL */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;display:flex;align-items:flex-end}
-.modal{background:var(--sur);border:1px solid var(--brd);border-radius:22px 22px 0 0;
-  padding:20px 18px max(36px,calc(env(safe-area-inset-bottom)+20px));
-  width:100%;max-height:90vh;overflow-y:auto;animation:su .3s cubic-bezier(.4,0,.2,1)}
-.modal::-webkit-scrollbar{width:3px}
-.modal::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
-.mhandle{width:32px;height:4px;background:var(--brd2);border-radius:2px;margin:0 auto 18px}
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;display:flex;align-items:flex-end}
+.modal{background:var(--sur);border:1px solid var(--brd);border-radius:22px 22px 0 0;padding:18px 16px max(32px,calc(env(safe-area-inset-bottom)+18px));width:100%;max-height:92vh;overflow-y:auto;animation:su .3s cubic-bezier(.4,0,.2,1)}
+.modal::-webkit-scrollbar{width:3px}.modal::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+.mh{width:32px;height:4px;background:var(--brd2);border-radius:2px;margin:0 auto 16px}
 @keyframes su{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-/* FLASHCARD */
-.fc-wrap{perspective:1200px;height:220px;margin-bottom:18px;cursor:pointer;user-select:none}
+.fcw{perspective:1200px;height:210px;margin-bottom:16px;cursor:pointer}
 .fc{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1)}
 .fc.flip{transform:rotateY(180deg)}
-.fc-f{position:absolute;inset:0;backface-visibility:hidden;background:var(--sur);
-  border:1px solid var(--brd);border-radius:18px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
-.fc-b{transform:rotateY(180deg);background:var(--sur2);border-color:rgba(94,255,196,.25)}
-
-/* PRACTICE MODE */
-.mc{display:flex;align-items:center;gap:12px;background:var(--sur);border:1px solid var(--brd);
-  border-radius:14px;padding:16px;margin-bottom:9px;cursor:pointer;transition:all .2s}
+.fcf{position:absolute;inset:0;backface-visibility:hidden;background:var(--sur);border:1px solid var(--brd);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center}
+.fcb{transform:rotateY(180deg);background:var(--sur2);border-color:rgba(94,255,196,.25)}
+.mc{display:flex;align-items:center;gap:11px;background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:14px;margin-bottom:8px;cursor:pointer;transition:all .2s}
 .mc:active{border-color:var(--ac);background:var(--sur2)}
-.mc-ico{width:48px;height:48px;border-radius:13px;background:var(--sur2);
-  display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
-
-/* OPTIONS */
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.opt{padding:12px 10px;background:var(--sur2);border:1px solid var(--brd);border-radius:9px;
-  color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .18s;text-align:left;width:100%}
-.opt:active{border-color:var(--ac2);color:var(--ac2)}
+.mci{width:46px;height:46px;border-radius:13px;background:var(--sur2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px}
+.opt{padding:11px 9px;background:var(--sur2);border:1px solid var(--brd);border-radius:9px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .18s;text-align:left;width:100%}
 .opt.cor{background:rgba(94,255,196,.1);border-color:var(--ac);color:var(--ac);font-weight:600}
 .opt.wrg{background:rgba(255,94,109,.1);border-color:var(--danger);color:var(--danger)}
-
-/* RESULT BOX */
-.rb{background:var(--sur2);border-radius:10px;padding:13px;border-left:3px solid var(--ac)}
-.rb.err{border-left-color:var(--danger)}
-
-/* READING */
-.rtext{font-size:15px;line-height:2.1;color:var(--t2)}
-.hw{color:var(--ac);font-weight:600;cursor:pointer;border-bottom:1px dashed rgba(94,255,196,.4)}
-
-/* STAT */
-.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
-.scrd{background:var(--sur);border:1px solid var(--brd);border-radius:14px;padding:14px;text-align:center}
-.sv{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1}
-.sl{font-size:10px;color:var(--t3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
-
-/* TOGGLE */
-.tog{width:42px;height:23px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
-.tog-k{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .2s}
-
-/* BLANK */
-.blank{display:inline-block;min-width:100px;padding:0 5px;border-bottom:2px solid var(--ac);color:var(--ac);font-style:italic}
-
-/* ONBOARDING */
-.ob{width:100%;height:100vh;max-width:430px;margin:0 auto;display:flex;flex-direction:column;
-  align-items:center;background:var(--bg);overflow-y:auto;padding:0 20px max(40px,env(safe-area-inset-bottom))}
-.ob::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 90% 55% at 50% -5%,rgba(94,255,196,.08) 0%,transparent 65%),
-             radial-gradient(ellipse 60% 40% at 80% 100%,rgba(124,111,255,.07) 0%,transparent 70%)}
-.ob-hero{width:100%;text-align:center;padding:52px 0 30px;position:relative;z-index:1}
-.ob-globe{font-size:60px;margin-bottom:16px;display:block;filter:drop-shadow(0 0 28px rgba(94,255,196,.25))}
-.ob-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.5px}
-.ob-logo em{color:var(--ac);font-style:normal}
-.ob-sub{font-size:14px;color:var(--t2);line-height:1.6;max-width:290px;margin:10px auto 0}
-.ob-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;text-align:center}
-.ob-sw{position:relative;margin-bottom:14px;width:100%}
-.ob-sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t3);pointer-events:none}
-.ob-sinp{width:100%;background:var(--sur2);border:1px solid var(--brd2);border-radius:10px;
-  padding:10px 13px 10px 34px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
-.ob-sinp:focus{border-color:var(--ac)}
-.ob-sinp::placeholder{color:var(--t3)}
-.lg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;position:relative;z-index:1}
-.lc{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--sur);
-  border:2px solid var(--brd);border-radius:14px;padding:13px 6px 10px;cursor:pointer;transition:all .2s}
-.lc:active{background:var(--sur2)}
+.rb{background:var(--sur2);border-radius:10px;padding:12px;border-left:3px solid var(--ac)}.rb.err{border-left-color:var(--danger)}
+.rt{font-size:14px;line-height:2;color:var(--t2)}.hw{color:var(--ac);font-weight:600;cursor:pointer;border-bottom:1px dashed rgba(94,255,196,.4)}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
+.sc2{background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:12px;text-align:center}
+.sv{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1}.sl{font-size:10px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+.tog{width:40px;height:22px;border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.togk{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s}
+.blnk{display:inline-block;min-width:90px;padding:0 5px;border-bottom:2px solid var(--ac);color:var(--ac);font-style:italic}
+.se{text-align:center;padding:40px 14px 18px}.empty{text-align:center;padding:40px 14px}
+.ob{width:100%;height:100vh;max-width:430px;margin:0 auto;display:flex;flex-direction:column;align-items:center;background:var(--bg);overflow-y:auto;padding:0 18px max(40px,env(safe-area-inset-bottom))}
+.ob::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 90% 55% at 50% -5%,rgba(94,255,196,.08) 0%,transparent 65%)}
+.obh{width:100%;text-align:center;padding:44px 0 26px;position:relative;z-index:1}
+.obl{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.5px}.obl em{color:var(--ac);font-style:normal}
+.obs{font-size:13px;color:var(--t2);line-height:1.6;max-width:280px;margin:8px auto 0}
+.obs2{width:100%;position:relative;z-index:1}
+.oblbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center}
+.obsw{position:relative;margin-bottom:12px;width:100%}
+.obsico{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--t3);pointer-events:none}
+.obsinp{width:100%;background:var(--sur2);border:1px solid var(--brd2);border-radius:10px;padding:9px 12px 9px 32px;color:var(--t);font-family:'DM Sans',sans-serif;font-size:13px;outline:none}
+.obsinp:focus{border-color:var(--ac)}.obsinp::placeholder{color:var(--t3)}
+.lg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;width:100%}
+.lc{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--sur);border:2px solid var(--brd);border-radius:13px;padding:11px 5px 9px;cursor:pointer;transition:all .2s}
 .lc.sel{border-color:var(--ac);background:rgba(94,255,196,.06)}
-.lc-f{font-size:26px;line-height:1}
-.lc-n{font-size:11px;font-weight:600;color:var(--t2);text-align:center;line-height:1.3}
-.lc.sel .lc-n{color:var(--ac)}
-.ob-cta{width:100%;margin-top:18px;position:relative;z-index:1}
-
-/* UTILS */
-.row{display:flex;align-items:center;gap:8px}
-.rb2{display:flex;align-items:center;justify-content:space-between}
-.fw7{font-weight:700}.fw6{font-weight:600}
-.fs13{font-size:13px}.fs12{font-size:12px}.fs11{font-size:11px}
-.c2{color:var(--t2)}.c3{color:var(--t3)}.ca{color:var(--ac)}
-.syne{font-family:'Syne',sans-serif}
-.italic{font-style:italic}
-.mt1{margin-top:6px}.mt2{margin-top:10px}.mt3{margin-top:16px}
-.mb1{margin-bottom:6px}.mb2{margin-bottom:10px}.mb3{margin-bottom:16px}
-.se{text-align:center;padding:44px 16px 20px}
-.empty{text-align:center;padding:44px 16px}
+.lcf{font-size:24px;line-height:1}.lcn{font-size:10px;font-weight:600;color:var(--t2);text-align:center;line-height:1.3}.lc.sel .lcn{color:var(--ac)}
+.row{display:flex;align-items:center;gap:7px}.rb2{display:flex;align-items:center;justify-content:space-between}
+.fw7{font-weight:700}.fw6{font-weight:600}.f13{font-size:13px}.f12{font-size:12px}.f11{font-size:11px}
+.c2{color:var(--t2)}.c3{color:var(--t3)}.ca{color:var(--ac)}.syn{font-family:'Syne',sans-serif}.ita{font-style:italic}
+.mt1{margin-top:5px}.mt2{margin-top:9px}.mt3{margin-top:14px}.mb1{margin-bottom:5px}.mb2{margin-bottom:9px}.mb3{margin-bottom:14px}
+.pav{width:68px;height:68px;border-radius:50%;border:3px solid var(--ac);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:var(--ac);background:var(--sur2);overflow:hidden}
+.pav img{width:100%;height:100%;object-fit:cover}
+.limw{background:var(--sur2);border-radius:20px;height:6px;overflow:hidden;flex:1}
+.limf{height:100%;border-radius:20px;transition:width .4s ease}
+.hcard{background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:12px;margin-bottom:8px;cursor:pointer}
+.gcard{background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:13px;margin-bottom:9px;cursor:pointer}
 </style>
 </head>
 <body>
-<div id="app"></div>
-
+<div id="app"><div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--t2);font-size:14px">Loading…</div></div>
 <script>
-// ═══════════════════════════════════════════
-// LANGUAGES & UI STRINGS
-// ═══════════════════════════════════════════
-const LANGS=[
-  {code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},
-  {code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},
-  {code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},
-  {code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},
-  {code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},
-  {code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},
-  {code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},
-  {code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},
-  {code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},
-  {code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},
-  {code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},
-  {code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},
-  {code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},
-  {code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},
-  {code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"},
-];
-
-const UI={
-  ru:{dict:"Словарь",practice:"Практика",progress:"Прогресс",words:"слов",hard:"трудных",
-    search:"Поиск…",addWord:"Добавить слово",save:"💾 Сохранить",cancel:"✕ Отмена",
-    listen:"Слушать",slow:"Медленно",translate:"Перевод",example:"Пример",
-    synonymsBtn:"✨ Синонимы и примеры",deleteQ:"Удалить слово?",
-    markHard:"☆ В трудные",unmarkHard:"⭐ Трудное",close:"Закрыть",delete:"🗑 Удалить",
-    back:"← Назад",next:"Следующее →",finish:"Завершить",again:"🔄 Ещё раз",
-    check:"Проверить",newText:"📄 Новый текст",showTr:"Показать перевод 👁",
-    dontKnow:"❌ Не знаю",know:"✅ Знаю",learned:"слов выучено!",
-    correct:"✅ Правильно!",wrongAns:"❌ Верный ответ:",right:"правильных ответов",
-    wordEN:"Слово (английский)",transcr:"Транскрипция",level:"Уровень",
-    exEN:"Пример (EN)",exTr:"Перевод примера",onlyHard:"Только трудные слова",
-    notFound:"Слов не найдено",addHint:"Добавь слово кнопкой ＋",
-    aiThink:"AI думает…",aiGen:"AI генерирует задание…",aiWrite:"AI пишет текст…",
-    aiSyn:"AI ищет синонимы…",aiGet:"AI получает данные…",
-    insertWord:"Вставь слово:",tapTr:"Нажми на слово для перевода",
-    questions:"Вопросы по тексту",statsSub:"Твоя статистика",
-    inDict:"В словаре",hardW:"Трудных",streakL:"Дней подряд",exCount:"Упражнений",
-    byLevel:"📊 По уровням",hardList:"⭐ Трудные слова",achiev:"🏆 Достижения",
-    changeLang:"Сменить язык",streakDays:"3 дня",
-    modeCards:"Flashcards",modeCardsSub:"Карточки — вспомни перевод",
-    modeFill:"Вставь слово",modeFillSub:"Пропуск в предложении",
-    modeRead:"AI‑текст",modeReadSub:"Читай и понимай в контексте",
-    minWords:"Добавь минимум 2 слова"},
-  es:{dict:"Diccionario",practice:"Práctica",progress:"Progreso",words:"palabras",hard:"difíciles",
-    search:"Buscar…",addWord:"Agregar palabra",save:"💾 Guardar",cancel:"✕ Cancelar",
-    listen:"Escuchar",slow:"Despacio",translate:"Traducción",example:"Ejemplo",
-    synonymsBtn:"✨ Sinónimos",deleteQ:"¿Eliminar?",markHard:"☆ Difícil",unmarkHard:"⭐ Difícil",
-    close:"Cerrar",delete:"🗑 Eliminar",back:"← Atrás",next:"Siguiente →",finish:"Terminar",
-    again:"🔄 Otra vez",check:"Comprobar",newText:"📄 Nuevo texto",showTr:"Ver traducción 👁",
-    dontKnow:"❌ No sé",know:"✅ Lo sé",learned:"palabras!",correct:"✅ ¡Correcto!",
-    wrongAns:"❌ Respuesta:",right:"correctas",wordEN:"Palabra (inglés)",transcr:"Transcripción",
-    level:"Nivel",exEN:"Ejemplo (EN)",exTr:"Traducción",onlyHard:"Solo difíciles",
-    notFound:"No hay palabras",addHint:"Agrega con ＋",aiThink:"IA pensando…",aiGen:"IA generando…",
-    aiWrite:"IA escribiendo…",aiSyn:"IA buscando…",aiGet:"IA obteniendo…",
-    insertWord:"Inserta:",tapTr:"Toca una palabra",questions:"Preguntas",statsSub:"Estadísticas",
-    inDict:"Diccionario",hardW:"Difíciles",streakL:"Días seguidos",exCount:"Ejercicios",
-    byLevel:"📊 Niveles",hardList:"⭐ Difíciles",achiev:"🏆 Logros",changeLang:"Cambiar idioma",
-    streakDays:"3 días",modeCards:"Flashcards",modeCardsSub:"Tarjetas",modeFill:"Completar",
-    modeFillSub:"Palabra faltante",modeRead:"Texto IA",modeReadSub:"Lee en contexto",
-    minWords:"Agrega mínimo 2 palabras"},
-  fr:{dict:"Dictionnaire",practice:"Pratique",progress:"Progrès",words:"mots",hard:"difficiles",
-    search:"Rechercher…",addWord:"Ajouter un mot",save:"💾 Enregistrer",cancel:"✕ Annuler",
-    listen:"Écouter",slow:"Lentement",translate:"Traduction",example:"Exemple",
-    synonymsBtn:"✨ Synonymes",deleteQ:"Supprimer?",markHard:"☆ Difficile",unmarkHard:"⭐ Difficile",
-    close:"Fermer",delete:"🗑 Supprimer",back:"← Retour",next:"Suivant →",finish:"Terminer",
-    again:"🔄 Encore",check:"Vérifier",newText:"📄 Nouveau texte",showTr:"Voir 👁",
-    dontKnow:"❌ Je ne sais pas",know:"✅ Je sais",learned:"mots appris!",correct:"✅ Correct!",
-    wrongAns:"❌ Réponse:",right:"correctes",wordEN:"Mot (anglais)",transcr:"Transcription",
-    level:"Niveau",exEN:"Exemple (EN)",exTr:"Traduction",onlyHard:"Mots difficiles",
-    notFound:"Aucun mot",addHint:"Ajoutez avec ＋",aiThink:"IA réfléchit…",aiGen:"IA génère…",
-    aiWrite:"IA écrit…",aiSyn:"IA cherche…",aiGet:"IA récupère…",
-    insertWord:"Insérez:",tapTr:"Appuyez sur un mot",questions:"Questions",statsSub:"Statistiques",
-    inDict:"Dictionnaire",hardW:"Difficiles",streakL:"Jours de suite",exCount:"Exercices",
-    byLevel:"📊 Niveaux",hardList:"⭐ Difficiles",achiev:"🏆 Réalisations",changeLang:"Changer",
-    streakDays:"3 jours",modeCards:"Flashcards",modeCardsSub:"Cartes",modeFill:"Compléter",
-    modeFillSub:"Mot manquant",modeRead:"Texte IA",modeReadSub:"Lire en contexte",
-    minWords:"Ajoutez au moins 2 mots"},
-  de:{dict:"Wörterbuch",practice:"Übung",progress:"Fortschritt",words:"Wörter",hard:"schwierig",
-    search:"Suchen…",addWord:"Wort hinzufügen",save:"💾 Speichern",cancel:"✕ Abbrechen",
-    listen:"Anhören",slow:"Langsam",translate:"Übersetzung",example:"Beispiel",
-    synonymsBtn:"✨ Synonyme",deleteQ:"Löschen?",markHard:"☆ Schwierig",unmarkHard:"⭐ Schwierig",
-    close:"Schließen",delete:"🗑 Löschen",back:"← Zurück",next:"Weiter →",finish:"Beenden",
-    again:"🔄 Nochmal",check:"Prüfen",newText:"📄 Neuer Text",showTr:"Zeigen 👁",
-    dontKnow:"❌ Weiß nicht",know:"✅ Weiß ich",learned:"Wörter gelernt!",correct:"✅ Richtig!",
-    wrongAns:"❌ Antwort:",right:"richtige",wordEN:"Wort (Englisch)",transcr:"Transkription",
-    level:"Niveau",exEN:"Beispiel (EN)",exTr:"Übersetzung",onlyHard:"Nur schwierige",
-    notFound:"Keine Wörter",addHint:"Mit ＋ hinzufügen",aiThink:"KI denkt…",aiGen:"KI generiert…",
-    aiWrite:"KI schreibt…",aiSyn:"KI sucht…",aiGet:"KI lädt…",
-    insertWord:"Einsetzen:",tapTr:"Wort antippen",questions:"Fragen",statsSub:"Statistiken",
-    inDict:"Wörterbuch",hardW:"Schwierig",streakL:"Tage in Folge",exCount:"Übungen",
-    byLevel:"📊 Niveau",hardList:"⭐ Schwierige",achiev:"🏆 Erfolge",changeLang:"Sprache",
-    streakDays:"3 Tage",modeCards:"Flashcards",modeCardsSub:"Karten",modeFill:"Lückentext",
-    modeFillSub:"Fehlendes Wort",modeRead:"KI‑Text",modeReadSub:"Im Kontext",
-    minWords:"Mindestens 2 Wörter"},
-};
-function T(lang,k){return(UI[lang]||UI.ru)[k]||(UI.ru)[k]||k}
-
-// ═══════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════
-let S={
-  screen:'onboard', // onboard | main
-  lang: null,
-  tab:'dict',
-  words:[
-    {id:1,word:"resilience",translation:"стойкость, упругость",transcription:"/rɪˈzɪliəns/",level:"B2",example:"Her resilience inspired everyone around her.",exampleRu:"Её стойкость вдохновила всех вокруг.",hard:false},
-    {id:2,word:"ambiguous",translation:"неоднозначный",transcription:"/æmˈbɪɡjuəs/",level:"C1",example:"The instructions were ambiguous and unclear.",exampleRu:"Инструкции были неоднозначными.",hard:true},
-    {id:3,word:"eloquent",translation:"красноречивый",transcription:"/ˈeləkwənt/",level:"C1",example:"She gave an eloquent speech that moved everyone.",exampleRu:"Она произнесла красноречивую речь.",hard:false},
-    {id:4,word:"persevere",translation:"упорствовать",transcription:"/ˌpɜːrsɪˈvɪr/",level:"B2",example:"You must persevere through challenges to succeed.",exampleRu:"Нужно упорно преодолевать трудности.",hard:false},
-    {id:5,word:"nuance",translation:"нюанс, тонкость",transcription:"/ˈnjuːɑːns/",level:"C1",example:"Understanding the nuance of language takes practice.",exampleRu:"Понимание тонкостей требует практики.",hard:true},
-  ],
-  filter:'All', search:'',
-  adding:false, detail:null,
-  practiceMode:null,
-  session:null,
-  showLangPicker:false,
-  obSearch:'', obSel:null,
-};
-
-function setState(patch){Object.assign(S,patch);render()}
-
-// ═══════════════════════════════════════════
-// TTS — works in real browser on phone!
-// ═══════════════════════════════════════════
-function speak(word, slow=false){
-  if(!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(word);
-  u.lang='en-US'; u.rate=slow?0.6:0.9; u.pitch=1;
-  // load voices
-  const trySpeak=()=>{
-    const voices=speechSynthesis.getVoices();
-    const v=voices.find(v=>v.lang.startsWith('en')&&(v.name.includes('Google')||v.name.includes('Samantha')||v.name.includes('Alex')))
-           ||voices.find(v=>v.lang.startsWith('en'));
-    if(v)u.voice=v;
-    speechSynthesis.speak(u);
-  };
-  if(speechSynthesis.getVoices().length>0){trySpeak();}
-  else{speechSynthesis.onvoiceschanged=()=>{trySpeak();speechSynthesis.onvoiceschanged=null};}
+const GID='1071970252736-hnlmo0ikjrmm9r8ap9tkicdgdv1accl0.apps.googleusercontent.com';
+const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},{code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},{code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},{code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},{code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},{code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},{code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},{code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},{code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},{code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},{code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},{code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},{code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},{code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},{code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"}];
+const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
+function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[]};
+async function api(path,o={}){
+  const r=await fetch(path,{...o,headers:{'Content-Type':'application/json',...(S.tok?{'Authorization':'Bearer '+S.tok}:{}),...(o.headers||{})},body:o.body?JSON.stringify(o.body):undefined});
+  if(!r.ok){const e=await r.json().catch(()=>({error:r.statusText}));throw new Error(e.error||r.statusText);}
+  return r.json();
 }
-
-// ═══════════════════════════════════════════
-// AI
-// ═══════════════════════════════════════════
-async function callAI(prompt, lang){
-  const L=LANGS.find(l=>l.code===lang)||LANGS[0];
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',max_tokens:1000,
-      system:`You are an English tutor AI. User's native language is ${L.nameEn}. ALL translations and explanations MUST be in ${L.nameEn}. Respond with valid JSON only. No markdown, no extra text.`,
-      messages:[{role:'user',content:prompt}]
-    })
-  });
-  const d=await r.json();
-  return (d.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+async function ai(type,data){return api('/api/ai/'+type,{method:'POST',body:data});}
+const LC={en:'en-US',de:'de-DE',fr:'fr-FR',es:'es-ES',it:'it-IT',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR'};
+function speak(w,slow){
+  if(!window.speechSynthesis)return;speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(w);u.lang=LC[S.ll]||'en-US';u.rate=slow?0.6:0.9;
+  const vs=speechSynthesis.getVoices();const v=vs.find(v=>v.lang.startsWith(u.lang.slice(0,2))&&v.name.includes('Google'))||vs.find(v=>v.lang.startsWith(u.lang.slice(0,2)));
+  if(v)u.voice=v;speechSynthesis.speak(u);
 }
-
-// ═══════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════
-function lvlBadge(l){
-  const c=l?.startsWith('C')?'bp2':l?.startsWith('B')?'bv':'bg';
-  return `<span class="badge ${c}">${l}</span>`;
+let _r=null,_ir=false;
+function mic(tid,bid){
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){alert('Voice not supported');return;}
+  if(_ir){if(_r)_r.stop();_ir=false;const b=ge(bid);if(b)b.classList.remove('rec');return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;_r=new SR();_r.lang=LC[S.ll]||'en-US';_r.continuous=false;_r.interimResults=false;
+  _r.onresult=(e)=>{const t=e.results[0][0].transcript;const el=ge(tid);if(el){el.value=t;el.dispatchEvent(new Event('input'));}};
+  _r.onend=()=>{_ir=false;const b=ge(bid);if(b)b.classList.remove('rec');};
+  _r.onerror=()=>{_ir=false;const b=ge(bid);if(b)b.classList.remove('rec');};
+  _r.start();_ir=true;const b=ge(bid);if(b)b.classList.add('rec');
 }
-function loader(txt){
-  return `<div class="ail"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>${txt}</div>`;
+function lvl(l){const c=l?.startsWith('C')?'bpk':l?.startsWith('B')?'bv':'bgr';return '<span class="badge '+c+'">'+(l||'?')+'</span>';}
+function ld(t){return '<div class="ail"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>'+(t||'AI…')+'</div>';}
+function tts(w){const e=(w||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<button class="ttsb" onclick="speak(\''+e+'\')">🔊</button> <button class="ttsb" onclick="speak(\''+e+'\',true)">🐢</button>';}
+function ge(id){return document.getElementById(id);}
+function ss(p){Object.assign(S,p);render();}
+function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0};}
+async function loadData(){
+  try{const w=await api('/api/words');S.words=w.map(mw);}catch{}
+  try{const st=await api('/api/stats');if(S.user){S.user.streak=st.streak?.current_streak||0;S.user.du=st.daily_used||0;S.user.dl=st.daily_limit||50;}}catch{}
+  try{const h=await api('/api/history');S.hist=h||[];}catch{}
+  if(S.user?.role==='teacher'){try{const g=await api('/api/groups');S.grps=g||[];}catch{}}
 }
-function ttsRow(word, lang){
-  const w=word.replace(/'/g,"\\'");
-  return `<div class="row mb2">
-    <button class="ttsb" onclick="speak('${w}')">🔊 ${T(lang,'listen')}</button>
-    <button class="ttsb" onclick="speak('${w}',true)">🐢 ${T(lang,'slow')}</button>
-  </div>`;
-}
-function e(id){return document.getElementById(id)}
-
-// ═══════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════
+function fmtU(u){return{id:u.id,email:u.email,name:u.name,avatar:u.avatar,role:u.role||'student',nl:u.native_lang||'ru',ll:u.learn_lang||'en',streak:u.streak||0,du:u.daily_used||0,dl:u.daily_limit||50};}
+(async()=>{
+  if(S.tok){
+    try{const d=await api('/api/auth/me');S.user=fmtU(d);S.nl=S.user.nl;S.ll=S.user.ll;await loadData();ss({scr:'main',tab:'dict'});return;}
+    catch{S.tok='';localStorage.removeItem('tok');}
+  }
+  render();
+})();
 function render(){
   const app=document.getElementById('app');
-  if(S.screen==='onboard'){app.innerHTML=renderOnboard();return;}
-  app.innerHTML=`
-    <header class="hdr">
-      <div class="logo">AI <em>English</em> Tutor</div>
-      <div class="hdr-right">
-        <div class="streak">🔥 ${T(S.lang,'streakDays')}</div>
-        <button class="lang-btn" onclick="setState({showLangPicker:true})" title="${T(S.lang,'changeLang')}">
-          ${LANGS.find(l=>l.code===S.lang)?.flag||'🌍'}
-        </button>
-      </div>
-    </header>
-    <main class="content" id="main-content">
-      ${renderMain()}
-    </main>
-    <nav class="nav">
-      ${['dict','practice','progress'].map((id,i)=>{
-        const icons=['📖','🏋️','📊'];
-        const labels=[T(S.lang,'dict'),T(S.lang,'practice'),T(S.lang,'progress')];
-        return `<button class="nb${S.tab===id&&!S.adding?' on':''}" onclick="switchTab('${id}')">
-          <span class="ni">${icons[i]}</span>${labels[i]}
-        </button>`;
-      }).join('')}
-    </nav>
-    ${S.tab==='dict'&&!S.adding?`<button class="fab" onclick="setState({adding:true})">＋</button>`:''}
-    ${S.showLangPicker?renderLangModal():''}
-    ${S.detail?renderWordModal():''}
-  `;
+  if(S.scr==='ob'){app.innerHTML=rOb();aGoogle();return;}
+  const isT=S.user?.role==='teacher'||S.user?.role==='admin';
+  const tabs=isT?[{id:'dict',i:'📖',l:'Words'},{id:'groups',i:'👥',l:'Groups'},{id:'practice',i:'🏋️',l:'Practice'},{id:'progress',i:'📊',l:'Stats'}]:[{id:'dict',i:'📖',l:'Words'},{id:'practice',i:'🏋️',l:'Practice'},{id:'history',i:'📜',l:'History'},{id:'progress',i:'📊',l:'Stats'}];
+  const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
+  const av=u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
+  const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
+  app.innerHTML='<header class="hdr"><div class="logo">AI <em>'+ln+'</em> Tutor</div><div class="hdr-r"><div class="streak">🔥 '+(u?.streak||0)+'</div>'+av+'</div></header>'
+    +'<main class="content" id="mc">'+rMain()+'</main>'
+    +'<nav class="nav">'+tabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')+'</nav>'
+    +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
+    +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
-
-function renderMain(){
-  if(S.adding)return renderAddWord();
-  if(S.tab==='dict')return renderDict();
-  if(S.tab==='practice')return renderPractice();
-  if(S.tab==='progress')return renderProgress();
-  return '';
+function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();return rDict();}
+function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});}
+function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();return ob3();}
+function ob1(){
+  const list=LANGS.filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(94,255,196,.3))">🌍</div><div class="obl">AI Language <em>Tutor</em></div><div class="obs">Learn any language with AI personalized to you.<br><span style="color:var(--t3);font-size:12px">Step 1 of 3 — Your native language</span></div></div>'
+    +'<div class="obs2 mb3"><div class="oblbl">What is your native language?</div>'
+    +'<div class="obsw"><span class="obsico">🔍</span><input class="obsinp" placeholder="Search…" value="'+(S.obs||'')+'" oninput="S.obs=this.value;render()"></div>'
+    +'<div class="lg">'+list.map(l=>'<div class="lc'+(S.nl===l.code?' sel':'')+'" onclick="S.nl=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.nl===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
+    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px"><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:2,obs:\'\'})">Continue →</button></div></div>';
 }
-
-function switchTab(tab){setState({tab,adding:false,practiceMode:null,session:null,detail:null})}
-
-// ═══════════════════════════════════════════
-// ONBOARDING
-// ═══════════════════════════════════════════
-function renderOnboard(){
-  const list=LANGS.filter(l=>
-    l.name.toLowerCase().includes((S.obSearch||'').toLowerCase())||
-    l.nameEn.toLowerCase().includes((S.obSearch||'').toLowerCase())
-  );
-  const chosen=LANGS.find(l=>l.code===S.obSel);
-  return `
-  <div class="ob">
-    <div class="ob-hero">
-      <span class="ob-globe">🌍</span>
-      <div class="ob-logo">AI <em>English</em> Tutor</div>
-      <div class="ob-sub">Learn English with AI-powered flashcards, exercises &amp; texts.<br>
-        <span style="color:var(--t3);font-size:13px">Choose your native language to start</span>
-      </div>
-    </div>
-    <div style="width:100%;position:relative;z-index:1;margin-bottom:10px">
-      <div class="ob-lbl">Select your native language</div>
-      <div class="ob-sw">
-        <span class="ob-sico">🔍</span>
-        <input class="ob-sinp" placeholder="Search language…" value="${S.obSearch||''}"
-          oninput="S.obSearch=this.value;render()">
-      </div>
-      <div class="lg">
-        ${list.map(l=>`
-          <div class="lc${S.obSel===l.code?' sel':''}" onclick="S.obSel='${l.code}';render()">
-            <div class="lc-f">${l.flag}</div>
-            <div class="lc-n">${l.name}</div>
-            ${S.obSel===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':''}
-          </div>`).join('')}
-      </div>
-    </div>
-    <div class="ob-cta">
-      <button class="btn bp bfu" style="padding:14px;font-size:15px;border-radius:14px"
-        ${!S.obSel?'disabled':''} onclick="startApp()">
-        ${chosen?`${chosen.flag} &nbsp;Start with ${chosen.name}`:'Choose a language ↑'}
-      </button>
-      ${chosen?`<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--t3)">Translations will appear in <strong style="color:var(--t2)">${chosen.name}</strong></div>`:''}
-    </div>
-  </div>`;
+function ob2(){
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📚</div><div class="obl">What will you <em>learn?</em></div><div class="obs"><span style="color:var(--t3);font-size:12px">Step 2 of 3 — Language to learn</span></div></div>'
+    +'<div class="obs2 mb3"><div class="oblbl">Choose language to learn</div>'
+    +'<div class="lg">'+LLANGS.map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
+    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px;display:flex;gap:9px"><button class="btn bg_ bfu" onclick="ss({step:1})">← Back</button><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:3})">Continue →</button></div></div>';
 }
-
-function startApp(){
-  if(!S.obSel)return;
-  setState({screen:'main',lang:S.obSel,tab:'dict'});
+function ob3(){
+  const c=LANGS.find(l=>l.code===S.nl);const ln=LLANGS.find(l=>l.code===S.ll);
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🔑</div><div class="obl">Sign <em>in</em></div><div class="obs">'+(c?c.flag+' '+c.name:'')+(ln?' → '+ln.flag+' '+ln.name:'')+'<br><span style="color:var(--t3);font-size:12px">Step 3 of 3</span></div></div>'
+    +'<div class="obs2" style="position:relative;z-index:1"><div id="gbw" style="margin-bottom:12px"></div>'
+    +'<div style="text-align:center;color:var(--t3);font-size:12px;margin-bottom:12px">— or email —</div>'
+    +'<input id="ob-em" class="inp" type="email" placeholder="Email" style="margin-bottom:10px">'
+    +'<input id="ob-pw" class="inp" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:12px">'
+    +'<div id="aerr" style="color:var(--danger);font-size:12px;margin-bottom:8px;display:none"></div>'
+    +'<button class="btn bp bfu mb2" style="padding:12px" onclick="emailAuth()">Sign in / Register</button>'
+    +'<button class="btn bg_ bfu" onclick="ss({step:2})">← Back</button></div></div>';
 }
-
-// ═══════════════════════════════════════════
-// LANG MODAL
-// ═══════════════════════════════════════════
-function renderLangModal(){
-  return `
-  <div class="overlay" onclick="closeLangModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="mhandle"></div>
-      <div class="rb2 mb3">
-        <div class="syne fw7" style="font-size:18px">${T(S.lang,'changeLang')}</div>
-        <button class="btn bg_ bsm" onclick="setState({showLangPicker:false})">✕</button>
-      </div>
-      <div class="lg" style="max-height:360px;overflow-y:auto;gap:7px">
-        ${LANGS.map(l=>`
-          <div class="lc${S.lang===l.code?' sel':''}" onclick="setState({lang:'${l.code}',showLangPicker:false})">
-            <div class="lc-f">${l.flag}</div>
-            <div class="lc-n">${l.name}</div>
-            ${S.lang===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':''}
-          </div>`).join('')}
-      </div>
-    </div>
-  </div>`;
+function aGoogle(){
+  if(S.step!==3)return;
+  setTimeout(()=>{
+    if(!window.google?.accounts?.id)return;
+    try{
+      google.accounts.id.initialize({client_id:GID,callback:onGoogle});
+      google.accounts.id.renderButton(ge('gbw'),{theme:'outline',size:'large',width:390,text:'continue_with'});
+    }catch(e){console.warn('Google:',e);}
+  },500);
 }
-function closeLangModal(e){if(e.target.classList.contains('overlay'))setState({showLangPicker:false})}
-
-// ═══════════════════════════════════════════
-// DICTIONARY
-// ═══════════════════════════════════════════
-function renderDict(){
-  const lang=S.lang;
+async function onGoogle(resp){
+  try{
+    const d=await api('/api/auth/google',{method:'POST',body:{token:resp.credential,nativeLang:S.nl,learnLang:S.ll}});
+    S.tok=d.token;localStorage.setItem('tok',d.token);S.user=fmtU(d.user);S.nl=S.user.nl;S.ll=S.user.ll;
+    await loadData();ss({scr:'main',tab:'dict'});
+  }catch(err){showErr(err.message);}
+}
+async function emailAuth(){
+  const em=ge('ob-em')?.value?.trim();const pw=ge('ob-pw')?.value;
+  if(!em||!pw){showErr('Fill in email and password');return;}
+  if(pw.length<6){showErr('Password min 6 chars');return;}
+  try{
+    const d=await api('/api/auth/email',{method:'POST',body:{email:em,password:pw,nativeLang:S.nl,learnLang:S.ll}});
+    S.tok=d.token;localStorage.setItem('tok',d.token);S.user=fmtU(d.user);S.nl=S.user.nl;S.ll=S.user.ll;
+    await loadData();ss({scr:'main',tab:'dict'});
+  }catch(err){showErr(err.message);}
+}
+function showErr(m){const e=ge('aerr');if(e){e.textContent=m;e.style.display='block';}}
+function logout(){S.tok='';S.user=null;S.words=[];S.hist=[];S.grps=[];localStorage.removeItem('tok');ss({scr:'ob',step:1});}
+function rProf(){
+  const u=S.user;const isT=u?.role==='teacher';const lim=u?.dl||50;const used=u?.du||0;const pct=Math.min(100,Math.round(used/lim*100));
+  const cl=LANGS.find(l=>l.code===S.nl);const ll=LLANGS.find(l=>l.code===S.ll);
+  return '<div class="ovl" onclick="if(event.target.classList.contains(\'ovl\'))ss({prof:false})">'
+    +'<div class="modal" onclick="event.stopPropagation()"><div class="mh"></div>'
+    +'<div class="pav">'+(u?.avatar?'<img src="'+u.avatar+'">': (u?.name||'?')[0])+'</div>'
+    +'<div style="text-align:center;margin-bottom:4px"><div class="syn fw7 f13">'+(u?.name||'User')+'</div><div class="f12 c3">'+(u?.email||'')+'</div>'
+    +'<div class="mt1"><span class="badge '+(isT?'byw':'bgr')+'">'+(isT?'👨‍🏫 Teacher':'🎓 Student')+'</span></div></div>'
+    +'<div class="divl"></div>'
+    +'<div class="card csm mb2"><div class="rb2 mb1"><span class="f12 fw6">AI requests today</span><span class="f12 c3">'+used+'/'+lim+'</span></div>'
+    +'<div style="display:flex;align-items:center;gap:8px"><div class="limw"><div class="limf" style="width:'+pct+'%;background:'+(pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--ac)')+'"></div></div></div></div>'
+    +'<div class="card csm mb2"><div class="f12 fw6 mb2">Learning settings</div>'
+    +'<div class="rb2 mb2"><span class="f12 c2">Native language</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'n\'})">'+(cl?cl.flag+' '+cl.name:'Select')+'</button></div>'
+    +'<div class="rb2"><span class="f12 c2">Learning</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'l\'})">'+(ll?ll.flag+' '+ll.name:'Select')+'</button></div></div>'
+    +(isT?'<button class="btn bs bfu bsm mb2" onclick="ss({prof:false,tab:\'groups\'})">👥 Manage groups</button>':'')
+    +'<button class="btn bd bfu" onclick="logout()">Sign out</button></div></div>';
+}
+function rLP(){
+  const isN=S.lp==='n';const list=isN?LANGS:LLANGS;const cur=isN?S.nl:S.ll;
+  return '<div class="ovl" onclick="if(event.target.classList.contains(\'ovl\'))ss({lp:false})">'
+    +'<div class="modal" onclick="event.stopPropagation()"><div class="mh"></div>'
+    +'<div class="rb2 mb3"><div class="syn fw7" style="font-size:17px">'+(isN?'Native language':'Learning language')+'</div><button class="btn bg_ bsm" onclick="ss({lp:false})">✕</button></div>'
+    +'<div class="lg" style="max-height:320px;overflow-y:auto;gap:6px">'+list.map(l=>'<div class="lc'+(cur===l.code?' sel':'')+'" onclick="selLang(\''+l.code+'\')"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(cur===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div></div>';
+}
+async function selLang(code){
+  const isN=S.lp==='n';if(isN)S.nl=code;else S.ll=code;
+  try{await api('/api/auth/lang',{method:'PATCH',body:{nativeLang:S.nl,learnLang:S.ll}});}catch{}
+  ss({lp:false});
+}
+function rDict(){
   const list=S.words.filter(w=>{
-    const m=w.word.toLowerCase().includes(S.search.toLowerCase())||w.translation.toLowerCase().includes(S.search.toLowerCase());
-    if(S.filter==='All')return m;
-    if(S.filter==='⭐')return m&&w.hard;
-    return m&&w.level===S.filter;
+    const m=w.word.toLowerCase().includes(S.srch.toLowerCase())||w.tr.toLowerCase().includes(S.srch.toLowerCase());
+    if(S.filt==='All')return m;if(S.filt==='⭐')return m&&w.hard;return m&&w.lv===S.filt;
   });
-  return `<div class="sc">
-    <div class="sh-t">${T(lang,'dict')}</div>
-    <div class="sh-s">${S.words.length} ${T(lang,'words')} · ${S.words.filter(w=>w.hard).length} ${T(lang,'hard')}</div>
-    <div class="sw">
-      <span class="sico">🔍</span>
-      <input class="inp sinp" placeholder="${T(lang,'search')}" value="${S.search}"
-        oninput="S.search=this.value;render()">
-    </div>
-    <div class="pills">
-      ${['All','⭐','B1','B2','C1'].map(f=>`
-        <button class="pill${S.filter===f?' on':''}" onclick="S.filter='${f}';render()">
-          ${f==='⭐'?`⭐ ${T(lang,'hard')}`:f}
-        </button>`).join('')}
-    </div>
-    ${list.length===0?`
-      <div class="empty">
-        <div style="font-size:48px;margin-bottom:12px">📭</div>
-        <div class="syne fw7 fs13 mb1">${T(lang,'notFound')}</div>
-        <div class="fs12 c3">${T(lang,'addHint')}</div>
-      </div>`
-    :list.map(w=>`
-      <div class="wli" onclick="openWord(${w.id})">
-        <div style="flex:1;min-width:0">
-          <div class="row mb1"><span class="wli-en">${w.word}</span>${lvlBadge(w.level)}</div>
-          <div class="wli-ru">${w.translation}</div>
-          ${w.example?`<div class="wli-ex">"${w.example.slice(0,52)}…"</div>`:''}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-          <button class="ib" onclick="event.stopPropagation();speak('${w.word.replace(/'/g,"\\'")}')">🔊</button>
-          <button class="ib" onclick="event.stopPropagation();toggleHard(${w.id})">${w.hard?'⭐':'☆'}</button>
-          <button class="ib" onclick="event.stopPropagation();deleteWord(${w.id})">🗑</button>
-        </div>
-      </div>`).join('')}
-  </div>`;
+  return '<div class="sc"><div class="sht">My Dictionary</div><div class="shs">'+S.words.length+' words · '+S.words.filter(w=>w.hard).length+' hard</div>'
+    +'<div class="sw"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
+    +'<div class="pills">'+['All','⭐','A1','A2','B1','B2','C1','C2'].map(f=>'<button class="pill'+(S.filt===f?' on':'')+'" onclick="S.filt=\''+f+'\';render()">'+(f==='⭐'?'⭐ Hard':f)+'</button>').join('')+'</div>'
+    +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
+    :list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
+      +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
+      +'<div class="wru">'+w.tr+'</div>'
+      +(w.gr?'<div class="wgr">📝 '+w.gr+'</div>':'')
+      +(w.ex?'<div class="wex">"'+w.ex.slice(0,50)+'…"</div>':'')+'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">'
+      +'<button class="ib" onclick="event.stopPropagation();speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button>'
+      +'<button class="ib" onclick="event.stopPropagation();togH('+w.id+')">'+(w.hard?'⭐':'☆')+'</button>'
+      +'<button class="ib" onclick="event.stopPropagation();delW('+w.id+')">🗑</button>'
+      +'</div></div>').join(''))
+    +'</div>';
 }
-
-function openWord(id){setState({detail:S.words.find(w=>w.id===id)})}
-function toggleHard(id){S.words=S.words.map(w=>w.id===id?{...w,hard:!w.hard}:w);render()}
-function deleteWord(id){if(confirm(T(S.lang,'deleteQ'))){S.words=S.words.filter(w=>w.id!==id);render()}}
-
-// ═══════════════════════════════════════════
-// WORD MODAL
-// ═══════════════════════════════════════════
-function renderWordModal(){
-  const w=S.detail; const lang=S.lang;
-  return `
-  <div class="overlay" onclick="closeWordModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="mhandle"></div>
-      <div class="rb2 mb2">
-        <div>
-          <div class="syne fw7" style="font-size:26px">${w.word}</div>
-          <div class="fs12 c3 mt1">${w.transcription}</div>
-        </div>
-        ${lvlBadge(w.level)}
-      </div>
-      ${ttsRow(w.word,lang)}
-      <div class="card csm mb2">
-        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${T(lang,'translate')}</div>
-        <div class="fw6 fs13">${w.translation}</div>
-      </div>
-      <div class="card csm mb3">
-        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">${T(lang,'example')}</div>
-        <div class="fs12 c2 italic" style="line-height:1.7">${w.example}</div>
-        <div class="fs11 c3 mt1">${w.exampleRu}</div>
-      </div>
-      <button class="btn bs bfu mb2" onclick="fetchExtras()">✨ ${T(lang,'synonymsBtn').replace('✨','').trim()}</button>
-      <div id="extras-area"></div>
-      <div class="div"></div>
-      <div class="row" style="flex-wrap:wrap;gap:7px">
-        <button class="btn bg_ bsm" onclick="toggleHardModal()">${w.hard?T(lang,'unmarkHard'):T(lang,'markHard')}</button>
-        <button class="btn bd bsm" onclick="deleteWordModal()">🗑 ${T(lang,'delete').replace('🗑','').trim()}</button>
-        <button class="btn bg_ bsm" style="margin-left:auto" onclick="setState({detail:null})">${T(lang,'close')}</button>
-      </div>
-    </div>
-  </div>`;
+function togH(id){S.words=S.words.map(w=>w.id===id?{...w,hard:!w.hard}:w);api('/api/words/'+id,{method:'PATCH',body:{hard:S.words.find(w=>w.id===id).hard}}).catch(()=>{});render();}
+function delW(id){if(!confirm('Delete?'))return;S.words=S.words.filter(w=>w.id!==id);api('/api/words/'+id,{method:'DELETE'}).catch(()=>{});render();}
+function rWM(){
+  const w=S.det;if(!w)return '';
+  return '<div class="ovl" onclick="if(event.target.classList.contains(\'ovl\'))ss({det:null})">'
+    +'<div class="modal" onclick="event.stopPropagation()"><div class="mh"></div>'
+    +'<div class="rb2 mb2"><div><div class="syn fw7" style="font-size:24px">'+w.word+'</div><div class="f12 c3">'+w.ts+'</div></div>'+lvl(w.lv)+'</div>'
+    +'<div class="row mb2">'+tts(w.word)+'</div>'
+    +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
+    +'<div class="fw6 f13">'+w.tr+'</div>'
+    +(w.gr?'<div style="margin-top:5px;padding:4px 8px;background:var(--acD);border-radius:7px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')+'</div>'
+    +'<div class="card csm mb3"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Example</div>'
+    +'<div class="f12 c2 ita" style="line-height:1.7">'+w.ex+'</div><div class="f11 c3 mt1">'+w.exr+'</div>'
+    +(w.ex?'<div class="mt1">'+tts(w.ex)+'</div>':'')+'</div>'
+    +'<button class="btn bs bfu mb2" onclick="fetchEx('+w.id+')">✨ Synonyms & more examples</button>'
+    +'<div id="ext"></div><div class="divl"></div>'
+    +'<div class="row" style="flex-wrap:wrap;gap:6px">'
+    +'<button class="btn bg_ bsm" onclick="togHM('+w.id+')">'+(w.hard?'⭐ Hard':'☆ Mark hard')+'</button>'
+    +'<button class="btn bd bsm" onclick="delWM('+w.id+')">🗑 Delete</button>'
+    +'<button class="btn bg_ bsm" style="margin-left:auto" onclick="ss({det:null})">Close</button>'
+    +'</div></div></div>';
 }
-function closeWordModal(e){if(e.target.classList.contains('overlay'))setState({detail:null})}
-function toggleHardModal(){S.words=S.words.map(w=>w.id===S.detail.id?{...w,hard:!w.hard}:w);S.detail={...S.detail,hard:!S.detail.hard};render()}
-function deleteWordModal(){if(confirm(T(S.lang,'deleteQ'))){S.words=S.words.filter(w=>w.id!==S.detail.id);setState({detail:null})}}
-
-async function fetchExtras(){
-  const area=e('extras-area'); if(!area)return;
-  area.innerHTML=loader(T(S.lang,'aiSyn'));
+function togHM(id){S.words=S.words.map(w=>w.id===id?{...w,hard:!w.hard}:w);S.det={...S.det,hard:!S.det.hard};api('/api/words/'+id,{method:'PATCH',body:{hard:S.det.hard}}).catch(()=>{});render();}
+function delWM(id){if(!confirm('Delete?'))return;S.words=S.words.filter(w=>w.id!==id);api('/api/words/'+id,{method:'DELETE'}).catch(()=>{});ss({det:null});}
+async function fetchEx(id){
+  const w=S.words.find(x=>x.id===id);if(!w)return;const area=ge('ext');if(!area)return;
+  area.innerHTML=ld('AI finding synonyms…');
   try{
-    const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
-    const raw=await callAI(`Word: "${S.detail.word}"\nAll text in ${L.nameEn}.\nReturn ONLY JSON:\n{"examples":["s1","s2","s3"],"synonyms":[{"word":"w1","translation":"r1"},{"word":"w2","translation":"r2"},{"word":"w3","translation":"r3"}]}`,S.lang);
-    const d=JSON.parse(raw);
-    area.innerHTML=`
-      <div class="sc">
-        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">More examples</div>
-        ${d.examples.map(ex=>`
-          <div style="padding:7px 0;border-bottom:1px solid var(--brd);font-size:12px;color:var(--t2);font-style:italic;line-height:1.6">
-            ${ex} <button class="ttsb" style="font-size:10px;padding:2px 7px;margin-left:6px" onclick="speak('${ex.replace(/'/g,"\\'")}')">🔊</button>
-          </div>`).join('')}
-        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin:12px 0 8px">Synonyms</div>
-        <div style="display:flex;flex-wrap:wrap;gap:7px">
-          ${d.synonyms.map(s=>`
-            <div style="background:var(--sur2);border:1px solid var(--brd);border-radius:9px;padding:6px 11px;cursor:pointer" onclick="speak('${s.word}')">
-              <div class="fw6 fs12">${s.word} 🔊</div>
-              <div class="fs11 c3">${s.translation}</div>
-            </div>`).join('')}
-        </div>
-      </div>`;
-  }catch{area.innerHTML=`<div class="rb err fs12">AI error. Try again.</div>`;}
+    const d=await ai('extras',{word:w.word});
+    area.innerHTML='<div class="sc"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:7px">More examples</div>'
+      +(d.examples||[]).map(ex=>'<div style="padding:6px 0;border-bottom:1px solid var(--brd);font-size:12px;color:var(--t2);font-style:italic;line-height:1.6">'+ex+' <button class="ttsb" style="font-size:9px;padding:2px 6px" onclick="speak(\''+ex.replace(/'/g,"\\'")+'\')">🔊</button></div>').join('')
+      +'<div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin:10px 0 7px">Synonyms</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+(d.synonyms||[]).map(s=>'<div style="background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:5px 10px;cursor:pointer" onclick="speak(\''+s.word+'\')"><div class="fw6 f12">'+s.word+' 🔊</div><div class="f11 c3">'+s.translation+'</div></div>').join('')+'</div></div>';
+  }catch(e){area.innerHTML='<div class="rb err f12">'+e.message+'</div>';}
 }
-
-// ═══════════════════════════════════════════
-// ADD WORD
-// ═══════════════════════════════════════════
-let _addData=null;
-function renderAddWord(){
-  const lang=S.lang;
-  return `<div class="sc">
-    <div class="rb2 mb3">
-      <div class="syne fw7" style="font-size:20px">${T(lang,'addWord')}</div>
-      <button class="btn bg_ bsm" onclick="setState({adding:false})">${T(lang,'cancel')}</button>
-    </div>
-    <div style="margin-bottom:13px">
-      <label style="display:block;font-size:10px;font-weight:600;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">${T(lang,'wordEN')}</label>
-      <div class="row">
-        <input id="new-word" class="inp" style="flex:1" placeholder="Enter word…"
-          onkeydown="if(event.key==='Enter')fetchWordAI()">
-        <button class="btn bp bsm" style="margin-left:8px" onclick="fetchWordAI()">✨ AI</button>
-      </div>
-    </div>
-    <div id="add-result"></div>
-  </div>`;
+let _ad=null;
+function rAdd(){
+  return '<div class="sc"><div class="rb2 mb3"><div class="syn fw7" style="font-size:19px">Add word</div><button class="btn bg_ bsm" onclick="ss({add:false})">✕</button></div>'
+    +'<div class="pills mb3">'
+    +'<button class="pill'+(S.addTab==='manual'?' on':'')+'" onclick="S.addTab=\'manual\';render()">✏️ Manual</button>'
+    +'<button class="pill'+(S.addTab==='photo'?' on':'')+'" onclick="S.addTab=\'photo\';render()">📷 Photo</button>'
+    +'<button class="pill'+(S.addTab==='list'?' on':'')+'" onclick="S.addTab=\'list\';render()">📋 List</button>'
+    +'</div>'+(S.addTab==='manual'?rAddM():S.addTab==='photo'?rAddP():rAddL())+'</div>';
 }
-
-async function fetchWordAI(){
-  const wordEl=e('new-word'); if(!wordEl)return;
-  const word=wordEl.value.trim(); if(!word)return;
-  const area=e('add-result'); if(!area)return;
-  area.innerHTML=loader(T(S.lang,'aiGet'));
-  const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
+function rAddM(){
+  return '<div><div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">Word or phrase</label>'
+    +'<div class="row"><input id="nw" class="inp" style="flex:1" placeholder="Enter word…" onkeydown="if(event.key===\'Enter\')fwAI()">'
+    +'<button class="micb" id="mic1" onclick="mic(\'nw\',\'mic1\')" style="margin-left:7px;white-space:nowrap">🎤 Voice</button>'
+    +'<button class="btn bp bsm" style="margin-left:6px" onclick="fwAI()">✨ AI</button></div></div>'
+    +'<div id="ar"></div></div>';
+}
+function rAddP(){
+  return '<div><input type="file" id="pf" accept="image/*" style="display:none" onchange="hPhoto(this)">'
+    +'<label for="pf" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:12px"><span style="font-size:26px">📷</span> Choose screenshot or photo</label>'
+    +'<div id="pr"></div></div>';
+}
+function rAddL(){
+  return '<div><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">Word list (one per line or comma-separated)</label>'
+    +'<textarea id="wl" class="inp" rows="6" placeholder="apple\nbeautiful\npersevere\n\nor: apple, beautiful, persevere" style="resize:vertical;margin-bottom:10px"></textarea>'
+    +'<button class="btn bp bfu" onclick="procList()">✨ Process with AI</button>'
+    +'<div id="lr" style="margin-top:12px"></div></div>';
+}
+async function fwAI(){
+  const w=ge('nw')?.value?.trim();if(!w)return;const a=ge('ar');if(!a)return;
+  a.innerHTML=ld('AI getting data…');
+  try{const d=await ai('word',{word:w});_ad={translation:d.translation||'',transcription:d.transcription||'',level:d.level||'B1',example_en:d.example_en||'',example_ru:d.example_ru||'',grammar_note:d.grammar_note||''};rAddForm(w);}
+  catch(e){_ad={translation:'',transcription:'',level:'B1',example_en:'',example_ru:'',grammar_note:''};a.innerHTML='<div class="rb err f12 mb2">'+e.message+'</div>';rAddForm(w);}
+}
+function rAddForm(word){
+  const a=ge('ar');if(!a||!_ad)return;const d=_ad;
+  a.innerHTML='<div class="sc">'
+    +[['Translation','f-tr','translation'],['Transcription','f-ts','transcription'],['Example','f-ex','example_en'],['Example translation','f-exr','example_ru']].map(([l,id,k])=>'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">'+l+'</label><input id="'+id+'" class="inp" value="'+(d[k]||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'"></div>').join('')
+    +'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">📝 Grammar note</label><input id="f-gr" class="inp" placeholder="e.g. countable noun / uncountable / transitive verb" value="'+(d.grammar_note||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'"></div>'
+    +'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">Level</label><select id="f-lv" class="inp">'+['A1','A2','B1','B2','C1','C2'].map(l=>'<option'+(l===d.level?' selected':'')+'>'+l+'</option>').join('')+'</select></div>'
+    +'<div class="row mb2">'+tts(word)+'</div>'
+    +'<button class="btn bp bfu" onclick="saveW(\''+word.replace(/'/g,"\\'")+'\')">💾 Save word</button></div>';
+}
+async function saveW(word){
+  const body={word,translation:ge('f-tr')?.value||'',transcription:ge('f-ts')?.value||'',level:ge('f-lv')?.value||'B1',example_en:ge('f-ex')?.value||'',example_ru:ge('f-exr')?.value||'',grammar_note:ge('f-gr')?.value||'',hard:false};
+  try{const s=await api('/api/words',{method:'POST',body});S.words=[mw(s),...S.words];}
+  catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
+  ss({add:false});
+}
+async function procList(){
+  const raw=ge('wl')?.value?.trim();if(!raw)return;
+  const words=raw.split(/[\n,]+/).map(w=>w.trim()).filter(Boolean);if(!words.length)return;
+  const a=ge('lr');if(!a)return;a.innerHTML=ld('Processing '+words.length+' words…');
   try{
-    const raw=await callAI(`Word: "${word}"\nReturn ONLY JSON (translations in ${L.nameEn}):\n{"translation":"in ${L.nameEn}","transcription":"IPA","level":"B1","example_en":"sentence","example_ru":"sentence translation in ${L.nameEn}"}`,S.lang);
-    _addData=JSON.parse(raw);
-    renderAddForm(word);
-  }catch{
-    _addData={translation:'',transcription:'',level:'B1',example_en:'',example_ru:''};
-    area.innerHTML=`<div class="rb err fs12 mb2">AI error. Fill manually.</div>`;
-    renderAddForm(word);
-  }
+    const d=await ai('bulk',{words});
+    for(const w of(d.words||[])){try{const s=await api('/api/words',{method:'POST',body:w});S.words=[mw(s),...S.words.filter(x=>x.word!==s.word)];}catch{}}
+    a.innerHTML='<div class="rb" style="text-align:center"><div class="sv ca">'+(d.words||[]).length+'</div><div class="f12 c3">words added!</div><button class="btn bs bsm mt2" onclick="ss({add:false})">Done ✓</button></div>';
+  }catch(e){a.innerHTML='<div class="rb err f12">'+e.message+'</div>';}
 }
-
-function renderAddForm(word){
-  const area=e('add-result'); if(!area||!_addData)return;
-  const lang=S.lang; const d=_addData;
-  area.innerHTML=`<div class="sc">
-    ${[[T(lang,'translate'),'f-tr','translation'],[T(lang,'transcr'),'f-ts','transcription'],[T(lang,'exEN'),'f-ex','example_en'],[T(lang,'exTr'),'f-exr','example_ru']].map(([lbl,id,k])=>`
-      <div style="margin-bottom:11px">
-        <label style="display:block;font-size:10px;font-weight:600;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">${lbl}</label>
-        <input id="${id}" class="inp" value="${(d[k]||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}">
-      </div>`).join('')}
-    <div style="margin-bottom:11px">
-      <label style="display:block;font-size:10px;font-weight:600;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">${T(lang,'level')}</label>
-      <select id="f-lv" class="inp">
-        ${['A1','A2','B1','B2','C1','C2'].map(l=>`<option${l===d.level?' selected':''}>${l}</option>`).join('')}
-      </select>
-    </div>
-    ${ttsRow(word,lang)}
-    <button class="btn bp bfu mt1" onclick="saveWord('${word.replace(/'/g,"\\'")}')">
-      ${T(lang,'save')}
-    </button>
-  </div>`;
-}
-
-function saveWord(word){
-  const newWord={
-    id:Date.now(),word,
-    translation:e('f-tr')?.value||'',
-    transcription:e('f-ts')?.value||'',
-    level:e('f-lv')?.value||'B1',
-    example:e('f-ex')?.value||'',
-    exampleRu:e('f-exr')?.value||'',
-    hard:false,
+let _pw=[],_ps=new Set();
+async function hPhoto(input){
+  const file=input.files[0];if(!file)return;const a=ge('pr');if(!a)return;
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const b64=ev.target.result.split(',')[1];const mt=file.type||'image/jpeg';
+    a.innerHTML='<img src="'+ev.target.result+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:11px;margin-bottom:12px;border:1px solid var(--brd)">'+ld('AI reading image…');
+    try{const r=await ai('image',{imageBase64:b64,mimeType:mt});rPhW(r.words||[],ev.target.result);}
+    catch(e){a.innerHTML='<div class="rb err f12">'+e.message+'</div>';}
   };
-  S.words=[newWord,...S.words];
-  setState({adding:false});
+  reader.readAsDataURL(file);
 }
-
-// ═══════════════════════════════════════════
-// PRACTICE
-// ═══════════════════════════════════════════
-let _hardOnly=false;
-
-function renderPractice(){
-  const lang=S.lang;
-  const avail=_hardOnly?S.words.filter(w=>w.hard):S.words;
-  if(S.practiceMode==='flash')return renderFlash();
-  if(S.practiceMode==='fill')return renderFill();
-  if(S.practiceMode==='read')return renderRead();
-  return `<div class="sc">
-    <div class="sh-t">${T(lang,'practice')}</div>
-    <div class="sh-s" style="margin-bottom:14px">Choose a training mode</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--sur);border:1px solid var(--brd);border-radius:14px;padding:12px 14px;margin-bottom:14px">
-      <div>
-        <div class="fw6 fs13">${T(lang,'onlyHard')}</div>
-        <div class="fs11 c3">${S.words.filter(w=>w.hard).length} ${T(lang,'words')} ⭐</div>
-      </div>
-      <button class="tog" style="background:${_hardOnly?'var(--ac)':'var(--brd2)'}" onclick="toggleHardOnly()">
-        <div class="tog-k" style="left:${_hardOnly?22:3}px"></div>
-      </button>
-    </div>
-    ${avail.length<2?`
-      <div class="empty">
-        <div style="font-size:44px;margin-bottom:12px">📚</div>
-        <div class="syne fw7 fs13 mb1">${T(lang,'minWords')}</div>
-      </div>`:`
-    <div class="mc" onclick="startMode('flash')">
-      <div class="mc-ico">🃏</div>
-      <div style="flex:1">
-        <div class="syne fw7 fs13">${T(lang,'modeCards')}</div>
-        <div class="fs12 c2 mt1">${T(lang,'modeCardsSub')}</div>
-      </div>
-      <span class="c3" style="font-size:18px">›</span>
-    </div>
-    <div class="mc" onclick="startMode('fill')">
-      <div class="mc-ico">✏️</div>
-      <div style="flex:1">
-        <div class="syne fw7 fs13">${T(lang,'modeFill')}</div>
-        <div class="fs12 c2 mt1">${T(lang,'modeFillSub')}</div>
-      </div>
-      <span class="c3" style="font-size:18px">›</span>
-    </div>
-    <div class="mc" onclick="startMode('read')">
-      <div class="mc-ico">📄</div>
-      <div style="flex:1">
-        <div class="syne fw7 fs13">${T(lang,'modeRead')}</div>
-        <div class="fs12 c2 mt1">${T(lang,'modeReadSub')}</div>
-      </div>
-      <span class="c3" style="font-size:18px">›</span>
-    </div>`}
-  </div>`;
+function rPhW(words,img){
+  _pw=words;_ps=new Set(words.map((_,i)=>i));const a=ge('pr');if(!a)return;
+  if(!words.length){a.innerHTML='<div class="rb err f12">No words found. Try another image.</div>';return;}
+  a.innerHTML='<img src="'+img+'" style="width:100%;max-height:140px;object-fit:cover;border-radius:11px;margin-bottom:10px;border:1px solid var(--brd)">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:8px">Found '+words.length+' words:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px" id="wch">'+words.map((w,i)=>'<div class="pill on" id="ch'+i+'" onclick="tCh('+i+')" style="cursor:pointer">'+w.word+'</div>').join('')+'</div>'
+    +'<div style="display:flex;gap:7px;margin-bottom:10px"><button class="btn bg_ bsm" onclick="sAllCh()">All</button><button class="btn bg_ bsm" onclick="sNoneCh()">None</button></div>'
+    +'<button class="btn bp bfu" onclick="savePh()">💾 Add selected</button>';
 }
-
-function toggleHardOnly(){_hardOnly=!_hardOnly;render()}
-
-function startMode(mode){
-  const avail=_hardOnly?S.words.filter(w=>w.hard):S.words;
-  const words=[...avail].sort(()=>Math.random()-.5);
-  S.practiceMode=mode;
-  S.session={words,idx:0,score:0,done:false,extra:[],exercise:null,loading:false,selected:null,flipped:false,readText:null,readLoading:false,readAnswers:{},readChecked:false,readTip:null};
-  render();
-  if(mode==='fill')loadFillExercise();
-  if(mode==='read')loadReadText();
+function tCh(i){if(_ps.has(i))_ps.delete(i);else _ps.add(i);const c=ge('ch'+i);if(c)c.classList.toggle('on',_ps.has(i));}
+function sAllCh(){_pw.forEach((_,i)=>_ps.add(i));document.querySelectorAll('[id^="ch"]').forEach(c=>c.classList.add('on'));}
+function sNoneCh(){_ps.clear();document.querySelectorAll('[id^="ch"]').forEach(c=>c.classList.remove('on'));}
+async function savePh(){
+  for(const w of _pw.filter((_,i)=>_ps.has(i))){try{const s=await api('/api/words',{method:'POST',body:w});S.words=[mw(s),...S.words.filter(x=>x.word!==s.word)];}catch{}}
+  ss({add:false});
 }
-
-// ── FLASHCARDS ──────────────────────────────
-function renderFlash(){
-  const s=S.session; const lang=S.lang;
-  if(s.done)return renderSessionEnd();
-  const all=[...s.words,...s.extra];
-  const w=all[s.idx];
-  return `<div class="sc">
-    <div class="rb2 mb2">
-      <button class="btn bg_ bsm" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
-      <span class="fs12 c3">${s.idx+1}/${all.length} · ✅${s.score}</span>
-    </div>
-    <div class="pb-w"><div class="pb-f" style="width:${s.idx/all.length*100}%"></div></div>
-    <div class="fc-wrap" onclick="flipCard()">
-      <div class="fc${s.flipped?' flip':''}">
-        <div class="fc-f">
-          <div class="fs11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">English · tap to flip</div>
-          <div class="syne fw7" style="font-size:34px;letter-spacing:-.5px;margin-bottom:6px">${w?.word}</div>
-          <div class="fs13 c2">${w?.transcription}</div>
-        </div>
-        <div class="fc-f fc-b">
-          <div class="fs11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">${T(lang,'translate')}</div>
-          <div class="syne fw7 ca" style="font-size:22px;margin-bottom:8px">${w?.translation}</div>
-          <div class="fs12 c2 italic" style="line-height:1.6">"${w?.example||''}"</div>
-        </div>
-      </div>
-    </div>
-    ${ttsRow(w?.word||'',lang)}
-    ${s.flipped?`
-    <div class="row" style="gap:8px">
-      <button class="btn bd bfu" onclick="answerFlash('no')">${T(lang,'dontKnow')}</button>
-      <button class="btn bp bfu" onclick="answerFlash('yes')">${T(lang,'know')}</button>
-    </div>`:`
-    <button class="btn bs bfu" onclick="flipCard()">${T(lang,'showTr')}</button>`}
-  </div>`;
+function rPrac(){
+  if(S.pm==='flash')return rFlash();if(S.pm==='fill')return rFill();if(S.pm==='read')return rRead();if(S.pm==='text')return rTxt();
+  const av=S.ho?S.words.filter(w=>w.hard):S.words;
+  return '<div class="sc"><div class="sht">Practice</div><div class="shs" style="margin-bottom:12px">Choose training mode</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:11px 12px;margin-bottom:12px">'
+    +'<div><div class="fw6 f13">Hard words only</div><div class="f11 c3">'+S.words.filter(w=>w.hard).length+' words ⭐</div></div>'
+    +'<button class="tog" style="background:'+(S.ho?'var(--ac)':'var(--brd2)')+'" onclick="S.ho=!S.ho;render()"><div class="togk" style="left:'+(S.ho?22:3)+'px"></div></button></div>'
+    +(av.length<2?'<div class="empty"><div style="font-size:40px;margin-bottom:10px">📚</div><div class="syn fw7 f13 mb1">Not enough words</div><div class="f12 c3">Add at least 2 words'+(S.ho?' or disable Hard only':'')+'</div></div>'
+    :'<div class="mc" onclick="stM(\'flash\')"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Cards — remember translation</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="stM(\'fill\')"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">Missing word in sentence</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="stM(\'read\')"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Read AI text, tap words</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="stM(\'text\')"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI story with your words</div></div><span class="c3" style="font-size:17px">›</span></div>')
+    +'</div>';
 }
-
-function flipCard(){S.session.flipped=!S.session.flipped;render()}
-
-function answerFlash(r){
-  const s=S.session;
-  if(r==='yes')s.score++;
-  if(r==='no')s.extra.push(s.words[s.idx]||s.extra[s.idx-s.words.length]);
-  s.flipped=false;
-  const all=[...s.words,...s.extra];
-  if(s.idx+1>=all.length)s.done=true;
-  else s.idx++;
-  render();
+function stM(m){
+  const av=S.ho?S.words.filter(w=>w.hard):S.words;
+  S.pm=m;S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(10,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
+  render();if(m==='fill')lFill();if(m==='read')lRead();if(m==='text')lTxt();
 }
-
-// ── FILL BLANK ──────────────────────────────
-function renderFill(){
-  const s=S.session; const lang=S.lang;
-  if(s.done)return renderSessionEnd();
-  const w=s.words[s.idx];
-  const ex=s.exercise;
-  let sentHtml='';
-  if(ex&&ex.sentence.includes('_______')){
-    const[b,a]=ex.sentence.split('_______');
-    sentHtml=`${b}<span class="blank">${s.selected||'_______'}</span>${a}`;
-  }else if(ex){sentHtml=ex.sentence;}
-  return `<div class="sc">
-    <div class="rb2 mb2">
-      <button class="btn bg_ bsm" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
-      <span class="fs12 c3">${s.idx+1}/${s.words.length} · ✅${s.score}</span>
-    </div>
-    <div class="pb-w"><div class="pb-f" style="width:${s.idx/s.words.length*100}%"></div></div>
-    <div class="card mb3">
-      <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">
-        ${T(lang,'insertWord')} <span class="ca">${w?.translation}</span>
-      </div>
-      ${s.loading?loader(T(lang,'aiGen')):ex?`<div class="syne fw7" style="font-size:17px;line-height:1.8">${sentHtml}</div>`:''}
-    </div>
-    ${!s.loading&&ex?`
-    <div class="opts">
-      ${ex.options.map(opt=>`
-        <button class="opt${s.selected?(opt===ex.answer?' cor':opt===s.selected?' wrg':''):''}"
-          onclick="chooseFill('${opt.replace(/'/g,"\\'")}')">
-          ${opt}
-        </button>`).join('')}
-    </div>
-    ${s.selected?`
-    <div class="rb${s.selected===ex.answer?'':' err'} sc" style="margin-bottom:0">
-      <div class="fw7 mb1">${s.selected===ex.answer?T(lang,'correct'):`${T(lang,'wrongAns')} "${ex.answer}"`}</div>
-      <div class="fs12 c2">${ex.explanation||''}</div>
-      ${ttsRow(ex.answer,lang)}
-    </div>
-    <button class="btn bp bfu mt2" onclick="nextFill()">
-      ${s.idx+1>=s.words.length?T(lang,'finish'):T(lang,'next')}
-    </button>`:''}`:''
-    }
-  </div>`;
+function rFlash(){
+  const s=S.sess;if(s.done)return rEnd();const all=[...s.words,...s.extra];const w=all[s.idx];
+  return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><span class="f12 c3">'+(s.idx+1)+'/'+all.length+' · ✅'+s.score+'</span></div>'
+    +'<div class="pbw"><div class="pbf" style="width:'+(s.idx/all.length*100)+'%"></div></div>'
+    +'<div class="fcw" onclick="flipC()"><div class="fc'+(s.flip?' flip':'')+'"><div class="fcf">'
+    +'<div class="f11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Tap to flip</div>'
+    +'<div class="syn fw7" style="font-size:32px;letter-spacing:-.5px;margin-bottom:5px">'+(w?.word||'')+'</div>'
+    +'<div class="f13 c2">'+(w?.ts||'')+'</div>'
+    +(w?.gr?'<div style="margin-top:8px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')
+    +'</div><div class="fcf fcb">'
+    +'<div class="f11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Translation</div>'
+    +'<div class="syn fw7 ca" style="font-size:22px;margin-bottom:7px">'+(w?.tr||'')+'</div>'
+    +'<div class="f12 c2 ita" style="line-height:1.6">"'+(w?.ex||'')+'"</div>'
+    +'</div></div></div>'
+    +'<div class="row mb2">'+tts(w?.word||'')+'</div>'
+    +(s.flip?'<div class="row" style="gap:8px"><button class="btn bd bfu" onclick="ansF(\'no\')">❌ Don\'t know</button><button class="btn bp bfu" onclick="ansF(\'yes\')">✅ Know it</button></div>'
+    :'<button class="btn bs bfu" onclick="flipC()">Show translation 👁</button>')
+    +'</div>';
 }
-
-async function loadFillExercise(){
-  const s=S.session; const w=s.words[s.idx];
-  if(!w)return;
-  s.loading=true;s.exercise=null;s.selected=null;render();
-  const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
-  try{
-    const raw=await callAI(`Word: "${w.word}" (meaning: ${w.translation})\nExplanation in ${L.nameEn}.\nReturn ONLY JSON:\n{"sentence":"The _______ was clear.","answer":"${w.word}","options":["${w.word}","wrong1","wrong2","wrong3"],"explanation":"in ${L.nameEn}"}`,S.lang);
-    const d=JSON.parse(raw);
-    d.options=d.options.sort(()=>Math.random()-.5);
-    s.exercise=d;
-  }catch{
-    s.exercise={sentence:`She showed great _______ throughout the process.`,answer:w.word,options:[w.word,'courage','silence','effort'].sort(()=>Math.random()-.5),explanation:`"${w.word}" — ${w.translation}`};
-  }
-  s.loading=false;render();
+function flipC(){S.sess.flip=!S.sess.flip;render();}
+function ansF(r){
+  const s=S.sess;if(r==='yes')s.score++;else s.extra.push([...s.words,...s.extra][s.idx]);
+  s.flip=false;const all=[...s.words,...s.extra];if(s.idx+1>=all.length)s.done=true;else s.idx++;render();
 }
-
-function chooseFill(opt){
-  const s=S.session; if(s.selected)return;
-  s.selected=opt;
-  if(opt===s.exercise.answer)s.score++;
-  render();
+function rFill(){
+  const s=S.sess;if(s.done)return rEnd();const w=s.words[s.idx];const ex=s.ex;
+  let sh='';if(ex?.sentence?.includes('_______')){const[b,a]=ex.sentence.split('_______');sh=b+'<span class="blnk">'+(s.sel||'_______')+'</span>'+a;}else if(ex)sh=ex.sentence;
+  return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><span class="f12 c3">'+(s.idx+1)+'/'+s.words.length+' · ✅'+s.score+'</span></div>'
+    +'<div class="pbw"><div class="pbf" style="width:'+(s.idx/s.words.length*100)+'%"></div></div>'
+    +'<div class="card mb3"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:7px">Fill in: <span class="ca">'+(w?.tr||'')+'</span>'+(w?.gr?' <span style="color:var(--t3);font-weight:400">· '+w.gr+'</span>':'')+'</div>'
+    +(s.load?ld('AI generating…'):ex?'<div class="syn fw7" style="font-size:16px;line-height:1.8">'+sh+'</div>':'')+'</div>'
+    +(!s.load&&ex?'<div class="opts">'+ex.options.map(opt=>'<button class="opt'+(s.sel?(opt===ex.answer?' cor':opt===s.sel?' wrg':''):'')+'" onclick="chF(\''+opt.replace(/'/g,"\\'")+'\')" > '+opt+'</button>').join('')+'</div>'
+    +(s.sel?'<div class="'+(s.sel===ex.answer?'rb':'rb err')+'" style="margin-bottom:0"><div class="fw7 mb1">'+(s.sel===ex.answer?'✅ Correct!':'❌ Answer: "'+ex.answer+'"')+'</div><div class="f12 c2">'+(ex.explanation||'')+'</div><div class="row mt2">'+tts(ex.answer||'')+'</div></div><button class="btn bp bfu mt2" onclick="nxF()">'+(s.idx+1>=s.words.length?'Finish':'Next →')+'</button>':''):'')
+    +'</div>';
 }
-
-function nextFill(){
-  const s=S.session;
-  s.idx++;
-  if(s.idx>=s.words.length){s.done=true;render();return;}
-  s.exercise=null;s.selected=null;
-  render();
-  loadFillExercise();
+async function lFill(){
+  const s=S.sess;const w=s.words[s.idx];if(!w)return;
+  s.load=true;s.ex=null;s.sel=null;render();
+  try{const d=await ai('exercise',{word:w.word,translation:w.tr,grammarNote:w.gr});d.options=d.options.sort(()=>Math.random()-.5);s.ex=d;}
+  catch{s.ex={sentence:'She showed _______ throughout the process.',answer:w.word,options:[w.word,'courage','silence','effort'].sort(()=>Math.random()-.5),explanation:'"'+w.word+'" — '+w.tr};}
+  s.load=false;render();
 }
-
-// ── READING ─────────────────────────────────
-function renderRead(){
-  const s=S.session; const lang=S.lang;
-  const wlist=s.words.slice(0,5);
-  let textHtml='';
-  if(s.readText){
-    textHtml=s.readText.text.split(/(\s+)/).map(tok=>{
-      const clean=tok.replace(/[.,!?;:]/g,'').toLowerCase();
-      const found=wlist.find(w=>w.word.toLowerCase()===clean);
-      if(found)return `<span class="hw" onclick="showReadTip('${found.word.replace(/'/g,"\\'")}','${found.translation.replace(/'/g,"\\'")}','${(found.transcription||'').replace(/'/g,"\\'")}')"> ${tok}</span>`;
-      return tok;
-    }).join('');
-  }
-  return `<div class="sc">
-    <div class="rb2 mb2">
-      <button class="btn bg_ bsm" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
-      <button class="btn bs bsm" onclick="loadReadText()" ${s.readLoading?'disabled':''}>${T(lang,'newText')}</button>
-    </div>
-    <div class="card mb2">
-      <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">📄 AI‑text · ${T(lang,'tapTr')}</div>
-      ${s.readLoading?loader(T(lang,'aiWrite')):`<div class="rtext">${textHtml}</div>`}
-    </div>
-    ${s.readTip?`
-    <div class="card csm mb2 sc" style="border-color:var(--ac)">
-      <div class="rb2">
-        <div><span class="syne fw7 fs13">${s.readTip.word}</span> · <span class="ca fs12">${s.readTip.translation}</span></div>
-        <button class="ib" onclick="S.session.readTip=null;render()">✕</button>
-      </div>
-      <div class="c3 fs11 italic mt1">${s.readTip.transcription}</div>
-      ${ttsRow(s.readTip.word,lang)}
-    </div>`:''}
-    ${s.readText?.questions&&!s.readLoading?`
-    <div class="syne fw7 fs13 mb2">${T(lang,'questions')}</div>
-    ${s.readText.questions.map((q,qi)=>`
-      <div class="card mb2">
-        <div class="fw6 fs13 mb2">${q.q}</div>
-        <div style="display:flex;flex-direction:column;gap:7px">
-          ${q.options.map(opt=>`
-            <button class="opt${s.readChecked?(opt===q.correct?' cor':s.readAnswers[qi]===opt?' wrg':''):''}"
-              style="${!s.readChecked&&s.readAnswers[qi]===opt?'border-color:var(--ac2);color:var(--ac2)':''}"
-              onclick="pickReadAns(${qi},'${opt.replace(/'/g,"\\'")}')">
-              ${opt}
-            </button>`).join('')}
-        </div>
-      </div>`).join('')}
-    ${!s.readChecked?`
-    <button class="btn bp bfu" onclick="checkRead()"
-      ${Object.keys(s.readAnswers).length<s.readText.questions.length?'disabled':''}>${T(lang,'check')}</button>`:`
-    <div class="rb" style="text-align:center">
-      <div class="syne fw7 ca" style="font-size:48px">${s.readText.questions.filter((_,i)=>s.readAnswers[i]===s.readText.questions[i].correct).length}/${s.readText.questions.length}</div>
-      <div class="fs12 c3 mt1">${T(lang,'right')}</div>
-      <button class="btn bs bsm mt2" onclick="loadReadText()">${T(lang,'newText')}</button>
-    </div>`}`:''}
-  </div>`;
+function chF(opt){const s=S.sess;if(s.sel)return;s.sel=opt;if(opt===s.ex.answer)s.score++;render();}
+function nxF(){const s=S.sess;s.idx++;if(s.idx>=s.words.length){s.done=true;render();return;}s.ex=null;s.sel=null;render();lFill();}
+function rRead(){
+  const s=S.sess;const wl=s.words.slice(0,5);let th='';
+  if(s.rt){th=s.rt.text.split(/(\s+)/).map(tk=>{const cl=tk.replace(/[.,!?;:]/g,'').toLowerCase();const f=wl.find(w=>w.word.toLowerCase()===cl);if(f)return '<span class="hw" onclick="showTip(\''+f.word.replace(/'/g,"\\'")+'\',\''+f.tr.replace(/'/g,"\\'")+'\',\''+f.ts.replace(/'/g,"\\'")+'\')"> '+tk+'</span>';return tk;}).join('');}
+  return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><button class="btn bs bsm" onclick="lRead()" '+(s.rl?'disabled':'')+'>🔄 New</button></div>'
+    +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">📄 AI text · Tap highlighted words</div>'+(s.rl?ld('AI writing…'):'<div class="rt">'+th+'</div>')+'</div>'
+    +(s.tip?'<div class="card csm mb2 sc" style="border-color:var(--ac)"><div class="rb2"><div><span class="syn fw7 f13">'+s.tip.w+'</span> · <span class="ca f12">'+s.tip.t+'</span></div><button class="ib" onclick="S.sess.tip=null;render()">✕</button></div><div class="c3 f11 ita mt1">'+s.tip.ts+'</div><div class="row mt2">'+tts(s.tip.w)+'</div></div>':'')
+    +(s.rt?.questions&&!s.rl?'<div class="syn fw7 f13 mb2">Questions</div>'
+    +s.rt.questions.map((q,qi)=>'<div class="card mb2"><div class="fw6 f13 mb2">'+q.q+'</div><div style="display:flex;flex-direction:column;gap:6px">'
+    +q.options.map(opt=>'<button class="opt'+(s.rc?(opt===q.correct?' cor':s.ra[qi]===opt?' wrg':''):'')+'" style="'+((!s.rc&&s.ra[qi]===opt)?'border-color:var(--ac2);color:var(--ac2)':'')+'" onclick="pickR('+qi+',\''+opt.replace(/'/g,"\\'")+'\')"> '+opt+'</button>').join('')
+    +'</div></div>').join('')
+    +(!s.rc?'<button class="btn bp bfu" onclick="chkR()" '+(Object.keys(s.ra).length<s.rt.questions.length?'disabled':'')+'>Check answers</button>'
+    :'<div class="rb" style="text-align:center"><div class="sv ca" style="font-size:44px">'+s.rt.questions.filter((_,i)=>s.ra[i]===s.rt.questions[i].correct).length+'/'+s.rt.questions.length+'</div><div class="f12 c3 mt1">correct</div><div class="row mt2" style="justify-content:center;gap:8px"><button class="btn bs bsm" onclick="saveTH()">💾 Save</button><button class="btn bs bsm" onclick="lRead()">🔄 New</button></div></div>'):'')
+    +'</div>';
 }
-
-function showReadTip(word,translation,transcription){S.session.readTip={word,translation,transcription};render()}
-function pickReadAns(qi,opt){if(S.session.readChecked)return;S.session.readAnswers[qi]=opt;render()}
-function checkRead(){S.session.readChecked=true;render()}
-
-async function loadReadText(){
-  const s=S.session;
-  s.readLoading=true;s.readText=null;s.readAnswers={};s.readChecked=false;s.readTip=null;render();
-  const wlist=s.words.slice(0,5);
-  const L=LANGS.find(l=>l.code===S.lang)||LANGS[0];
-  try{
-    const raw=await callAI(`Words: ${wlist.map(w=>w.word).join(', ')}\nWrite English text (100-130 words, B2) using ALL words.\nQuestions and options in ${L.nameEn}.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}`,S.lang);
-    const d=JSON.parse(raw);
-    d.highlighted=wlist.map(w=>w.word);
-    s.readText=d;
-  }catch{
-    s.readText={text:`In today's world, resilience is a key quality. When facing ambiguous situations, it is important to persevere. An eloquent speaker communicates with great nuance.`,questions:[{q:"What is a key quality?",options:["Patience","Resilience","Speed","Luck"],correct:"Resilience"}]};
-  }
-  s.readLoading=false;render();
+function showTip(w,t,ts){S.sess.tip={w,t,ts};render();}
+function pickR(qi,opt){if(S.sess.rc)return;S.sess.ra[qi]=opt;render();}
+function chkR(){S.sess.rc=true;render();}
+async function lRead(){
+  const s=S.sess;s.rl=true;s.rt=null;s.ra={};s.rc=false;s.tip=null;render();
+  try{const d=await ai('text',{words:s.words.slice(0,5).map(w=>w.word)});s.rt=d;}
+  catch{s.rt={text:'Learning takes dedication. Every word you study brings you closer to fluency.',questions:[{q:'What does learning require?',options:['Dedication','Speed','Money','Luck'],correct:'Dedication'}]};}
+  s.rl=false;render();
 }
-
-// ── SESSION END ─────────────────────────────
-function renderSessionEnd(){
-  const s=S.session; const lang=S.lang;
-  return `<div class="sc">
-    <button class="btn bg_ bsm mb3" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
-    <div class="se">
-      <div class="syne fw7" style="font-size:72px;color:var(--ac);line-height:1">${s.score}</div>
-      <div class="syne fw7 fs13 mt1">${T(lang,'learned')}</div>
-      <div class="fs12 c3 mt1">of ${s.words.length}</div>
-      <div class="row mt3" style="justify-content:center;gap:10px">
-        <button class="btn bp" onclick="startMode('${S.practiceMode}')">${T(lang,'again')}</button>
-        <button class="btn bs" onclick="setState({practiceMode:null,session:null})">${T(lang,'back')}</button>
-      </div>
-    </div>
-  </div>`;
+function rTxt(){
+  const s=S.sess;
+  return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><button class="btn bs bsm" onclick="lTxt()" '+(s.gl?'disabled':'')+'>🔄 New story</button></div>'
+    +(s.gl?'<div class="card">'+ld('AI writing story with your words…')+'</div>':'')
+    +(s.gt&&!s.gl?'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">✍️ Story · Words used: '+(s.gt.wordsUsed||[]).join(', ')+'</div><div class="rt">'+s.gt.text+'</div></div>'
+    +((s.gt.questions||[]).length?'<div class="card mb2"><div class="f12 fw6 mb2">Questions</div>'+(s.gt.questions||[]).map((q,i)=>'<div style="margin-bottom:10px"><div class="f12 fw6 mb1">'+(i+1)+'. '+q.q+'</div><div style="color:var(--t2);font-size:12px">'+q.options.map((o,j)=>String.fromCharCode(65+j)+') '+o).join(' · ')+'</div><div style="font-size:11px;color:var(--ac);margin-top:3px">✓ '+q.correct+'</div></div>').join('')+'</div>':'')
+    +'<button class="btn bp bfu mb2" onclick="saveTH()">💾 Save to history</button>':'')+'</div>';
 }
-
-// ═══════════════════════════════════════════
-// PROGRESS
-// ═══════════════════════════════════════════
-function renderProgress(){
-  const lang=S.lang;
-  const total=S.words.length, hard=S.words.filter(w=>w.hard).length;
-  const byLvl=['A1','A2','B1','B2','C1','C2'].map(l=>({l,n:S.words.filter(w=>w.level===l).length})).filter(x=>x.n>0);
-  return `<div class="sc">
-    <div class="sh-t">${T(lang,'progress')}</div>
-    <div class="sh-s">${T(lang,'statsSub')}</div>
-    <div class="sg">
-      <div class="scrd"><div class="sv ca">${total}</div><div class="sl">${T(lang,'inDict')}</div></div>
-      <div class="scrd"><div class="sv" style="color:var(--warn)">${hard}</div><div class="sl">${T(lang,'hardW')}</div></div>
-      <div class="scrd"><div class="sv" style="color:var(--ac3)">🔥3</div><div class="sl">${T(lang,'streakL')}</div></div>
-      <div class="scrd"><div class="sv" style="color:var(--ac2)">12</div><div class="sl">${T(lang,'exCount')}</div></div>
-    </div>
-    ${byLvl.length?`
-    <div class="card mb2">
-      <div class="fw6 fs13 mb3">${T(lang,'byLevel')}</div>
-      ${byLvl.map(({l,n})=>`
-        <div class="mb2">
-          <div class="rb2 mb1">
-            <div class="row">${lvlBadge(l)}<span class="fs11 c3">${n} ${T(lang,'words')}</span></div>
-            <span class="fs11 c3">${Math.round(n/total*100)}%</span>
-          </div>
-          <div class="pb-w" style="height:4px">
-            <div class="pb-f" style="width:${n/total*100}%;background:${l.startsWith('C')?'var(--ac3)':l.startsWith('B')?'var(--ac2)':'var(--ac)'}"></div>
-          </div>
-        </div>`).join('')}
-    </div>`:''}
-    ${hard?`
-    <div class="card mb2">
-      <div class="fw6 fs13 mb2">${T(lang,'hardList')}</div>
-      ${S.words.filter(w=>w.hard).map(w=>`
-        <div class="rb2" style="padding:8px 0;border-bottom:1px solid var(--brd)">
-          <div class="row"><span class="fw6 fs13">${w.word}</span><span class="c3 fs12">${w.translation}</span></div>
-          <div class="row" style="gap:5px">${lvlBadge(w.level)}<button class="ib" style="font-size:13px" onclick="speak('${w.word.replace(/'/g,"\\'")}')">🔊</button></div>
-        </div>`).join('')}
-    </div>`:''}
-    <div class="card">
-      <div class="fw6 fs13 mb2">${T(lang,'achiev')}</div>
-      ${[
-        {i:'📖',l:'First word added',done:total>=1},
-        {i:'📚',l:'10 words in dictionary',done:total>=10},
-        {i:'🔥',l:'3-day streak',done:true},
-        {i:'⭐',l:'First hard word',done:hard>=1},
-        {i:'🎯',l:'First exercise completed',done:true},
-      ].map(a=>`
-        <div class="row" style="padding:8px 0;border-bottom:1px solid var(--brd);gap:11px">
-          <span style="font-size:20px;filter:${a.done?'none':'grayscale(1) opacity(.3)'}">${a.i}</span>
-          <span class="fs12" style="color:${a.done?'var(--t)':'var(--t3)'}">${a.l}</span>
-          ${a.done?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':''}
-        </div>`).join('')}
-    </div>
-  </div>`;
+async function lTxt(){
+  const s=S.sess;s.gl=true;s.gt=null;render();
+  try{const d=await ai('generate',{words:s.words.map(w=>w.word),type:'story'});s.gt=d;}
+  catch{s.gt={text:'Once upon a time, our hero decided to study every day. It was not easy, but they continued to practice.',wordsUsed:s.words.slice(0,3).map(w=>w.word),questions:[{q:'What did the hero do?',options:['Give up','Study hard','Sleep','Run'],correct:'Study hard'}]};}
+  s.gl=false;render();
 }
-
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
+async function saveTH(){
+  const s=S.sess;const t=s.rt||s.gt;if(!t)return;
+  try{const r=await api('/api/history',{method:'POST',body:{text:t.text,words:s.words.map(w=>w.word),type:S.pm}});S.hist=[r,...S.hist];alert('Saved to history!');}
+  catch{alert('Saved locally!');}
+}
+function rEnd(){
+  const s=S.sess;
+  return '<div class="sc"><button class="btn bg_ bsm mb3" onclick="ss({pm:null,sess:null})">← Back</button>'
+    +'<div class="se"><div class="syn fw7" style="font-size:68px;color:var(--ac);line-height:1">'+s.score+'</div>'
+    +'<div class="syn fw7 f13 mt1">words learned!</div><div class="f12 c3 mt1">of '+s.words.length+' cards</div>'
+    +'<div class="row mt3" style="justify-content:center;gap:9px"><button class="btn bp" onclick="stM(\''+S.pm+'\')">🔄 Again</button><button class="btn bs" onclick="ss({pm:null,sess:null})">← Menu</button></div></div></div>';
+}
+function rHist(){
+  return '<div class="sc"><div class="sht">History</div><div class="shs">Saved texts and exercises</div>'
+    +(S.hist.length===0?'<div class="empty"><div style="font-size:40px;margin-bottom:10px">📜</div><div class="syn fw7 f13 mb1">No history yet</div><div class="f12 c3">Complete AI reading or generate stories</div></div>'
+    :S.hist.map(h=>'<div class="hcard" onclick="opH('+h.id+')"><div class="rb2 mb1"><div class="f11 c3">'+new Date(h.created_at||Date.now()).toLocaleDateString()+'</div><div style="display:flex;gap:4px">'+(h.words||[]).slice(0,3).map(w=>'<span class="badge bgr" style="font-size:9px">'+w+'</span>').join('')+'</div></div><div class="f12 c2" style="line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">'+h.text+'</div></div>').join(''))
+    +'</div>';
+}
+function opH(id){
+  const h=S.hist.find(x=>x.id===id);if(!h)return;
+  document.body.insertAdjacentHTML('beforeend','<div class="ovl" id="hm" onclick="if(event.target.id===\'hm\')this.remove()"><div class="modal" onclick="event.stopPropagation()"><div class="mh"></div><div class="rb2 mb2"><div class="f11 c3">'+new Date(h.created_at||Date.now()).toLocaleDateString()+'</div><button class="btn bg_ bsm" onclick="ge(\'hm\').remove()">✕</button></div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">'+(h.words||[]).map(w=>'<span class="badge bgr">'+w+'</span>').join('')+'</div><div class="rt mb3">'+h.text+'</div><button class="btn bd bsm" onclick="delH('+h.id+')">🗑 Delete</button></div></div>');
+}
+async function delH(id){S.hist=S.hist.filter(h=>h.id!==id);try{await api('/api/history/'+id,{method:'DELETE'});}catch{}ge('hm')?.remove();render();}
+function rGrps(){
+  const isT=S.user?.role==='teacher'||S.user?.role==='admin';
+  return '<div class="sc"><div class="sht">Groups</div><div class="shs">'+(isT?'Your student groups':'My groups')+'</div>'
+    +(isT?'<button class="btn bp bfu mb3" onclick="crGrp()">＋ Create group</button>':'<button class="btn bs bfu mb3" onclick="joinGrp()">🔗 Join group by code</button>')
+    +(S.grps.length===0?'<div class="empty"><div style="font-size:40px;margin-bottom:10px">👥</div><div class="syn fw7 f13 mb1">No groups yet</div><div class="f12 c3">'+(isT?'Create a group and invite students':'Ask your teacher for the group code')+'</div></div>'
+    :S.grps.map(g=>'<div class="gcard" onclick="opGrp('+g.id+')"><div class="rb2 mb1"><div class="syn fw7 f13">'+g.name+'</div><span class="badge bv">'+(g.member_count||0)+' students</span></div><div class="f12 c3">Invite code: <strong style="color:var(--ac)">'+(g.code||'—')+'</strong></div></div>').join(''))
+    +'</div>';
+}
+async function crGrp(){
+  const name=prompt('Group name:');if(!name)return;
+  try{const g=await api('/api/groups',{method:'POST',body:{name}});S.grps=[g,...S.grps];render();alert('Group created!\nInvite code: '+g.code);}
+  catch(e){alert('Error: '+e.message);}
+}
+async function joinGrp(){
+  const code=prompt('Enter invite code:');if(!code)return;
+  try{const r=await api('/api/groups/join',{method:'POST',body:{code:code.trim().toUpperCase()}});alert('Joined group: '+r.group.name);S.grps=[r.group,...S.grps];render();}
+  catch(e){alert('Error: '+e.message);}
+}
+async function opGrp(id){
+  const g=S.grps.find(x=>x.id===id);if(!g)return;
+  try{const m=await api('/api/groups/'+id+'/members');alert('Group: '+g.name+'\nCode: '+g.code+'\nMembers: '+m.length+'\n\n'+m.map(u=>u.name+' ('+u.word_count+' words)').join('\n'));}
+  catch{alert('Group: '+g.name+'\nCode: '+g.code);}
+}
+function rProg(){
+  const total=S.words.length,hard=S.words.filter(w=>w.hard).length,prac=S.words.filter(w=>w.tp>0).length;
+  const byL=['A1','A2','B1','B2','C1','C2'].map(l=>({l,n:S.words.filter(w=>w.lv===l).length})).filter(x=>x.n>0);
+  const lim=S.user?.dl||50,used=S.user?.du||0,pct=Math.min(100,Math.round(used/lim*100));
+  return '<div class="sc"><div class="sht">Progress</div><div class="shs">Learning statistics</div>'
+    +'<div class="sg"><div class="sc2"><div class="sv ca">'+total+'</div><div class="sl">Words</div></div><div class="sc2"><div class="sv" style="color:var(--warn)">'+hard+'</div><div class="sl">Hard</div></div><div class="sc2"><div class="sv" style="color:var(--ac3)">🔥'+(S.user?.streak||0)+'</div><div class="sl">Streak</div></div><div class="sc2"><div class="sv" style="color:var(--ac2)">'+prac+'</div><div class="sl">Practiced</div></div></div>'
+    +'<div class="card mb2"><div class="rb2 mb2"><div class="fw6 f13">AI requests today</div><span class="f12 c3">'+used+'/'+lim+'</span></div><div style="display:flex;align-items:center;gap:8px"><div class="limw" style="height:8px"><div class="limf" style="width:'+pct+'%;background:'+(pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--ac)')+'"></div></div><span class="f11 c3">'+pct+'%</span></div></div>'
+    +(byL.length?'<div class="card mb2"><div class="fw6 f13 mb3">📊 By level</div>'+byL.map(({l,n})=>'<div class="mb2"><div class="rb2 mb1"><div class="row">'+lvl(l)+'<span class="f11 c3">'+n+' words</span></div><span class="f11 c3">'+Math.round(n/total*100)+'%</span></div><div class="pbw" style="height:4px"><div class="pbf" style="width:'+n/total*100+'%;background:'+(l.startsWith('C')?'var(--ac3)':l.startsWith('B')?'var(--ac2)':'var(--ac)')+'"></div></div></div>').join('')+'</div>':'')
+    +(hard?'<div class="card mb2"><div class="fw6 f13 mb2">⭐ Hard words</div>'+S.words.filter(w=>w.hard).map(w=>'<div class="rb2" style="padding:7px 0;border-bottom:1px solid var(--brd)"><div class="row"><span class="fw6 f13">'+w.word+'</span><span class="c3 f12">'+w.tr+'</span></div><div class="row" style="gap:4px">'+lvl(w.lv)+'<button class="ib" style="font-size:12px" onclick="speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button></div></div>').join('')+'</div>':'')
+    +'<div class="card"><div class="fw6 f13 mb2">🏆 Achievements</div>'
+    +[{i:'📖',l:'First word added',d:total>=1},{i:'📚',l:'10 words',d:total>=10},{i:'💯',l:'50 words',d:total>=50},{i:'🔥',l:'3-day streak',d:(S.user?.streak||0)>=3},{i:'⭐',l:'First hard word',d:hard>=1},{i:'🎯',l:'First practice',d:prac>=1}].map(a=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--brd);gap:10px"><span style="font-size:19px;filter:'+(a.d?'none':'grayscale(1) opacity(.3)')+'">'+a.i+'</span><span class="f12" style="color:'+(a.d?'var(--t)':'var(--t3)')+'">'+a.l+'</span>'+(a.d?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':'')+'</div>').join('')
+    +'</div></div>';
+}
 render();
 </script>
 </body>
