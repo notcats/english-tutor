@@ -2,11 +2,12 @@
 const GID='1071970252736-hnlmo0ikjrmm9r8ap9tkicdgdv1accl0.apps.googleusercontent.com';
 const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},{code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},{code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},{code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},{code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},{code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},{code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},{code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},{code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},{code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},{code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},{code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},{code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},{code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},{code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"}];
 const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
-
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
+
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
 let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[]};
+
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
   const r=await fetch(path,{...o,headers:{'Content-Type':'application/json',...(S.tok?{'Authorization':'Bearer '+S.tok}:{}),...(o.headers||{})},body:o.body?JSON.stringify(o.body):undefined});
@@ -14,6 +15,25 @@ async function api(path,o={}){
   return r.json();
 }
 async function ai(type,data){return api('/api/ai/'+type,{method:'POST',body:data});}
+function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0};}
+function saveWord(s) {
+  S.words = [mw(s), ...S.words.filter(x => x.word !== s.word)];
+}
+async function loadData(){
+  try{const w=await api('/api/words');S.words=w.map(mw);}catch{}
+  try{const st=await api('/api/stats');if(S.user){S.user.streak=st.streak?.current_streak||0;S.user.du=st.daily_used||0;S.user.dl=st.daily_limit||50;}}catch{}
+  try{const h=await api('/api/history');S.hist=h||[];}catch{}
+  if(S.user?.role==='teacher'){try{const g=await api('/api/groups');S.grps=g||[];}catch{}}
+}
+function fmtU(u){return{id:u.id,email:u.email,name:u.name,avatar:u.avatar,role:u.role||'student',nl:u.native_lang||'ru',ll:u.learn_lang||'en',streak:u.streak||0,du:u.daily_used||0,dl:u.daily_limit||50};}
+(async()=>{
+  if(S.tok){
+    try{const d=await api('/api/auth/me');S.user=fmtU(d);S.nl=S.user.nl;S.ll=S.user.ll;await loadData();ss({scr:'main',tab:'dict'});return;}
+    catch{S.tok='';localStorage.removeItem('tok');}
+  }
+  render();
+})();
+
 // ── SPEECH ──────────────────────────────────────────────
 const LC={en:'en-US',de:'de-DE',fr:'fr-FR',es:'es-ES',it:'it-IT',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR'};
 function speak(w,slow){
@@ -32,89 +52,33 @@ function mic(tid,bid){
   _r.onerror=()=>{_ir=false;const b=ge(bid);if(b)b.classList.remove('rec');};
   _r.start();_ir=true;const b=ge(bid);if(b)b.classList.add('rec');
 }
+
 // ── UI HELPERS ──────────────────────────────────────────
 function lvl(l){const c=l?.startsWith('C')?'bpk':l?.startsWith('B')?'bv':'bgr';return '<span class="badge '+c+'">'+(l||'?')+'</span>';}
 function ld(t){return '<div class="ail"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>'+(t||'AI…')+'</div>';}
 function tts(w){const e=(w||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<button class="ttsb" onclick="speak(\''+e+'\')">🔊</button> <button class="ttsb" onclick="speak(\''+e+'\',true)">🐢</button>';}
 function ge(id){return document.getElementById(id);}
 function ss(p){Object.assign(S,p);render();}
-function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0};}
-
-function saveWord(s) {
-  S.words = [mw(s), ...S.words.filter(x => x.word !== s.word)];
-}
-
 function modal(content, closeAction) {
-  return '<div class="ovl" onclick="if(event.target.classList.contains(\'ovl\'))'+closeAction+'">'  
+  return '<div class="ovl" onclick="if(event.target.classList.contains(\'ovl\'))' + closeAction + '">'
     + '<div class="modal" onclick="event.stopPropagation()"><div class="mh"></div>'
     + content
     + '</div></div>';
 }
-
 function progressBar(pct, color, height) {
   const c = color || (pct > 80 ? 'var(--danger)' : pct > 50 ? 'var(--warn)' : 'var(--ac)');
   const h = height ? 'height:' + height + ';' : '';
   return '<div class="limw" style="' + h + '"><div class="limf" style="width:' + pct + '%;background:' + c + '"></div></div>';
 }
-async function loadData(){
-  try{const w=await api('/api/words');S.words=w.map(mw);}catch{}
-  try{const st=await api('/api/stats');if(S.user){S.user.streak=st.streak?.current_streak||0;S.user.du=st.daily_used||0;S.user.dl=st.daily_limit||50;}}catch{}
-  try{const h=await api('/api/history');S.hist=h||[];}catch{}
-  if(S.user?.role==='teacher'){try{const g=await api('/api/groups');S.grps=g||[];}catch{}}
-}
-function fmtU(u){return{id:u.id,email:u.email,name:u.name,avatar:u.avatar,role:u.role||'student',nl:u.native_lang||'ru',ll:u.learn_lang||'en',streak:u.streak||0,du:u.daily_used||0,dl:u.daily_limit||50};}
-(async()=>{
-  if(S.tok){
-    try{const d=await api('/api/auth/me');S.user=fmtU(d);S.nl=S.user.nl;S.ll=S.user.ll;await loadData();ss({scr:'main',tab:'dict'});return;}
-    catch{S.tok='';localStorage.removeItem('tok');}
-  }
-  render();
-})();
-// ── RENDER: SHELL ───────────────────────────────────────
-function render(){
-  const app=document.getElementById('app');
-  if(S.scr==='ob'){app.innerHTML=rOb();aGoogle();return;}
-  const isT=S.user?.role==='teacher'||S.user?.role==='admin';
-  const tabs=isT?[{id:'dict',i:'📖',l:'Words'},{id:'groups',i:'👥',l:'Groups'},{id:'practice',i:'🏋️',l:'Practice'},{id:'progress',i:'📊',l:'Stats'}]:[{id:'dict',i:'📖',l:'Words'},{id:'practice',i:'🏋️',l:'Practice'},{id:'history',i:'📜',l:'History'},{id:'progress',i:'📊',l:'Stats'}];
-  const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
-  const av=u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
-  const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
-  app.innerHTML='<header class="hdr"><div class="logo">AI <em>'+ln+'</em> Tutor</div><div class="hdr-r"><div class="streak">🔥 '+(u?.streak||0)+'</div>'+av+'</div></header>'
-    +'<main class="content" id="mc">'+rMain()+'</main>'
-    +'<nav class="nav">'+tabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')+'</nav>'
-    +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
-    +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
-}
-function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();return rDict();}
-function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});}
-// ── RENDER: ONBOARDING ──────────────────────────────────
-function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();return ob3();}
-function ob1(){
-  const list=LANGS.filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
-  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(94,255,196,.3))">🌍</div><div class="obl">AI Language <em>Tutor</em></div><div class="obs">Learn any language with AI personalized to you.<br><span style="color:var(--t3);font-size:12px">Step 1 of 3 — Your native language</span></div></div>'
-    +'<div class="obs2 mb3"><div class="oblbl">What is your native language?</div>'
-    +'<div class="obsw"><span class="obsico">🔍</span><input class="obsinp" placeholder="Search…" value="'+(S.obs||'')+'" oninput="S.obs=this.value;render()"></div>'
-    +'<div class="lg">'+list.map(l=>'<div class="lc'+(S.nl===l.code?' sel':'')+'" onclick="S.nl=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.nl===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
-    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px"><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:2,obs:\'\'})">Continue →</button></div></div>';
-}
-function ob2(){
-  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📚</div><div class="obl">What will you <em>learn?</em></div><div class="obs"><span style="color:var(--t3);font-size:12px">Step 2 of 3 — Language to learn</span></div></div>'
-    +'<div class="obs2 mb3"><div class="oblbl">Choose language to learn</div>'
-    +'<div class="lg">'+LLANGS.map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
-    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px;display:flex;gap:9px"><button class="btn bg_ bfu" onclick="ss({step:1})">← Back</button><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:3})">Continue →</button></div></div>';
-}
-function ob3(){
-  const c=LANGS.find(l=>l.code===S.nl);const ln=LLANGS.find(l=>l.code===S.ll);
-  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🔑</div><div class="obl">Sign <em>in</em></div><div class="obs">'+(c?c.flag+' '+c.name:'')+(ln?' → '+ln.flag+' '+ln.name:'')+'<br><span style="color:var(--t3);font-size:12px">Step 3 of 3</span></div></div>'
-    +'<div class="obs2" style="position:relative;z-index:1"><div id="gbw" style="margin-bottom:12px"></div>'
-    +'<div style="text-align:center;color:var(--t3);font-size:12px;margin-bottom:12px">— or email —</div>'
-    +'<input id="ob-em" class="inp" type="email" placeholder="Email" style="margin-bottom:10px">'
-    +'<input id="ob-pw" class="inp" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:12px">'
-    +'<div id="aerr" style="color:var(--danger);font-size:12px;margin-bottom:8px;display:none"></div>'
-    +'<button class="btn bp bfu mb2" style="padding:12px" onclick="emailAuth()">Sign in / Register</button>'
-    +'<button class="btn bg_ bfu" onclick="ss({step:2})">← Back</button></div></div>';
-}
+
 // ── AUTH ────────────────────────────────────────────────
+function showErr(m){const e=ge('aerr');if(e){e.textContent=m;e.style.display='block';}}
+function logout(){S.tok='';S.user=null;S.words=[];S.hist=[];S.grps=[];localStorage.removeItem('tok');ss({scr:'ob',step:1});}
+async function selLang(code){
+  const isN=S.lp==='n';if(isN)S.nl=code;else S.ll=code;
+  try{await api('/api/auth/lang',{method:'PATCH',body:{nativeLang:S.nl,learnLang:S.ll}});}catch{}
+  ss({lp:false});
+}
 function aGoogle(){
   if(S.step!==3)return;
   setTimeout(()=>{
@@ -142,38 +106,99 @@ async function emailAuth(){
     await loadData();ss({scr:'main',tab:'dict'});
   }catch(err){showErr(err.message);}
 }
-function showErr(m){const e=ge('aerr');if(e){e.textContent=m;e.style.display='block';}}
-function logout(){S.tok='';S.user=null;S.words=[];S.hist=[];S.grps=[];localStorage.removeItem('tok');ss({scr:'ob',step:1});}
+
+// ── RENDER: SHELL ───────────────────────────────────────
+function render(){
+  const app=document.getElementById('app');
+  if(S.scr==='ob'){app.innerHTML=rOb();aGoogle();return;}
+  const isT=S.user?.role==='teacher'||S.user?.role==='admin';
+  const tabs=isT?[{id:'dict',i:'📖',l:'Words'},{id:'groups',i:'👥',l:'Groups'},{id:'practice',i:'🏋️',l:'Practice'},{id:'progress',i:'📊',l:'Stats'}]:[{id:'dict',i:'📖',l:'Words'},{id:'practice',i:'🏋️',l:'Practice'},{id:'history',i:'📜',l:'History'},{id:'progress',i:'📊',l:'Stats'}];
+  const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
+  const av=u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
+  const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
+  app.innerHTML='<header class="hdr"><div class="logo">AI <em>'+ln+'</em> Tutor</div><div class="hdr-r"><div class="streak">🔥 '+(u?.streak||0)+'</div>'+av+'</div></header>'
+    +'<main class="content" id="mc">'+rMain()+'</main>'
+    +'<nav class="nav">'+tabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')+'</nav>'
+    +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
+    +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
+}
+function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();return rDict();}
+function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});}
+
+// ── RENDER: ONBOARDING ──────────────────────────────────
+function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();return ob3();}
+function ob1(){
+  const list=LANGS.filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(94,255,196,.3))">🌍</div><div class="obl">AI Language <em>Tutor</em></div><div class="obs">Learn any language with AI personalized to you.<br><span style="color:var(--t3);font-size:12px">Step 1 of 3 — Your native language</span></div></div>'
+    +'<div class="obs2 mb3"><div class="oblbl">What is your native language?</div>'
+    +'<div class="obsw"><span class="obsico">🔍</span><input class="obsinp" placeholder="Search…" value="'+(S.obs||'')+'" oninput="S.obs=this.value;render()"></div>'
+    +'<div class="lg">'+list.map(l=>'<div class="lc'+(S.nl===l.code?' sel':'')+'" onclick="S.nl=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.nl===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
+    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px"><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:2,obs:\'\'})">Continue →</button></div></div>';
+}
+function ob2(){
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📚</div><div class="obl">What will you <em>learn?</em></div><div class="obs"><span style="color:var(--t3);font-size:12px">Step 2 of 3 — Language to learn</span></div></div>'
+    +'<div class="obs2 mb3"><div class="oblbl">Choose language to learn</div>'
+    +'<div class="lg">'+LLANGS.map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
+    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px;display:flex;gap:9px"><button class="btn bg_ bfu" onclick="ss({step:1})">← Back</button><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:3})">Continue →</button></div></div>';
+}
+function ob3(){
+  const c=LANGS.find(l=>l.code===S.nl);const ln=LLANGS.find(l=>l.code===S.ll);
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🔑</div><div class="obl">Sign <em>in</em></div><div class="obs">'+(c?c.flag+' '+c.name:'')+(ln?' → '+ln.flag+' '+ln.name:'')+'<br><span style="color:var(--t3);font-size:12px">Step 3 of 3</span></div></div>'
+    +'<div class="obs2" style="position:relative;z-index:1"><div id="gbw" style="margin-bottom:12px"></div>'
+    +'<div style="text-align:center;color:var(--t3);font-size:12px;margin-bottom:12px">— or email —</div>'
+    +'<input id="ob-em" class="inp" type="email" placeholder="Email" style="margin-bottom:10px">'
+    +'<input id="ob-pw" class="inp" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:12px">'
+    +'<div id="aerr" style="color:var(--danger);font-size:12px;margin-bottom:8px;display:none"></div>'
+    +'<button class="btn bp bfu mb2" style="padding:12px" onclick="emailAuth()">Sign in / Register</button>'
+    +'<button class="btn bg_ bfu" onclick="ss({step:2})">← Back</button></div></div>';
+}
+
 // ── RENDER: MODALS ──────────────────────────────────────
 function rProf(){
   const u=S.user;const isT=u?.role==='teacher';const lim=u?.dl||50;const used=u?.du||0;const pct=Math.min(100,Math.round(used/lim*100));
   const cl=LANGS.find(l=>l.code===S.nl);const ll=LLANGS.find(l=>l.code===S.ll);
-  const profInner =
-    +'<div class="pav">'+(u?.avatar?'<img src="'+u.avatar+'">': (u?.name||'?')[0])+'</div>'
+  const innerContent=
+    '<div class="pav">'+(u?.avatar?'<img src="'+u.avatar+'">': (u?.name||'?')[0])+'</div>'
     +'<div style="text-align:center;margin-bottom:4px"><div class="syn fw7 f13">'+(u?.name||'User')+'</div><div class="f12 c3">'+(u?.email||'')+'</div>'
     +'<div class="mt1"><span class="badge '+(isT?'byw':'bgr')+'">'+(isT?'👨‍🏫 Teacher':'🎓 Student')+'</span></div></div>'
     +'<div class="divl"></div>'
     +'<div class="card csm mb2"><div class="rb2 mb1"><span class="f12 fw6">AI requests today</span><span class="f12 c3">'+used+'/'+lim+'</span></div>'
-    +'<div style="display:flex;align-items:center;gap:8px">'+progressBar(pct)+'</div></div>'
+    +'<div style="display:flex;align-items:center;gap:8px">' + progressBar(pct) + '</div></div>'
     +'<div class="card csm mb2"><div class="f12 fw6 mb2">Learning settings</div>'
     +'<div class="rb2 mb2"><span class="f12 c2">Native language</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'n\'})">'+(cl?cl.flag+' '+cl.name:'Select')+'</button></div>'
     +'<div class="rb2"><span class="f12 c2">Learning</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'l\'})">'+(ll?ll.flag+' '+ll.name:'Select')+'</button></div></div>'
     +(isT?'<button class="btn bs bfu bsm mb2" onclick="ss({prof:false,tab:\'groups\'})">👥 Manage groups</button>':'')
     +'<button class="btn bd bfu" onclick="logout()">Sign out</button>';
-  return modal(profInner, "ss({prof:false})");
+  return modal(innerContent, 'ss({prof:false})');
 }
 function rLP(){
   const isN=S.lp==='n';const list=isN?LANGS:LLANGS;const cur=isN?S.nl:S.ll;
-  const lpInner =
-    +'<div class="rb2 mb3"><div class="syn fw7" style="font-size:17px">'+(isN?'Native language':'Learning language')+'</div><button class="btn bg_ bsm" onclick="ss({lp:false})">✕</button></div>'
+  const innerContent=
+    '<div class="rb2 mb3"><div class="syn fw7" style="font-size:17px">'+(isN?'Native language':'Learning language')+'</div><button class="btn bg_ bsm" onclick="ss({lp:false})">✕</button></div>'
     +'<div class="lg" style="max-height:320px;overflow-y:auto;gap:6px">'+list.map(l=>'<div class="lc'+(cur===l.code?' sel':'')+'" onclick="selLang(\''+l.code+'\')"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(cur===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div>';
-  return modal(lpInner, "ss({lp:false})");
+  return modal(innerContent, 'ss({lp:false})');
 }
-async function selLang(code){
-  const isN=S.lp==='n';if(isN)S.nl=code;else S.ll=code;
-  try{await api('/api/auth/lang',{method:'PATCH',body:{nativeLang:S.nl,learnLang:S.ll}});}catch{}
-  ss({lp:false});
+function rWM(){
+  const w=S.det;if(!w)return '';
+  const innerContent=
+    '<div class="rb2 mb2"><div><div class="syn fw7" style="font-size:24px">'+w.word+'</div><div class="f12 c3">'+w.ts+'</div></div>'+lvl(w.lv)+'</div>'
+    +'<div class="row mb2">'+tts(w.word)+'</div>'
+    +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
+    +'<div class="fw6 f13">'+w.tr+'</div>'
+    +(w.gr?'<div style="margin-top:5px;padding:4px 8px;background:var(--acD);border-radius:7px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')+'</div>'
+    +'<div class="card csm mb3"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Example</div>'
+    +'<div class="f12 c2 ita" style="line-height:1.7">'+w.ex+'</div><div class="f11 c3 mt1">'+w.exr+'</div>'
+    +(w.ex?'<div class="mt1">'+tts(w.ex)+'</div>':'')+'</div>'
+    +'<button class="btn bs bfu mb2" onclick="fetchEx('+w.id+')">✨ Synonyms & more examples</button>'
+    +'<div id="ext"></div><div class="divl"></div>'
+    +'<div class="row" style="flex-wrap:wrap;gap:6px">'
+    +'<button class="btn bg_ bsm" onclick="togHM('+w.id+')">'+(w.hard?'⭐ Hard':'☆ Mark hard')+'</button>'
+    +'<button class="btn bd bsm" onclick="delWM('+w.id+')">🗑 Delete</button>'
+    +'<button class="btn bg_ bsm" style="margin-left:auto" onclick="ss({det:null})">Close</button>'
+    +'</div>';
+  return modal(innerContent, 'ss({det:null})');
 }
+
 // ── RENDER: DICTIONARY ──────────────────────────────────
 function rDict(){
   const list=S.words.filter(w=>{
@@ -198,26 +223,6 @@ function rDict(){
 }
 function togH(id){S.words=S.words.map(w=>w.id===id?{...w,hard:!w.hard}:w);api('/api/words/'+id,{method:'PATCH',body:{hard:S.words.find(w=>w.id===id).hard}}).catch(()=>{});render();}
 function delW(id){if(!confirm('Delete?'))return;S.words=S.words.filter(w=>w.id!==id);api('/api/words/'+id,{method:'DELETE'}).catch(()=>{});render();}
-function rWM(){
-  const w=S.det;if(!w)return '';
-  const wmInner =
-    +'<div class="rb2 mb2"><div><div class="syn fw7" style="font-size:24px">'+w.word+'</div><div class="f12 c3">'+w.ts+'</div></div>'+lvl(w.lv)+'</div>'
-    +'<div class="row mb2">'+tts(w.word)+'</div>'
-    +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
-    +'<div class="fw6 f13">'+w.tr+'</div>'
-    +(w.gr?'<div style="margin-top:5px;padding:4px 8px;background:var(--acD);border-radius:7px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')+'</div>'
-    +'<div class="card csm mb3"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Example</div>'
-    +'<div class="f12 c2 ita" style="line-height:1.7">'+w.ex+'</div><div class="f11 c3 mt1">'+w.exr+'</div>'
-    +(w.ex?'<div class="mt1">'+tts(w.ex)+'</div>':'')+'</div>'
-    +'<button class="btn bs bfu mb2" onclick="fetchEx('+w.id+')">✨ Synonyms & more examples</button>'
-    +'<div id="ext"></div><div class="divl"></div>'
-    +'<div class="row" style="flex-wrap:wrap;gap:6px">'
-    +'<button class="btn bg_ bsm" onclick="togHM('+w.id+')">'+(w.hard?'⭐ Hard':'☆ Mark hard')+'</button>'
-    +'<button class="btn bd bsm" onclick="delWM('+w.id+')">🗑 Delete</button>'
-    +'<button class="btn bg_ bsm" style="margin-left:auto" onclick="ss({det:null})">Close</button>'
-    +'</div>';
-  return modal(wmInner, "ss({det:null})");
-}
 function togHM(id){S.words=S.words.map(w=>w.id===id?{...w,hard:!w.hard}:w);S.det={...S.det,hard:!S.det.hard};api('/api/words/'+id,{method:'PATCH',body:{hard:S.det.hard}}).catch(()=>{});render();}
 function delWM(id){if(!confirm('Delete?'))return;S.words=S.words.filter(w=>w.id!==id);api('/api/words/'+id,{method:'DELETE'}).catch(()=>{});ss({det:null});}
 async function fetchEx(id){
@@ -231,6 +236,7 @@ async function fetchEx(id){
       +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+(d.synonyms||[]).map(s=>'<div style="background:var(--sur2);border:1px solid var(--brd);border-radius:8px;padding:5px 10px;cursor:pointer" onclick="speak(\''+s.word+'\')"><div class="fw6 f12">'+s.word+' 🔊</div><div class="f11 c3">'+s.translation+'</div></div>').join('')+'</div></div>';
   }catch(e){area.innerHTML='<div class="rb err f12">'+e.message+'</div>';}
 }
+
 // ── RENDER: ADD WORD ────────────────────────────────────
 let _ad=null;
 function rAdd(){
@@ -318,6 +324,7 @@ async function savePh(){
   for(const w of _pw.filter((_,i)=>_ps.has(i))){try{const s=await api('/api/words',{method:'POST',body:w});saveWord(s);}catch{}}
   ss({add:false});
 }
+
 // ── RENDER: PRACTICE ────────────────────────────────────
 function rPrac(){
   if(S.pm==='flash')return rFlash();if(S.pm==='fill')return rFill();if(S.pm==='read')return rRead();if(S.pm==='text')return rTxt();
@@ -431,6 +438,7 @@ function rEnd(){
     +'<div class="syn fw7 f13 mt1">words learned!</div><div class="f12 c3 mt1">of '+s.words.length+' cards</div>'
     +'<div class="row mt3" style="justify-content:center;gap:9px"><button class="btn bp" onclick="stM(\''+S.pm+'\')">🔄 Again</button><button class="btn bs" onclick="ss({pm:null,sess:null})">← Menu</button></div></div></div>';
 }
+
 // ── RENDER: HISTORY ─────────────────────────────────────
 function rHist(){
   return '<div class="sc"><div class="sht">History</div><div class="shs">Saved texts and exercises</div>'
@@ -443,6 +451,7 @@ function opH(id){
   document.body.insertAdjacentHTML('beforeend','<div class="ovl" id="hm" onclick="if(event.target.id===\'hm\')this.remove()"><div class="modal" onclick="event.stopPropagation()"><div class="mh"></div><div class="rb2 mb2"><div class="f11 c3">'+new Date(h.created_at||Date.now()).toLocaleDateString()+'</div><button class="btn bg_ bsm" onclick="ge(\'hm\').remove()">✕</button></div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">'+(h.words||[]).map(w=>'<span class="badge bgr">'+w+'</span>').join('')+'</div><div class="rt mb3">'+h.text+'</div><button class="btn bd bsm" onclick="delH('+h.id+')">🗑 Delete</button></div></div>');
 }
 async function delH(id){S.hist=S.hist.filter(h=>h.id!==id);try{await api('/api/history/'+id,{method:'DELETE'});}catch{}ge('hm')?.remove();render();}
+
 // ── RENDER: GROUPS ──────────────────────────────────────
 function rGrps(){
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
@@ -467,6 +476,7 @@ async function opGrp(id){
   try{const m=await api('/api/groups/'+id+'/members');alert('Group: '+g.name+'\nCode: '+g.code+'\nMembers: '+m.length+'\n\n'+m.map(u=>u.name+' ('+u.word_count+' words)').join('\n'));}
   catch{alert('Group: '+g.name+'\nCode: '+g.code);}
 }
+
 // ── RENDER: PROGRESS ────────────────────────────────────
 function rProg(){
   const total=S.words.length,hard=S.words.filter(w=>w.hard).length,prac=S.words.filter(w=>w.tp>0).length;
@@ -474,13 +484,13 @@ function rProg(){
   const lim=S.user?.dl||50,used=S.user?.du||0,pct=Math.min(100,Math.round(used/lim*100));
   return '<div class="sc"><div class="sht">Progress</div><div class="shs">Learning statistics</div>'
     +'<div class="sg"><div class="sc2"><div class="sv ca">'+total+'</div><div class="sl">Words</div></div><div class="sc2"><div class="sv" style="color:var(--warn)">'+hard+'</div><div class="sl">Hard</div></div><div class="sc2"><div class="sv" style="color:var(--ac3)">🔥'+(S.user?.streak||0)+'</div><div class="sl">Streak</div></div><div class="sc2"><div class="sv" style="color:var(--ac2)">'+prac+'</div><div class="sl">Practiced</div></div></div>'
-    +'<div class="card mb2"><div class="rb2 mb2"><div class="fw6 f13">AI requests today</div><span class="f12 c3">'+used+'/'+lim+'</span></div><div style="display:flex;align-items:center;gap:8px">'+progressBar(pct,null,'8px')+'<span class="f11 c3">'+pct+'%</span></div></div>'
+    +'<div class="card mb2"><div class="rb2 mb2"><div class="fw6 f13">AI requests today</div><span class="f12 c3">'+used+'/'+lim+'</span></div><div style="display:flex;align-items:center;gap:8px">' + progressBar(pct, null, '8px') + '<span class="f11 c3">'+pct+'%</span></div></div>'
     +(byL.length?'<div class="card mb2"><div class="fw6 f13 mb3">📊 By level</div>'+byL.map(({l,n})=>'<div class="mb2"><div class="rb2 mb1"><div class="row">'+lvl(l)+'<span class="f11 c3">'+n+' words</span></div><span class="f11 c3">'+Math.round(n/total*100)+'%</span></div><div class="pbw" style="height:4px"><div class="pbf" style="width:'+n/total*100+'%;background:'+(l.startsWith('C')?'var(--ac3)':l.startsWith('B')?'var(--ac2)':'var(--ac)')+'"></div></div></div>').join('')+'</div>':'')
     +(hard?'<div class="card mb2"><div class="fw6 f13 mb2">⭐ Hard words</div>'+S.words.filter(w=>w.hard).map(w=>'<div class="rb2" style="padding:7px 0;border-bottom:1px solid var(--brd)"><div class="row"><span class="fw6 f13">'+w.word+'</span><span class="c3 f12">'+w.tr+'</span></div><div class="row" style="gap:4px">'+lvl(w.lv)+'<button class="ib" style="font-size:12px" onclick="speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button></div></div>').join('')+'</div>':'')
     +'<div class="card"><div class="fw6 f13 mb2">🏆 Achievements</div>'
     +[{i:'📖',l:'First word added',d:total>=1},{i:'📚',l:'10 words',d:total>=10},{i:'💯',l:'50 words',d:total>=50},{i:'🔥',l:'3-day streak',d:(S.user?.streak||0)>=3},{i:'⭐',l:'First hard word',d:hard>=1},{i:'🎯',l:'First practice',d:prac>=1}].map(a=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--brd);gap:10px"><span style="font-size:19px;filter:'+(a.d?'none':'grayscale(1) opacity(.3)')+'">'+a.i+'</span><span class="f12" style="color:'+(a.d?'var(--t)':'var(--t3)')+'">'+a.l+'</span>'+(a.d?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':'')+'</div>').join('')
     +'</div></div>';
 }
-// ── INIT ────────────────────────────────────────────────
 
+// ── INIT ────────────────────────────────────────────────
 render();
