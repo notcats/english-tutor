@@ -279,9 +279,8 @@ function rAdd(){
   return '<div class="sc"><div class="rb2 mb3"><div class="syn fw7" style="font-size:19px">Add word</div><button class="btn bg_ bsm" onclick="ss({add:false})">✕</button></div>'
     +'<div class="pills mb3">'
     +'<button class="pill'+(S.addTab==='manual'?' on':'')+'" onclick="S.addTab=\'manual\';render()">✏️ Manual</button>'
-    +'<button class="pill'+(S.addTab==='photo'?' on':'')+'" onclick="S.addTab=\'photo\';render()">📷 Photo</button>'
     +'<button class="pill'+(S.addTab==='list'?' on':'')+'" onclick="S.addTab=\'list\';render()">📋 List</button>'
-    +'</div>'+(S.addTab==='manual'?rAddM():S.addTab==='photo'?rAddP():rAddL())+'</div>';
+    +'</div>'+(S.addTab==='list'?rAddL():rAddM())+'</div>';
 }
 function rAddM(){
   return '<div><div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">Word or phrase</label>'
