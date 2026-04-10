@@ -582,7 +582,27 @@ function rProg(){
 // ── INIT ────────────────────────────────────────────────
 render();
 
-// ── PULL TO REFRESH ─────────────────────────────────────
+// ── SWIPE DOWN TO CLOSE MODAL ────────────────────────────
+let _swY=0,_swEl=null;
+document.addEventListener('touchstart',e=>{
+  const m=e.target.closest('.modal');
+  if(m){_swY=e.touches[0].clientY;_swEl=m;}
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!_swEl)return;
+  const dy=e.touches[0].clientY-_swY;
+  if(dy>0){_swEl.style.transform='translateY('+dy+'px)';_swEl.style.transition='none';}
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!_swEl)return;
+  const dy=e.changedTouches[0].clientY-_swY;
+  _swEl.style.transition='transform .25s ease';
+  if(dy>90){
+    _swEl.style.transform='translateY(110%)';
+    setTimeout(()=>{_swEl?.closest('.ovl')?.click();if(_swEl)_swEl.style.transform='';_swEl=null;},220);
+  }else{_swEl.style.transform='';_swEl=null;}
+  _swY=0;
+},{passive:true});
 let _ptY=0;
 document.addEventListener('touchstart',e=>{
   const mc=ge('mc');
