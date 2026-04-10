@@ -444,11 +444,10 @@ async function lFill(){
 function chF(opt){const s=S.sess;if(s.sel)return;s.sel=opt;if(opt===s.ex.answer)s.score++;render();}
 function nxF(){const s=S.sess;s.idx++;if(s.idx>=s.words.length){s.done=true;render();return;}s.ex=null;s.sel=null;render();lFill();}
 function rRead(){
-  const s=S.sess;const wl=s.words.slice(0,5);let th='';
-  if(s.rt){th=s.rt.text.split(/(\s+)/).map(tk=>{const cl=tk.replace(/[.,!?;:]/g,'').toLowerCase();const f=wl.find(w=>w.word.toLowerCase()===cl);if(f)return '<span class="hw" onclick="showTip(\''+f.word.replace(/'/g,"\\'")+'\',\''+f.tr.replace(/'/g,"\\'")+'\',\''+f.ts.replace(/'/g,"\\'")+'\')"> '+tk+'</span>';return tk;}).join('');}
+  const s=S.sess;
   return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><button class="btn bs bsm" onclick="lRead()" '+(s.rl?'disabled':'')+'>🔄 New</button></div>'
-    +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">📄 AI text · Tap highlighted words</div>'+(s.rl?ld('AI writing…'):'<div class="rt">'+th+'</div>')+'</div>'
-    +(s.tip?'<div class="card csm mb2 sc" style="border-color:var(--ac)"><div class="rb2"><div><span class="syn fw7 f13">'+s.tip.w+'</span> · <span class="ca f12">'+s.tip.t+'</span></div><button class="ib" onclick="S.sess.tip=null;render()">✕</button></div><div class="c3 f11 ita mt1">'+s.tip.ts+'</div><div class="row mt2">'+tts(s.tip.w)+'</div></div>':'')
+    +rTip()
+    +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">📄 Tap any word for translation</div>'+(s.rl?ld('AI writing…'):'<div class="rt">'+(s.rt?tappableText(s.rt.text):'')+'</div>')+'</div>'
     +(s.rt?.questions&&!s.rl?'<div class="syn fw7 f13 mb2">Questions</div>'
     +s.rt.questions.map((q,qi)=>'<div class="card mb2"><div class="fw6 f13 mb2">'+q.q+'</div><div style="display:flex;flex-direction:column;gap:6px">'
     +q.options.map(opt=>'<button class="opt'+(s.rc?(opt===q.correct?' cor':s.ra[qi]===opt?' wrg':''):'')+'" style="'+((!s.rc&&s.ra[qi]===opt)?'border-color:var(--ac2);color:var(--ac2)':'')+'" onclick="pickR('+qi+',\''+opt.replace(/'/g,"\\'")+'\')"> '+opt+'</button>').join('')
@@ -457,7 +456,41 @@ function rRead(){
     :'<div class="rb" style="text-align:center"><div class="sv ca" style="font-size:44px">'+s.rt.questions.filter((_,i)=>s.ra[i]===s.rt.questions[i].correct).length+'/'+s.rt.questions.length+'</div><div class="f12 c3 mt1">correct</div><div class="row mt2" style="justify-content:center;gap:8px"><button class="btn bs bsm" onclick="saveTH()">💾 Save</button><button class="btn bs bsm" onclick="lRead()">🔄 New</button></div></div>'):'')
     +'</div>';
 }
-function showTip(w,t,ts){S.sess.tip={w,t,ts};render();}
+function tappableText(text){
+  return text.split(/(\s+)/).map(tk=>{
+    const cl=tk.replace(/[.,!?;:'"()\-]/g,'').toLowerCase().trim();
+    if(!cl||cl.length<2)return tk;
+    const inDict=S.words.some(w=>w.word.toLowerCase()===cl);
+    return '<span style="cursor:pointer;'+(inDict?'color:var(--ac);font-weight:600;border-bottom:1px solid rgba(94,255,196,.35)':'border-bottom:1px dashed var(--brd2)')+'" onclick="tapWord(\''+cl.replace(/'/g,"\\'")+'\')">'+tk+'</span>';
+  }).join('');
+}
+async function tapWord(word){
+  if(!word||word.length<2)return;
+  const ex=S.words.find(w=>w.word.toLowerCase()===word.toLowerCase());
+  if(ex){S.sess.tip={w:ex.word,t:ex.tr,ts:ex.ts,lv:ex.lv,gr:ex.gr,known:true};render();return;}
+  S.sess.tip={w:word,t:'',ts:'',loading:true,known:false};render();
+  try{const d=await ai('word',{word});S.sess.tip={w:word,t:d.translation,ts:d.transcription,lv:d.level,gr:d.grammar_note,ex:d.example_en,loading:false,known:false};}
+  catch{S.sess.tip={w:word,t:'?',ts:'',loading:false,known:false};}
+  render();
+}
+async function addTipWord(){
+  const tip=S.sess.tip;if(!tip||tip.known||tip.loading)return;
+  const body={word:tip.w,translation:tip.t,transcription:tip.ts||'',level:tip.lv||'B1',example_en:tip.ex||'',example_ru:'',grammar_note:tip.gr||'',hard:false};
+  try{const s=await api('/api/words',{method:'POST',body});saveWord(s);}
+  catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:'',gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
+  if(S.sess.tip)S.sess.tip.known=true;render();
+}
+function rTip(){
+  const s=S.sess;if(!s?.tip)return '';
+  return '<div class="card csm mb2" style="border-color:var(--ac)">'
+    +'<div class="rb2 mb1"><div class="row" style="gap:6px"><span class="syn fw7 f13">'+s.tip.w+'</span>'+(s.tip.lv?lvl(s.tip.lv):'')+'</div><button class="ib" onclick="S.sess.tip=null;render()">✕</button></div>'
+    +(s.tip.loading?ld('Translating…')
+    :'<div class="f13 fw6 ca mb1">'+s.tip.t+'</div>'
+    +(s.tip.ts?'<div class="f11 c3 mb2">'+s.tip.ts+'</div>':'')
+    +'<div class="row" style="gap:7px">'+tts(s.tip.w)
+    +(s.tip.known?'<span class="f11 c3" style="margin-left:auto">✓ In dictionary</span>':'<button class="btn bp bsm" style="margin-left:auto" onclick="addTipWord()">+ Add</button>')
+    +'</div>')+'</div>';
+}
 function pickR(qi,opt){if(S.sess.rc)return;S.sess.ra[qi]=opt;render();}
 function chkR(){S.sess.rc=true;render();}
 async function lRead(){
@@ -470,7 +503,7 @@ function rTxt(){
   const s=S.sess;
   return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><button class="btn bs bsm" onclick="lTxt()" '+(s.gl?'disabled':'')+'>🔄 New story</button></div>'
     +(s.gl?'<div class="card">'+ld('AI writing story with your words…')+'</div>':'')
-    +(s.gt&&!s.gl?'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">✍️ Story · Words used: '+(s.gt.wordsUsed||[]).join(', ')+'</div><div class="rt">'+s.gt.text+'</div></div>'
+    +(s.gt&&!s.gl?rTip()+'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">✍️ Story · Tap any word for translation</div><div class="rt">'+tappableText(s.gt.text)+'</div></div>'
     +((s.gt.questions||[]).length?'<div class="card mb2"><div class="f12 fw6 mb2">Questions</div>'+(s.gt.questions||[]).map((q,i)=>'<div style="margin-bottom:10px"><div class="f12 fw6 mb1">'+(i+1)+'. '+q.q+'</div><div style="color:var(--t2);font-size:12px">'+q.options.map((o,j)=>String.fromCharCode(65+j)+') '+o).join(' · ')+'</div><div style="font-size:11px;color:var(--ac);margin-top:3px">✓ '+q.correct+'</div></div>').join('')+'</div>':'')
     +'<button class="btn bp bfu mb2" onclick="saveTH()">💾 Save to history</button>':'')+'</div>';
 }
