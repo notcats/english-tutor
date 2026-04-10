@@ -4,9 +4,30 @@ const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},
 const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
 
+// ── I18N ────────────────────────────────────────────────
+const UI_LANG=(navigator.language||'en').slice(0,2).toLowerCase();
+const I18N={
+  en:{nativeQ:'What is your native language?',learnQ:'What will you learn?',step1:'Step 1 of 3 — Your native language',step2:'Step 2 of 3 — Language to learn',step3:'Step 3 of 3',cont:'Continue →',back:'← Back',search:'Search…',chooseLang:'Choose language to learn',addWord:'Add a word',noAccount:'No account needed',signInBtn:'Sign in',signInSub:'Save & sync progress',saveTitle:'Save your progress!',saveDesc:'Create a free account to keep your words safe.',register:'Create account',skip:'Skip for now',wordAdded:'Word added!'},
+  ru:{nativeQ:'Какой ваш родной язык?',learnQ:'Какой язык вы учите?',step1:'Шаг 1 из 3 — Родной язык',step2:'Шаг 2 из 3 — Язык для изучения',step3:'Шаг 3 из 3',cont:'Продолжить →',back:'← Назад',search:'Поиск…',chooseLang:'Выберите язык',addWord:'Добавить слово',noAccount:'Без регистрации',signInBtn:'Войти',signInSub:'Синхронизация прогресса',saveTitle:'Сохраните прогресс!',saveDesc:'Создайте бесплатный аккаунт, чтобы слова не потерялись.',register:'Создать аккаунт',skip:'Пропустить',wordAdded:'Слово добавлено!'},
+  es:{nativeQ:'¿Cuál es tu idioma nativo?',learnQ:'¿Qué idioma aprenderás?',step1:'Paso 1/3 — Tu idioma nativo',step2:'Paso 2/3 — Idioma a aprender',step3:'Paso 3/3',cont:'Continuar →',back:'← Atrás',search:'Buscar…',chooseLang:'Elige idioma',addWord:'Añadir palabra',noAccount:'Sin cuenta',signInBtn:'Iniciar sesión',signInSub:'Guardar progreso',saveTitle:'¡Guarda tu progreso!',saveDesc:'Crea una cuenta gratuita para guardar tus palabras.',register:'Crear cuenta',skip:'Omitir',wordAdded:'¡Palabra añadida!'},
+  fr:{nativeQ:'Quelle est votre langue maternelle?',learnQ:'Quelle langue apprendrez-vous?',step1:'Étape 1/3 — Langue maternelle',step2:'Étape 2/3 — Langue à apprendre',step3:'Étape 3/3',cont:'Continuer →',back:'← Retour',search:'Rechercher…',chooseLang:'Choisissez une langue',addWord:'Ajouter un mot',noAccount:'Sans compte',signInBtn:'Se connecter',signInSub:'Sauvegarder la progression',saveTitle:'Sauvegardez vos progrès!',saveDesc:'Créez un compte gratuit pour ne pas perdre vos mots.',register:'Créer un compte',skip:'Passer',wordAdded:'Mot ajouté!'},
+  de:{nativeQ:'Was ist Ihre Muttersprache?',learnQ:'Welche Sprache lernen Sie?',step1:'Schritt 1/3 — Muttersprache',step2:'Schritt 2/3 — Lernsprache',step3:'Schritt 3/3',cont:'Weiter →',back:'← Zurück',search:'Suchen…',chooseLang:'Lernsprache wählen',addWord:'Wort hinzufügen',noAccount:'Ohne Konto',signInBtn:'Anmelden',signInSub:'Fortschritt synchronisieren',saveTitle:'Fortschritt speichern!',saveDesc:'Erstellen Sie ein kostenloses Konto für Ihre Wörter.',register:'Konto erstellen',skip:'Überspringen',wordAdded:'Wort hinzugefügt!'},
+  zh:{nativeQ:'您的母语是什么?',learnQ:'您要学习哪种语言?',step1:'第1/3步 — 您的母语',step2:'第2/3步 — 学习语言',step3:'第3/3步',cont:'继续 →',back:'← 返回',search:'搜索…',chooseLang:'选择学习语言',addWord:'添加单词',noAccount:'无需账户',signInBtn:'登录',signInSub:'同步进度',saveTitle:'保存您的进度！',saveDesc:'创建免费账户以保留您的单词。',register:'创建账户',skip:'跳过',wordAdded:'单词已添加！'},
+  ja:{nativeQ:'母語は何ですか？',learnQ:'学ぶ言語は何ですか？',step1:'ステップ1/3 — 母語',step2:'ステップ2/3 — 学習言語',step3:'ステップ3/3',cont:'続ける →',back:'← 戻る',search:'検索…',chooseLang:'学習言語を選択',addWord:'単語を追加',noAccount:'アカウント不要',signInBtn:'サインイン',signInSub:'進捗を同期',saveTitle:'進捗を保存！',saveDesc:'無料アカウントを作成して単語を保存しましょう。',register:'アカウント作成',skip:'後で',wordAdded:'単語が追加されました！'},
+  ko:{nativeQ:'모국어가 무엇인가요?',learnQ:'어떤 언어를 배울 건가요?',step1:'1/3단계 — 모국어',step2:'2/3단계 — 학습 언어',step3:'3/3단계',cont:'계속 →',back:'← 뒤로',search:'검색…',chooseLang:'학습 언어 선택',addWord:'단어 추가',noAccount:'계정 불필요',signInBtn:'로그인',signInSub:'진행 상황 동기화',saveTitle:'진행 상황을 저장하세요!',saveDesc:'무료 계정을 만들어 단어를 보관하세요.',register:'계정 만들기',skip:'나중에',wordAdded:'단어가 추가되었습니다!'},
+  uk:{nativeQ:'Яка ваша рідна мова?',learnQ:'Яку мову ви вивчаєте?',step1:'Крок 1/3 — Рідна мова',step2:'Крок 2/3 — Мова для вивчення',step3:'Крок 3/3',cont:'Продовжити →',back:'← Назад',search:'Пошук…',chooseLang:'Оберіть мову',addWord:'Додати слово',noAccount:'Без реєстрації',signInBtn:'Увійти',signInSub:'Синхронізація прогресу',saveTitle:'Збережіть прогрес!',saveDesc:'Створіть безкоштовний акаунт, щоб не втратити слова.',register:'Створити акаунт',skip:'Пропустити',wordAdded:'Слово додано!'},
+  pt:{nativeQ:'Qual é a sua língua materna?',learnQ:'Qual idioma vai aprender?',step1:'Passo 1/3 — Idioma nativo',step2:'Passo 2/3 — Idioma a aprender',step3:'Passo 3/3',cont:'Continuar →',back:'← Voltar',search:'Pesquisar…',chooseLang:'Escolha o idioma',addWord:'Adicionar palavra',noAccount:'Sem conta',signInBtn:'Entrar',signInSub:'Salvar progresso',saveTitle:'Salve seu progresso!',saveDesc:'Crie uma conta gratuita para guardar suas palavras.',register:'Criar conta',skip:'Pular',wordAdded:'Palavra adicionada!'},
+  tr:{nativeQ:'Ana diliniz nedir?',learnQ:'Hangi dili öğreneceksiniz?',step1:'Adım 1/3 — Ana dil',step2:'Adım 2/3 — Öğrenilecek dil',step3:'Adım 3/3',cont:'Devam →',back:'← Geri',search:'Ara…',chooseLang:'Dil seçin',addWord:'Kelime ekle',noAccount:'Hesap gerekmez',signInBtn:'Giriş yap',signInSub:'İlerlemeyi kaydet',saveTitle:'İlerlemenizi kaydedin!',saveDesc:'Kelimelerinizi korumak için ücretsiz hesap oluşturun.',register:'Hesap oluştur',skip:'Atla',wordAdded:'Kelime eklendi!'},
+  it:{nativeQ:'Qual è la tua lingua madre?',learnQ:'Quale lingua stai imparando?',step1:'Passo 1/3 — Lingua madre',step2:'Passo 2/3 — Lingua da imparare',step3:'Passo 3/3',cont:'Continua →',back:'← Indietro',search:'Cerca…',chooseLang:'Scegli la lingua',addWord:'Aggiungi parola',noAccount:'Senza account',signInBtn:'Accedi',signInSub:'Salva i progressi',saveTitle:'Salva i tuoi progressi!',saveDesc:'Crea un account gratuito per non perdere le parole.',register:'Crea account',skip:'Salta',wordAdded:'Parola aggiunta!'},
+  pl:{nativeQ:'Jaki jest twój ojczysty język?',learnQ:'Jakiego języka się uczysz?',step1:'Krok 1/3 — Ojczysty język',step2:'Krok 2/3 — Język do nauki',step3:'Krok 3/3',cont:'Kontynuuj →',back:'← Wstecz',search:'Szukaj…',chooseLang:'Wybierz język',addWord:'Dodaj słowo',noAccount:'Bez konta',signInBtn:'Zaloguj się',signInSub:'Synchronizuj postępy',saveTitle:'Zapisz swoje postępy!',saveDesc:'Utwórz darmowe konto dla swoich słów.',register:'Utwórz konto',skip:'Pomiń',wordAdded:'Słowo dodane!'},
+  ar:{nativeQ:'ما هي لغتك الأم؟',learnQ:'ما اللغة التي ستتعلمها؟',step1:'الخطوة 1/3 — لغتك الأم',step2:'الخطوة 2/3 — اللغة التي تتعلمها',step3:'الخطوة 3/3',cont:'متابعة →',back:'→ رجوع',search:'بحث…',chooseLang:'اختر اللغة',addWord:'إضافة كلمة',noAccount:'بدون حساب',signInBtn:'تسجيل الدخول',signInSub:'مزامنة التقدم',saveTitle:'احفظ تقدمك!',saveDesc:'أنشئ حسابًا مجانيًا للحفاظ على كلماتك.',register:'إنشاء حساب',skip:'تخطي',wordAdded:'تمت إضافة الكلمة!'},
+  hi:{nativeQ:'आपकी मातृभाषा क्या है?',learnQ:'आप कौन सी भाषा सीखेंगे?',step1:'चरण 1/3 — आपकी मातृभाषा',step2:'चरण 2/3 — सीखने की भाषा',step3:'चरण 3/3',cont:'जारी रखें →',back:'← वापस',search:'खोजें…',chooseLang:'भाषा चुनें',addWord:'शब्द जोड़ें',noAccount:'खाते की ज़रूरत नहीं',signInBtn:'साइन इन',signInSub:'प्रगति सिंक करें',saveTitle:'अपनी प्रगति बचाएं!',saveDesc:'अपने शब्दों को सुरक्षित रखने के लिए मुफ़्त खाता बनाएं।',register:'खाता बनाएं',skip:'छोड़ें',wordAdded:'शब्द जोड़ा गया!'},
+};
+function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
+
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[]};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add'};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -14,7 +35,7 @@ async function api(path,o={}){
   if(!r.ok){const e=await r.json().catch(()=>({error:r.statusText}));throw new Error(e.error||r.statusText);}
   return r.json();
 }
-async function ai(type,data){return api('/api/ai/'+type,{method:'POST',body:data});}
+async function ai(type,data){return api('/api/ai/'+type,{method:'POST',body:{learnLang:S.ll,nativeLang:S.nl,...data}});}
 function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0};}
 function saveWord(s) {
   S.words = [mw(s), ...S.words.filter(x => x.word !== s.word)];
@@ -73,14 +94,14 @@ function progressBar(pct, color, height) {
 
 // ── AUTH ────────────────────────────────────────────────
 function showErr(m){const e=ge('aerr');if(e){e.textContent=m;e.style.display='block';}}
-function logout(){S.tok='';S.user=null;S.words=[];S.hist=[];S.grps=[];localStorage.removeItem('tok');ss({scr:'ob',step:1});}
+function logout(){S.tok='';S.user=null;S.words=[];S.hist=[];S.grps=[];localStorage.removeItem('tok');ss({scr:'ob',step:1,guest:false,guestStep:'add'});}
 async function selLang(code){
   const isN=S.lp==='n';if(isN)S.nl=code;else S.ll=code;
   try{await api('/api/auth/lang',{method:'PATCH',body:{nativeLang:S.nl,learnLang:S.ll}});}catch{}
   ss({lp:false});
 }
 function aGoogle(){
-  if(S.step!==3)return;
+  if(S.step!==4)return;
   setTimeout(()=>{
     if(!window.google?.accounts?.id)return;
     try{
@@ -91,9 +112,12 @@ function aGoogle(){
 }
 async function onGoogle(resp){
   try{
+    const guestWords=S.words.filter(w=>w.local);
     const d=await api('/api/auth/google',{method:'POST',body:{token:resp.credential,nativeLang:S.nl,learnLang:S.ll}});
     S.tok=d.token;localStorage.setItem('tok',d.token);S.user=fmtU(d.user);S.nl=S.user.nl;S.ll=S.user.ll;
-    await loadData();ss({scr:'main',tab:'dict'});
+    await loadData();
+    for(const w of guestWords){try{const s=await api('/api/words',{method:'POST',body:{word:w.word,translation:w.tr,transcription:w.ts,level:w.lv,example_en:w.ex,example_ru:w.exr,grammar_note:w.gr,hard:w.hard}});saveWord(s);}catch{}}
+    ss({scr:'main',tab:'dict',guest:false,guestStep:'add'});
   }catch(err){showErr(err.message);}
 }
 async function emailAuth(){
@@ -101,11 +125,15 @@ async function emailAuth(){
   if(!em||!pw){showErr('Fill in email and password');return;}
   if(pw.length<6){showErr('Password min 6 chars');return;}
   try{
+    const guestWords=S.words.filter(w=>w.local);
     const d=await api('/api/auth/email',{method:'POST',body:{email:em,password:pw,nativeLang:S.nl,learnLang:S.ll}});
     S.tok=d.token;localStorage.setItem('tok',d.token);S.user=fmtU(d.user);S.nl=S.user.nl;S.ll=S.user.ll;
-    await loadData();ss({scr:'main',tab:'dict'});
+    await loadData();
+    for(const w of guestWords){try{const s=await api('/api/words',{method:'POST',body:{word:w.word,translation:w.tr,transcription:w.ts,level:w.lv,example_en:w.ex,example_ru:w.exr,grammar_note:w.gr,hard:w.hard}});saveWord(s);}catch{}}
+    ss({scr:'main',tab:'dict',guest:false,guestStep:'add'});
   }catch(err){showErr(err.message);}
 }
+function enterGuest(){ss({scr:'main',tab:'dict',guest:true,guestStep:'add'});}
 
 // ── RENDER: SHELL ───────────────────────────────────────
 function render(){
@@ -114,9 +142,10 @@ function render(){
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
   const tabs=isT?[{id:'dict',i:'📖',l:'Words'},{id:'groups',i:'👥',l:'Groups'},{id:'practice',i:'🏋️',l:'Practice'},{id:'progress',i:'📊',l:'Stats'}]:[{id:'dict',i:'📖',l:'Words'},{id:'practice',i:'🏋️',l:'Practice'},{id:'history',i:'📜',l:'History'},{id:'progress',i:'📊',l:'Stats'}];
   const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
-  const av=u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
+  const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
+    :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
   const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
-  app.innerHTML='<header class="hdr"><div class="logo">AI <em>'+ln+'</em> Tutor</div><div class="hdr-r"><div class="streak">🔥 '+(u?.streak||0)+'</div>'+av+'</div></header>'
+  app.innerHTML='<header class="hdr"><div class="logo">AI <em>'+ln+'</em> Tutor</div><div class="hdr-r">'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
     +'<main class="content" id="mc">'+rMain()+'</main>'
     +'<nav class="nav">'+tabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')+'</nav>'
     +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
@@ -126,31 +155,61 @@ function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.ta
 function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});}
 
 // ── RENDER: ONBOARDING ──────────────────────────────────
-function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();return ob3();}
+function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();if(S.step===3)return ob3();if(S.step===4)return ob4();return ob5();}
 function ob1(){
   const list=LANGS.filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
-  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(94,255,196,.3))">🌍</div><div class="obl">AI Language <em>Tutor</em></div><div class="obs">Learn any language with AI personalized to you.<br><span style="color:var(--t3);font-size:12px">Step 1 of 3 — Your native language</span></div></div>'
-    +'<div class="obs2 mb3"><div class="oblbl">What is your native language?</div>'
-    +'<div class="obsw"><span class="obsico">🔍</span><input class="obsinp" placeholder="Search…" value="'+(S.obs||'')+'" oninput="S.obs=this.value;render()"></div>'
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(94,255,196,.3))">🌍</div><div class="obl">AI Language <em>Tutor</em></div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step1')+'</div></div>'
+    +'<div class="obs2 mb3"><div class="oblbl">'+t('nativeQ')+'</div>'
+    +'<div class="obsw"><span class="obsico">🔍</span><input class="obsinp" placeholder="'+t('search')+'" value="'+(S.obs||'')+'" oninput="S.obs=this.value;render()"></div>'
     +'<div class="lg">'+list.map(l=>'<div class="lc'+(S.nl===l.code?' sel':'')+'" onclick="S.nl=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.nl===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
-    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px"><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:2,obs:\'\'})">Continue →</button></div></div>';
+    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px"><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:2,obs:\'\'})">'+t('cont')+'</button></div></div>';
 }
 function ob2(){
-  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📚</div><div class="obl">What will you <em>learn?</em></div><div class="obs"><span style="color:var(--t3);font-size:12px">Step 2 of 3 — Language to learn</span></div></div>'
-    +'<div class="obs2 mb3"><div class="oblbl">Choose language to learn</div>'
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📚</div><div class="obl">'+t('learnQ').replace(/\?/,'? <em>🎯</em>')+'</div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step2')+'</div></div>'
+    +'<div class="obs2 mb3"><div class="oblbl">'+t('chooseLang')+'</div>'
     +'<div class="lg">'+LLANGS.map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
-    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px;display:flex;gap:9px"><button class="btn bg_ bfu" onclick="ss({step:1})">← Back</button><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:3})">Continue →</button></div></div>';
+    +'<div style="width:100%;position:relative;z-index:1;margin-top:14px;display:flex;gap:9px"><button class="btn bg_ bfu" onclick="ss({step:1})">'+t('back')+'</button><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:3})">'+t('cont')+'</button></div></div>';
 }
 function ob3(){
   const c=LANGS.find(l=>l.code===S.nl);const ln=LLANGS.find(l=>l.code===S.ll);
-  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🔑</div><div class="obl">Sign <em>in</em></div><div class="obs">'+(c?c.flag+' '+c.name:'')+(ln?' → '+ln.flag+' '+ln.name:'')+'<br><span style="color:var(--t3);font-size:12px">Step 3 of 3</span></div></div>'
+  const pair=(c?c.flag+' '+c.name:'')+(ln?' → '+ln.flag+' '+ln.name:'');
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🚀</div><div class="obl" style="font-size:20px">'+pair+'</div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step3')+'</div></div>'
+    +'<div class="obs2" style="position:relative;z-index:1;display:flex;flex-direction:column;gap:12px">'
+    +'<button class="btn bp bfu" style="padding:20px 16px;font-size:15px;border-radius:16px;display:flex;align-items:center;gap:14px;text-align:left" onclick="ss({step:5,guestStep:\'add\'})">'
+    +'<span style="font-size:30px">📝</span><div><div style="font-weight:700;margin-bottom:3px">'+t('addWord')+'</div><div style="font-size:11px;opacity:.7">'+t('noAccount')+'</div></div></button>'
+    +'<button class="btn bg_ bfu" style="padding:20px 16px;font-size:15px;border-radius:16px;display:flex;align-items:center;gap:14px;text-align:left" onclick="ss({step:4})">'
+    +'<span style="font-size:30px">🔑</span><div><div style="font-weight:700;margin-bottom:3px">'+t('signInBtn')+'</div><div style="font-size:11px;opacity:.7">'+t('signInSub')+'</div></div></button>'
+    +'<button class="btn bg_ bfu" style="padding:11px" onclick="ss({step:2})">'+t('back')+'</button></div></div>';
+}
+function ob4(){
+  const c=LANGS.find(l=>l.code===S.nl);const ln=LLANGS.find(l=>l.code===S.ll);
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🔑</div><div class="obl">'+t('signInBtn')+'</div><div class="obs">'+(c?c.flag+' '+c.name:'')+(ln?' → '+ln.flag+' '+ln.name:'')+'<br><span style="color:var(--t3);font-size:12px">'+t('step3')+'</span></div></div>'
     +'<div class="obs2" style="position:relative;z-index:1"><div id="gbw" style="margin-bottom:12px"></div>'
     +'<div style="text-align:center;color:var(--t3);font-size:12px;margin-bottom:12px">— or email —</div>'
     +'<input id="ob-em" class="inp" type="email" placeholder="Email" style="margin-bottom:10px">'
     +'<input id="ob-pw" class="inp" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:12px">'
     +'<div id="aerr" style="color:var(--danger);font-size:12px;margin-bottom:8px;display:none"></div>'
     +'<button class="btn bp bfu mb2" style="padding:12px" onclick="emailAuth()">Sign in / Register</button>'
-    +'<button class="btn bg_ bfu" onclick="ss({step:2})">← Back</button></div></div>';
+    +'<button class="btn bg_ bfu" onclick="ss({step:3})">'+t('back')+'</button></div></div>';
+}
+function ob5(){
+  if(S.guestStep==='prompt')return ob5Prompt();
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📝</div><div class="obl">'+t('addWord')+'</div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step3')+'</div></div>'
+    +'<div class="obs2" style="position:relative;z-index:1">'+rAddM()
+    +'<button class="btn bg_ bfu" style="margin-top:10px" onclick="ss({step:3})">'+t('back')+'</button></div></div>';
+}
+function ob5Prompt(){
+  const w=S.words[0];
+  return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🎉</div><div class="obl">'+t('saveTitle')+'</div><div class="obs">'+t('saveDesc')+'</div></div>'
+    +(w?'<div class="obs2 mb3" style="position:relative;z-index:1"><div class="card csm"><div class="rb2"><span class="syn fw7 f13">'+w.word+'</span>'+lvl(w.lv)+'</div><div class="f12 c2">'+w.tr+'</div></div></div>':'')
+    +'<div class="obs2" style="position:relative;z-index:1;display:flex;flex-direction:column;gap:10px">'
+    +'<div id="gbw2" style="margin-bottom:4px"></div>'
+    +'<div style="text-align:center;color:var(--t3);font-size:12px">— or email —</div>'
+    +'<input id="ob-em" class="inp" type="email" placeholder="Email" style="margin-bottom:6px">'
+    +'<input id="ob-pw" class="inp" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:8px">'
+    +'<div id="aerr" style="color:var(--danger);font-size:12px;margin-bottom:4px;display:none"></div>'
+    +'<button class="btn bp bfu" style="padding:13px" onclick="emailAuth()">'+t('register')+'</button>'
+    +'<button class="btn bg_ bfu" style="padding:11px" onclick="enterGuest()">'+t('skip')+'</button></div></div>';
 }
 
 // ── RENDER: MODALS ──────────────────────────────────────
@@ -205,7 +264,8 @@ function rDict(){
     const m=w.word.toLowerCase().includes(S.srch.toLowerCase())||w.tr.toLowerCase().includes(S.srch.toLowerCase());
     if(S.filt==='All')return m;if(S.filt==='⭐')return m&&w.hard;return m&&w.lv===S.filt;
   });
-  return '<div class="sc"><div class="sht">My Dictionary</div><div class="shs">'+S.words.length+' words · '+S.words.filter(w=>w.hard).length+' hard</div>'
+  const guestBanner=S.guest?'<div class="rb" style="background:var(--acD);border-color:var(--ac);margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💾</span><div style="flex:1"><div class="fw6 f12">'+t('saveTitle')+'</div><div class="f11 c2 mt1">'+t('saveDesc')+'</div></div><button class="btn bp bsm" style="font-size:11px;white-space:nowrap" onclick="ss({scr:\'ob\',step:4})">'+t('register')+'</button></div>':'';
+  return '<div class="sc"><div class="sht">My Dictionary</div><div class="shs">'+S.words.length+' words · '+S.words.filter(w=>w.hard).length+' hard</div>'+guestBanner
     +'<div class="sw"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
     +'<div class="pills">'+['All','⭐',...LEVELS].map(f=>'<button class="pill'+(S.filt===f?' on':'')+'" onclick="S.filt=\''+f+'\';render()">'+(f==='⭐'?'⭐ Hard':f)+'</button>').join('')+'</div>'
     +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
@@ -282,6 +342,12 @@ function rAddForm(word){
 }
 async function saveW(word){
   const body={word,translation:ge('f-tr')?.value||'',transcription:ge('f-ts')?.value||'',level:ge('f-lv')?.value||'B1',example_en:ge('f-ex')?.value||'',example_ru:ge('f-exr')?.value||'',grammar_note:ge('f-gr')?.value||'',hard:false};
+  if(!S.user){
+    S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0,local:true},...S.words];
+    if(S.scr==='ob'){ss({guestStep:'prompt'});setTimeout(()=>{if(!window.google?.accounts?.id)return;try{google.accounts.id.initialize({client_id:GID,callback:onGoogle});google.accounts.id.renderButton(ge('gbw2'),{theme:'outline',size:'large',width:300,text:'continue_with'});}catch{}},400);}
+    else ss({add:false});
+    return;
+  }
   try{const s=await api('/api/words',{method:'POST',body});S.words=[mw(s),...S.words];}
   catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
   ss({add:false});
