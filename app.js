@@ -546,3 +546,32 @@ function rProg(){
 
 // ── INIT ────────────────────────────────────────────────
 render();
+
+// ── PULL TO REFRESH ─────────────────────────────────────
+let _ptY=0;
+document.addEventListener('touchstart',e=>{
+  const mc=ge('mc');
+  if(mc&&mc.scrollTop===0&&S.scr==='main'&&!S.add&&!S.det&&!S.prof&&!S.lp)
+    _ptY=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!_ptY)return;
+  const mc=ge('mc');if(!mc||mc.scrollTop>2){_ptY=0;return;}
+  const dy=e.touches[0].clientY-_ptY;
+  if(dy<=0)return;
+  let ind=ge('ptr-ind');
+  if(!ind){ind=document.createElement('div');ind.id='ptr-ind';ind.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--sur2);border:1px solid var(--brd2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--t3);z-index:30;pointer-events:none';document.body.appendChild(ind);}
+  ind.textContent=dy>65?'⬆️ Release to refresh':'↓ Pull to refresh';
+},{passive:true});
+document.addEventListener('touchend',async e=>{
+  if(!_ptY)return;
+  const dy=e.changedTouches[0].clientY-_ptY;
+  const ind=ge('ptr-ind');
+  if(ind&&dy>65){
+    ind.textContent='⟳ Refreshing…';
+    if(S.user)await loadData();
+    render();
+  }
+  if(ind)ind.remove();
+  _ptY=0;
+},{passive:true});
