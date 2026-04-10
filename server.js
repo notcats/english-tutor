@@ -188,14 +188,19 @@ function genGroupCode() {
 }
 
 async function callClaude(messages, system, maxTokens = 1000) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: maxTokens, system, messages }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.GROQ_KEY },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: maxTokens,
+      messages: [{ role: 'system', content: system }, ...messages],
+      temperature: 0.3,
+    }),
   });
   const d = await r.json();
   if (d.error) throw new Error(d.error.message);
-  return (d.content || []).map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+  return (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
 }
 
 function getSystemPrompt(userId, nativeLang, learnLang) {
@@ -568,26 +573,8 @@ app.post('/api/ai/bulk', auth, aiLimit, checkLimit, async (req, res) => {
 });
 
 app.post('/api/ai/image', auth, aiLimit, checkLimit, async (req, res) => {
-  try {
-    const { imageBase64, mimeType } = req.body;
-    const langs = await getUserLangs(req.user.id);
-    const ll = LEARN[langs.learn_lang] || 'English';
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 2000,
-        system: getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
-        messages: [{ role: 'user', content: [
-          { type: 'image', source: { type: 'base64', media_type: mimeType || 'image/jpeg', data: imageBase64 } },
-          { type: 'text', text: `Extract all ${ll} words/phrases being taught in this image. For each provide translation in native language, IPA transcription, CEFR level, example sentence, grammar note.\nReturn ONLY JSON:\n{"words":[{"word":"...","translation":"...","transcription":"...","level":"B1","example_en":"...","example_ru":"...","grammar_note":"..."}]}` }
-        ]}]
-      })
-    });
-    const d = await r.json();
-    const raw = (d.content || []).map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
-    res.json(JSON.parse(raw));
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  // Groq does not support image input — return helpful error
+  res.status(400).json({ error: 'Photo mode requires a vision-capable AI. Use Manual or List mode instead.' });
 });
 
 app.post('/api/ai/analyze', auth, aiLimit, checkLimit, async (req, res) => {
