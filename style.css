@@ -1,7 +1,9 @@
 :root{--bg:#080a0f;--sur:#111420;--sur2:#181b28;--sur3:#1e2235;--brd:#252840;--brd2:#2e3350;--ac:#5effc4;--acD:rgba(94,255,196,.1);--ac2:#7c6fff;--ac3:#ff6b9d;--warn:#ffb547;--danger:#ff5e6d;--t:#eef0f8;--t2:#a8adc8;--t3:#5a6080}
 [data-theme="light"]{--bg:#f4f6fb;--sur:#ffffff;--sur2:#eef0f8;--sur3:#e5e8f5;--brd:#dde0ee;--brd2:#c8cce0;--ac:#00a876;--acD:rgba(0,168,118,.12);--ac2:#5040c8;--ac3:#d0305a;--warn:#c97d00;--danger:#d03040;--t:#111428;--t2:#4a506e;--t3:#8a90b0}
 [data-theme="light"] .hdr{background:rgba(244,246,251,.97)}
-[data-theme="light"] .nav{background:rgba(255,255,255,.97)}
+[data-theme="light"] .nav{background:rgba(255,255,255,.98);box-shadow:0 -2px 16px rgba(0,0,0,.08);border-top-color:#c8cce0}
+[data-theme="light"] .nb{color:#6b7290}
+[data-theme="light"] .nb.on{color:#00a876}
 [data-theme="light"] .ovl{background:rgba(0,0,0,.45)}
 [data-theme="light"] .bp,[data-theme="light"] .pill.on,[data-theme="light"] .fab{color:#fff}
 [data-theme="light"] #app::before{background:radial-gradient(ellipse 70% 45% at 20% 5%,rgba(0,168,118,.07) 0%,transparent 70%),radial-gradient(ellipse 50% 35% at 85% 95%,rgba(80,64,200,.05) 0%,transparent 70%)}
@@ -21,7 +23,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-f
 .content{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 14px 80px;position:relative;z-index:1;-webkit-overflow-scrolling:touch}
 .content::-webkit-scrollbar{width:3px}.content::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
 .nav{display:flex;position:relative;z-index:5;background:rgba(13,15,23,.97);border-top:1px solid var(--brd);padding:6px 0 max(10px,env(safe-area-inset-bottom));flex-shrink:0}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:9px;font-weight:500;color:var(--t3);padding:3px 0;transition:color .2s}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;color:var(--t3);padding:3px 0;transition:color .2s}
 .nb.on{color:var(--ac)}.ni{font-size:19px;line-height:1}.nb.on .ni{transform:scale(1.1)}
 .sc{animation:fu .22s ease}
 @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
