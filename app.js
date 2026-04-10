@@ -124,7 +124,7 @@ function render(){
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
   const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
-  app.innerHTML='<header class="hdr"><div class="logo">AI <em>'+ln+'</em> Tutor</div><div class="hdr-r">'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
+  app.innerHTML='<header class="hdr"><div class="logo">AI <em>Dictionary</em></div><div class="hdr-r">'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
     +'<main class="content" id="mc">'+rMain()+'</main>'
     +'<nav class="nav">'+tabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')+'</nav>'
     +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
