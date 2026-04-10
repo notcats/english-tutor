@@ -498,6 +498,7 @@ async function lRead(){
   try{const d=await ai('text',{words:s.words.slice(0,5).map(w=>w.word)});s.rt=d;}
   catch{s.rt={text:'Learning takes dedication. Every word you study brings you closer to fluency.',questions:[{q:'What does learning require?',options:['Dedication','Speed','Money','Luck'],correct:'Dedication'}]};}
   s.rl=false;render();
+  autoSaveHistory(s.rt.text,s.words.map(w=>w.word),'read');
 }
 function rTxt(){
   const s=S.sess;
@@ -505,18 +506,17 @@ function rTxt(){
     +(s.gl?'<div class="card">'+ld('AI writing story with your words…')+'</div>':'')
     +(s.gt&&!s.gl?rTip()+'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">✍️ Story · Tap any word for translation</div><div class="rt">'+tappableText(s.gt.text)+'</div></div>'
     +((s.gt.questions||[]).length?'<div class="card mb2"><div class="f12 fw6 mb2">Questions</div>'+(s.gt.questions||[]).map((q,i)=>'<div style="margin-bottom:10px"><div class="f12 fw6 mb1">'+(i+1)+'. '+q.q+'</div><div style="color:var(--t2);font-size:12px">'+q.options.map((o,j)=>String.fromCharCode(65+j)+') '+o).join(' · ')+'</div><div style="font-size:11px;color:var(--ac);margin-top:3px">✓ '+q.correct+'</div></div>').join('')+'</div>':'')
-    +'<button class="btn bp bfu mb2" onclick="saveTH()">💾 Save to history</button>':'')+'</div>';
+    :'')+'</div>';
 }
 async function lTxt(){
   const s=S.sess;s.gl=true;s.gt=null;render();
   try{const d=await ai('generate',{words:s.words.map(w=>w.word),type:'story'});s.gt=d;}
   catch{s.gt={text:'Once upon a time, our hero decided to study every day. It was not easy, but they continued to practice.',wordsUsed:s.words.slice(0,3).map(w=>w.word),questions:[{q:'What did the hero do?',options:['Give up','Study hard','Sleep','Run'],correct:'Study hard'}]};}
   s.gl=false;render();
+  autoSaveHistory(s.gt.text,s.words.map(w=>w.word),'text');
 }
-async function saveTH(){
-  const s=S.sess;const t=s.rt||s.gt;if(!t)return;
-  try{const r=await api('/api/history',{method:'POST',body:{text:t.text,words:s.words.map(w=>w.word),type:S.pm}});S.hist=[r,...S.hist];alert('Saved to history!');}
-  catch{alert('Saved locally!');}
+async function autoSaveHistory(text,words,type){
+  try{const r=await api('/api/history',{method:'POST',body:{text,words,type}});S.hist=[r,...S.hist];}catch{}
 }
 function rEnd(){
   const s=S.sess;
