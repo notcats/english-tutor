@@ -507,8 +507,8 @@ app.post('/api/ai/word', optAuth, aiLimit, async (req, res) => {
       await pool.query('UPDATE users SET daily_used=daily_used+1 WHERE id=$1', [req.user.id]);
     }
     const raw = await callClaude(
-      [{ role: 'user', content: `Word/phrase in ${ll}: "${word}"\nReturn ONLY JSON:\n{"translation":"${nl} translation","transcription":"IPA or phonetic","level":"A1/A2/B1/B2/C1/C2","example_en":"example sentence in ${ll}","example_ru":"translation of example in ${nl}","grammar_note":"e.g. countable noun / uncountable noun / transitive verb / intransitive verb / adjective / adverb / idiom etc"}` }],
-      `You are an expert ${ll} language teacher. Native language: ${nl}. Be concise and accurate.`
+      [{ role: 'user', content: `Word/phrase in ${ll}: "${word}"\nIf it is an idiom or set phrase, translate the meaning (not word-for-word). Return ONLY JSON:\n{"translation":"${nl} idiomatic/semantic translation","transcription":"IPA or phonetic","level":"A1/A2/B1/B2/C1/C2","example_en":"natural example sentence in ${ll}","example_ru":"translation of example in ${nl}","grammar_note":"e.g. countable noun / uncountable / transitive verb / intransitive verb / adjective / adverb / idiom / set phrase etc"}` }],
+      `You are an expert ${ll} language teacher. Native language: ${nl}. For idioms and set phrases always give the idiomatic meaning in ${nl}, never a literal word-for-word translation. Be concise and accurate.`
     );
     const d = JSON.parse(raw);
     await pool.query(
