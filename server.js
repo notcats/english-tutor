@@ -271,25 +271,6 @@ app.delete('/api/admin/cache/:id', adminAuth, async (req, res) => {
 });
 
 // ── AUTH ROUTES ───────────────────────────────────────────────
-app.post('/api/auth/google', async (req, res) => {
-  try {
-    const { token, nativeLang, learnLang } = req.body;
-    const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-    const gData = await gRes.json();
-    if (gData.error) return res.status(401).json({ error: 'Invalid Google token' });
-    const { sub: googleId, email, name, picture } = gData;
-    let result = await pool.query(
-      `INSERT INTO users (google_id, email, name, avatar, native_lang, learn_lang)
-       VALUES ($1,$2,$3,$4,$5,$6)
-       ON CONFLICT (google_id) DO UPDATE SET name=$3, avatar=$4, last_seen=NOW()
-       RETURNING *`,
-      [googleId, email, name, picture, nativeLang || 'ru', learnLang || 'en']
-    );
-    const user = result.rows[0];
-    await pool.query(`INSERT INTO streaks (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, [user.id]);
-    res.json({ token: makeToken(user), user: formatUser(user) });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
 app.post('/api/auth/email', async (req, res) => {
   try {

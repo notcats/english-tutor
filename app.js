@@ -1,5 +1,4 @@
 // ── CONFIG ──────────────────────────────────────────────
-const GID='1071970252736-hnlmo0ikjrmm9r8ap9tkicdgdv1accl0.apps.googleusercontent.com';
 const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},{code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},{code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},{code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},{code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},{code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},{code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},{code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},{code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},{code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},{code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},{code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},{code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},{code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},{code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"}];
 const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
@@ -100,26 +99,6 @@ async function selLang(code){
   try{await api('/api/auth/lang',{method:'PATCH',body:{nativeLang:S.nl,learnLang:S.ll}});}catch{}
   ss({lp:false});
 }
-function aGoogle(){
-  if(S.step!==4)return;
-  setTimeout(()=>{
-    if(!window.google?.accounts?.id)return;
-    try{
-      google.accounts.id.initialize({client_id:GID,callback:onGoogle});
-      google.accounts.id.renderButton(ge('gbw'),{theme:'outline',size:'large',width:390,text:'continue_with'});
-    }catch(e){console.warn('Google:',e);}
-  },500);
-}
-async function onGoogle(resp){
-  try{
-    const guestWords=S.words.filter(w=>w.local);
-    const d=await api('/api/auth/google',{method:'POST',body:{token:resp.credential,nativeLang:S.nl,learnLang:S.ll}});
-    S.tok=d.token;localStorage.setItem('tok',d.token);S.user=fmtU(d.user);S.nl=S.user.nl;S.ll=S.user.ll;
-    await loadData();
-    for(const w of guestWords){try{const s=await api('/api/words',{method:'POST',body:{word:w.word,translation:w.tr,transcription:w.ts,level:w.lv,example_en:w.ex,example_ru:w.exr,grammar_note:w.gr,hard:w.hard}});saveWord(s);}catch{}}
-    ss({scr:'main',tab:'dict',guest:false,guestStep:'add'});
-  }catch(err){showErr(err.message);}
-}
 async function emailAuth(){
   const em=ge('ob-em')?.value?.trim();const pw=ge('ob-pw')?.value;
   if(!em||!pw){showErr('Fill in email and password');return;}
@@ -138,7 +117,7 @@ function enterGuest(){ss({scr:'main',tab:'dict',guest:true,guestStep:'add'});}
 // ── RENDER: SHELL ───────────────────────────────────────
 function render(){
   const app=document.getElementById('app');
-  if(S.scr==='ob'){app.innerHTML=rOb();aGoogle();return;}
+  if(S.scr==='ob'){app.innerHTML=rOb();return;}
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
   const tabs=isT?[{id:'dict',i:'📖',l:'Words'},{id:'groups',i:'👥',l:'Groups'},{id:'practice',i:'🏋️',l:'Practice'},{id:'progress',i:'📊',l:'Stats'}]:[{id:'dict',i:'📖',l:'Words'},{id:'practice',i:'🏋️',l:'Practice'},{id:'history',i:'📜',l:'History'},{id:'progress',i:'📊',l:'Stats'}];
   const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
@@ -184,8 +163,7 @@ function ob3(){
 function ob4(){
   const c=LANGS.find(l=>l.code===S.nl);const ln=LLANGS.find(l=>l.code===S.ll);
   return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🔑</div><div class="obl">'+t('signInBtn')+'</div><div class="obs">'+(c?c.flag+' '+c.name:'')+(ln?' → '+ln.flag+' '+ln.name:'')+'<br><span style="color:var(--t3);font-size:12px">'+t('step3')+'</span></div></div>'
-    +'<div class="obs2" style="position:relative;z-index:1"><div id="gbw" style="margin-bottom:12px"></div>'
-    +'<div style="text-align:center;color:var(--t3);font-size:12px;margin-bottom:12px">— or email —</div>'
+    +'<div class="obs2" style="position:relative;z-index:1">'
     +'<input id="ob-em" class="inp" type="email" placeholder="Email" style="margin-bottom:10px">'
     +'<input id="ob-pw" class="inp" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:12px">'
     +'<div id="aerr" style="color:var(--danger);font-size:12px;margin-bottom:8px;display:none"></div>'
@@ -203,8 +181,6 @@ function ob5Prompt(){
   return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">🎉</div><div class="obl">'+t('saveTitle')+'</div><div class="obs">'+t('saveDesc')+'</div></div>'
     +(w?'<div class="obs2 mb3" style="position:relative;z-index:1"><div class="card csm"><div class="rb2"><span class="syn fw7 f13">'+w.word+'</span>'+lvl(w.lv)+'</div><div class="f12 c2">'+w.tr+'</div></div></div>':'')
     +'<div class="obs2" style="position:relative;z-index:1;display:flex;flex-direction:column;gap:10px">'
-    +'<div id="gbw2" style="margin-bottom:4px"></div>'
-    +'<div style="text-align:center;color:var(--t3);font-size:12px">— or email —</div>'
     +'<input id="ob-em" class="inp" type="email" placeholder="Email" style="margin-bottom:6px">'
     +'<input id="ob-pw" class="inp" type="password" placeholder="Password (min 6 chars)" style="margin-bottom:8px">'
     +'<div id="aerr" style="color:var(--danger);font-size:12px;margin-bottom:4px;display:none"></div>'
@@ -344,7 +320,7 @@ async function saveW(word){
   const body={word,translation:ge('f-tr')?.value||'',transcription:ge('f-ts')?.value||'',level:ge('f-lv')?.value||'B1',example_en:ge('f-ex')?.value||'',example_ru:ge('f-exr')?.value||'',grammar_note:ge('f-gr')?.value||'',hard:false};
   if(!S.user){
     S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0,local:true},...S.words];
-    if(S.scr==='ob'){ss({guestStep:'prompt'});setTimeout(()=>{if(!window.google?.accounts?.id)return;try{google.accounts.id.initialize({client_id:GID,callback:onGoogle});google.accounts.id.renderButton(ge('gbw2'),{theme:'outline',size:'large',width:300,text:'continue_with'});}catch{}},400);}
+    if(S.scr==='ob'){ss({guestStep:'prompt'});}
     else ss({add:false});
     return;
   }
