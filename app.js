@@ -124,14 +124,10 @@ function render(){
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
   const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
-  const half=Math.ceil(tabs.length/2);
-  const leftTabs=tabs.slice(0,half);const rightTabs=tabs.slice(half);
-  const addBtn='<button class="nb-add" onclick="ss({add:true,addTab:\'manual\'})"><div class="nb-add-btn">＋</div></button>';
   app.innerHTML='<header class="hdr"><div class="logo">AI <em>'+ln+'</em> Tutor</div><div class="hdr-r">'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
     +'<main class="content" id="mc">'+rMain()+'</main>'
-    +'<nav class="nav">'+leftTabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')
-    +(!S.add?addBtn:'<div class="nb-add"></div>')
-    +rightTabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')+'</nav>'
+    +'<nav class="nav">'+tabs.map(t=>'<button class="nb'+(S.tab===t.id&&!S.add?' on':'')+'" onclick="swT(\''+t.id+'\')"><span class="ni">'+t.i+'</span>'+t.l+'</button>').join('')+'</nav>'
+    +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
     +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
 function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();return rDict();}
