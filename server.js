@@ -476,7 +476,7 @@ app.post('/api/ai/word', optAuth, aiLimit, async (req, res) => {
     const cached = await pool.query('SELECT * FROM word_cache WHERE word=$1 AND learn_lang=$2 AND native_lang=$3', [wordLower, ll_code, nl_code]);
     if (cached.rows.length > 0) {
       const c = cached.rows[0];
-      return res.json({ translation: c.translation, transcription: c.transcription, level: c.level, example_en: c.example_en, example_ru: c.example_ru, grammar_note: c.grammar_note, from_cache: true });
+      return res.json({ translation: c.translation, transcription: c.transcription, level: c.level, example_en: c.example_en, example_ru: c.example_ru, grammar_note: c.grammar_note, synonyms: c.synonyms||[], from_cache: true });
     }
     if (req.user) {
       const u = await pool.query('SELECT daily_used, daily_limit, last_reset FROM users WHERE id=$1', [req.user.id]);
@@ -488,14 +488,14 @@ app.post('/api/ai/word', optAuth, aiLimit, async (req, res) => {
       await pool.query('UPDATE users SET daily_used=daily_used+1 WHERE id=$1', [req.user.id]);
     }
     const raw = await callClaude(
-      [{ role: 'user', content: `Word/phrase in ${ll}: "${word}"\nIf it is an idiom or set phrase, translate the meaning (not word-for-word). Return ONLY JSON:\n{"translation":"${nl} idiomatic/semantic translation","transcription":"IPA or phonetic","level":"A1/A2/B1/B2/C1/C2","example_en":"natural example sentence in ${ll}","example_ru":"translation of example in ${nl}","grammar_note":"e.g. countable noun / uncountable / transitive verb / intransitive verb / adjective / adverb / idiom / set phrase etc"}` }],
-      `You are an expert ${ll} language teacher. Native language: ${nl}. For idioms and set phrases always give the idiomatic meaning in ${nl}, never a literal word-for-word translation. Be concise and accurate.`
+      [{ role: 'user', content: `Word/phrase in ${ll}: "${word}"\nIf it is an idiom or set phrase, translate the meaning (not word-for-word). Return ONLY JSON:\n{"translation":"${nl} idiomatic/semantic translation","transcription":"IPA phonetic in square brackets e.g. [ˈfriːdəm]","level":"A1/A2/B1/B2/C1/C2","example_en":"natural example sentence in ${ll}","example_ru":"translation of example in ${nl}","grammar_note":"e.g. countable noun / uncountable / transitive verb / adjective / idiom etc","synonyms":[{"word":"synonym1","translation":"${nl} translation"},{"word":"synonym2","translation":"${nl} translation"},{"word":"synonym3","translation":"${nl} translation"}]}` }],
+      `You are an expert ${ll} language teacher. Native language: ${nl}. For idioms always give the idiomatic meaning in ${nl}. Transcription must be IPA of the ${ll} word, not ${nl}. Be concise and accurate.`
     );
     const d = JSON.parse(raw);
     await pool.query(
-      `INSERT INTO word_cache (word, learn_lang, native_lang, translation, transcription, level, example_en, example_ru, grammar_note)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (word, learn_lang, native_lang) DO NOTHING`,
-      [wordLower, ll_code, nl_code, d.translation, d.transcription, d.level, d.example_en, d.example_ru, d.grammar_note]
+      `INSERT INTO word_cache (word, learn_lang, native_lang, translation, transcription, level, example_en, example_ru, grammar_note, synonyms)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (word, learn_lang, native_lang) DO NOTHING`,
+      [wordLower, ll_code, nl_code, d.translation, d.transcription, d.level, d.example_en, d.example_ru, d.grammar_note, JSON.stringify(d.synonyms||[])]
     );
     res.json(d);
   } catch (err) { res.status(500).json({ error: err.message }); }

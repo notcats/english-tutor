@@ -304,13 +304,23 @@ function rAddL(){
 async function fwAI(){
   const w=ge('nw')?.value?.trim();if(!w)return;const a=ge('ar');if(!a)return;
   a.innerHTML=ld('AI getting data…');
-  try{const d=await ai('word',{word:w});_ad={translation:d.translation||'',transcription:d.transcription||'',level:d.level||'B1',example_en:d.example_en||'',example_ru:d.example_ru||'',grammar_note:d.grammar_note||''};rAddForm(w);}
-  catch(e){_ad={translation:'',transcription:'',level:'B1',example_en:'',example_ru:'',grammar_note:''};a.innerHTML='<div class="rb err f12 mb2">'+e.message+'</div>';rAddForm(w);}
+  try{const d=await ai('word',{word:w});_ad={translation:d.translation||'',transcription:d.transcription||'',level:d.level||'B1',example_en:d.example_en||'',example_ru:d.example_ru||'',grammar_note:d.grammar_note||'',synonyms:d.synonyms||[]};rAddForm(w);}
+  catch(e){_ad={translation:'',transcription:'',level:'B1',example_en:'',example_ru:'',grammar_note:'',synonyms:[]};a.innerHTML='<div class="rb err f12 mb2">'+e.message+'</div>';rAddForm(w);}
 }
 function rAddForm(word){
   const a=ge('ar');if(!a||!_ad)return;const d=_ad;
+  const syn=d.synonyms||[];
   a.innerHTML='<div class="sc">'
-    +[['Translation','f-tr','translation'],['Transcription','f-ts','transcription'],['Example','f-ex','example_en'],['Example translation','f-exr','example_ru']].map(([l,id,k])=>'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">'+l+'</label><input id="'+id+'" class="inp" value="'+(d[k]||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'"></div>').join('')
+    +'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">Translation</label><input id="f-tr" class="inp" value="'+(d.translation||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'"></div>'
+    +'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">Transcription</label><input id="f-ts" class="inp" value="'+(d.transcription||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'"></div>'
+    +'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">Example</label>'
+    +'<div class="card csm" style="padding:10px 12px">'
+    +'<input id="f-ex" class="inp" style="background:transparent;border:none;padding:0;font-style:italic;color:var(--t1);font-size:13px;margin-bottom:6px" value="'+(d.example_en||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'">'
+    +'<div style="height:1px;background:var(--brd);margin-bottom:6px"></div>'
+    +'<input id="f-exr" class="inp" style="background:transparent;border:none;padding:0;color:var(--t3);font-size:12px" value="'+(d.example_ru||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'">'
+    +'</div></div>'
+    +(syn.length?'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.7px">Synonyms</label>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+syn.map(s=>'<div style="background:var(--sur2);border:1px solid var(--brd2);border-radius:9px;padding:5px 10px;cursor:pointer" onclick="speak(\''+s.word.replace(/'/g,"\\'")+'\')" title="'+s.translation+'"><div class="fw6 f12">'+s.word+' 🔊</div><div class="f11 c3">'+s.translation+'</div></div>').join('')+'</div></div>':'')
     +'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">📝 Grammar note</label><input id="f-gr" class="inp" placeholder="e.g. countable noun / uncountable / transitive verb" value="'+(d.grammar_note||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'"></div>'
     +'<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.7px">Level</label><select id="f-lv" class="inp">'+LEVELS.map(l=>'<option'+(l===d.level?' selected':'')+'>'+l+'</option>').join('')+'</select></div>'
     +'<div class="row mb2">'+tts(word)+'</div>'
