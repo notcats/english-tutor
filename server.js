@@ -148,6 +148,13 @@ const auth = (req, res, next) => {
     res.status(401).json({ error: 'Unauthorized' });
   }
 };
+const optAuth = (req, res, next) => {
+  try {
+    const token = (req.headers.authorization || '').split(' ')[1];
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+  } catch { req.user = null; }
+  next();
+};
 
 // ── AI LIMIT MIDDLEWARE ───────────────────────────────────────
 const checkLimit = async (req, res, next) => {
@@ -470,33 +477,44 @@ app.post('/api/groups/:id/words', auth, async (req, res) => {
 // ── AI ROUTES ─────────────────────────────────────────────────
 const aiLimit = rateLimit({ windowMs: 60000, max: 30, message: { error: 'Too many AI requests' } });
 
-app.post('/api/ai/word', auth, aiLimit, async (req, res) => {
+app.post('/api/ai/word', optAuth, aiLimit, async (req, res) => {
   try {
-    const { word } = req.body;
-    const langs = await getUserLangs(req.user.id);
-    const ll = LEARN[langs.learn_lang] || 'English';
+    const { word, learnLang: bodyLL, nativeLang: bodyNL } = req.body;
+    let ll_code, nl_code;
+    if (req.user) {
+      const langs = await getUserLangs(req.user.id);
+      ll_code = langs.learn_lang;
+      nl_code = langs.native_lang;
+    } else {
+      ll_code = bodyLL || 'en';
+      nl_code = bodyNL || 'ru';
+    }
+    const ll = LEARN[ll_code] || 'English';
+    const nl = LANGS[nl_code] || 'Russian';
     const wordLower = (word || '').toLowerCase().trim();
-    const cached = await pool.query('SELECT * FROM word_cache WHERE word=$1 AND learn_lang=$2 AND native_lang=$3', [wordLower, langs.learn_lang, langs.native_lang]);
+    const cached = await pool.query('SELECT * FROM word_cache WHERE word=$1 AND learn_lang=$2 AND native_lang=$3', [wordLower, ll_code, nl_code]);
     if (cached.rows.length > 0) {
       const c = cached.rows[0];
       return res.json({ translation: c.translation, transcription: c.transcription, level: c.level, example_en: c.example_en, example_ru: c.example_ru, grammar_note: c.grammar_note, from_cache: true });
     }
-    const u = await pool.query('SELECT daily_used, daily_limit, last_reset FROM users WHERE id=$1', [req.user.id]);
-    const user = u.rows[0];
-    const today = new Date().toISOString().split('T')[0];
-    const lastReset = user.last_reset?.toISOString?.()?.split('T')[0];
-    if (lastReset !== today) await pool.query('UPDATE users SET daily_used=0, last_reset=CURRENT_DATE WHERE id=$1', [req.user.id]);
-    else if (user.daily_used >= user.daily_limit) return res.status(429).json({ error: `Daily limit reached (${user.daily_limit})` });
-    await pool.query('UPDATE users SET daily_used=daily_used+1 WHERE id=$1', [req.user.id]);
+    if (req.user) {
+      const u = await pool.query('SELECT daily_used, daily_limit, last_reset FROM users WHERE id=$1', [req.user.id]);
+      const user = u.rows[0];
+      const today = new Date().toISOString().split('T')[0];
+      const lastReset = user.last_reset?.toISOString?.()?.split('T')[0];
+      if (lastReset !== today) await pool.query('UPDATE users SET daily_used=0, last_reset=CURRENT_DATE WHERE id=$1', [req.user.id]);
+      else if (user.daily_used >= user.daily_limit) return res.status(429).json({ error: `Daily limit reached (${user.daily_limit})` });
+      await pool.query('UPDATE users SET daily_used=daily_used+1 WHERE id=$1', [req.user.id]);
+    }
     const raw = await callClaude(
-      [{ role: 'user', content: `Word/phrase in ${ll}: "${word}"\nReturn ONLY JSON:\n{"translation":"native lang translation","transcription":"IPA or phonetic","level":"A1/A2/B1/B2/C1/C2","example_en":"example sentence in ${ll}","example_ru":"translation of example in native language","grammar_note":"e.g. countable noun / uncountable noun / transitive verb / intransitive verb / adjective / adverb / idiom etc"}` }],
-      getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang)
+      [{ role: 'user', content: `Word/phrase in ${ll}: "${word}"\nReturn ONLY JSON:\n{"translation":"${nl} translation","transcription":"IPA or phonetic","level":"A1/A2/B1/B2/C1/C2","example_en":"example sentence in ${ll}","example_ru":"translation of example in ${nl}","grammar_note":"e.g. countable noun / uncountable noun / transitive verb / intransitive verb / adjective / adverb / idiom etc"}` }],
+      `You are an expert ${ll} language teacher. Native language: ${nl}. Be concise and accurate.`
     );
     const d = JSON.parse(raw);
     await pool.query(
       `INSERT INTO word_cache (word, learn_lang, native_lang, translation, transcription, level, example_en, example_ru, grammar_note)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (word, learn_lang, native_lang) DO NOTHING`,
-      [wordLower, langs.learn_lang, langs.native_lang, d.translation, d.transcription, d.level, d.example_en, d.example_ru, d.grammar_note]
+      [wordLower, ll_code, nl_code, d.translation, d.transcription, d.level, d.example_en, d.example_ru, d.grammar_note]
     );
     res.json(d);
   } catch (err) { res.status(500).json({ error: err.message }); }
