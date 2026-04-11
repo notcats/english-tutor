@@ -210,6 +210,23 @@ async function callClaude(messages, system, maxTokens = 1000) {
   return (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
 }
 
+// If AI returned a letter (A/B/C/D) as correct instead of the full option text, resolve it
+function normalizeQuestions(data) {
+  if (!data?.questions) return data;
+  data.questions = data.questions.map(q => {
+    if (!q.options?.length) return q;
+    const letterMap = { A: 0, B: 1, C: 2, D: 3 };
+    if (/^[A-D]$/.test(q.correct?.trim())) {
+      q.correct = q.options[letterMap[q.correct.trim()]] ?? q.correct;
+    } else {
+      const match = q.options.find(o => o.trim().toLowerCase() === q.correct?.trim().toLowerCase());
+      if (match) q.correct = match;
+    }
+    return q;
+  });
+  return data;
+}
+
 function getSystemPrompt(userId, nativeLang, learnLang) {
   const nl = LANGS[nativeLang] || 'Russian';
   const ll = LEARN[learnLang] || 'English';
@@ -563,11 +580,11 @@ app.post('/api/ai/text', auth, aiLimit, async (req, res) => {
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const raw = await callClaude(
-      [{ role: 'user', content: `Words to use: ${words.join(', ')}\nWrite a reading text in ${ll} ONLY (100-130 words, B2 level) using ALL words naturally. The text field MUST be entirely in ${ll}.\nComprehension questions and answer options must also be in ${ll}.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
+      [{ role: 'user', content: `Words to use: ${words.join(', ')}\nWrite a reading text in ${ll} ONLY (100-130 words, B2 level) using ALL words naturally. The text field MUST be entirely in ${ll}.\nComprehension questions and answer options must also be in ${ll}.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"What does X mean?","options":["first option","second option","third option","fourth option"],"correct":"first option"}]}` }],
       getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
       1500
     );
-    res.json(JSON.parse(raw));
+    res.json(normalizeQuestions(JSON.parse(raw)));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -577,11 +594,11 @@ app.post('/api/ai/generate', auth, aiLimit, async (req, res) => {
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const raw = await callClaude(
-      [{ role: 'user', content: `Words: ${words.join(', ')}\nWrite a creative ${type || 'story'} in ${ll} ONLY (150-200 words) using ALL these words. The text field MUST be entirely in ${ll}. Make it engaging and educational.\nAdd 2 comprehension questions and answer options in ${ll}.\nReturn ONLY JSON:\n{"text":"...","wordsUsed":["w1","w2"],"questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
+      [{ role: 'user', content: `Words: ${words.join(', ')}\nWrite a creative ${type || 'story'} in ${ll} ONLY (150-200 words) using ALL these words. The text field MUST be entirely in ${ll}. Make it engaging and educational.\nAdd 2 comprehension questions and answer options in ${ll}.\nReturn ONLY JSON:\n{"text":"...","wordsUsed":["w1","w2"],"questions":[{"q":"What did X do?","options":["first option","second option","third option","fourth option"],"correct":"first option"}]}` }],
       getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
       2000
     );
-    res.json(JSON.parse(raw));
+    res.json(normalizeQuestions(JSON.parse(raw)));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
