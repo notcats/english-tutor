@@ -252,7 +252,7 @@ function rWM(){
   return modal(innerContent, 'ss({det:null})');
 }
 
-/function printWords(){
+function printWords(){
   document.body.setAttribute('data-date', new Date().toLocaleDateString());
   window.print();
 }
