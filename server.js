@@ -260,8 +260,31 @@ app.patch('/api/admin/user/:id', adminAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+app.delete('/api/admin/user/:id', adminAuth, async (req, res) => {
+  try {
+    if (String(req.params.id) === String(req.user.id)) return res.status(400).json({ error: "Can't delete yourself" });
+    await pool.query('DELETE FROM users WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/admin/users', adminAuth, async (req, res) => {
+  try {
+    const { q } = req.query;
+    const r = await pool.query(
+      `SELECT u.id, u.email, u.name, u.role, u.daily_limit, u.daily_used, u.native_lang, u.learn_lang, u.created_at, u.last_seen,
+              (SELECT COUNT(*) FROM words w WHERE w.user_id=u.id) word_count
+       FROM users u
+       WHERE ($1::text IS NULL OR u.email ILIKE $1 OR u.name ILIKE $1)
+       ORDER BY u.created_at DESC LIMIT 200`,
+      [q ? `%${q}%` : null]
+    );
+    res.json(r.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/admin/cache', adminAuth, async (req, res) => {
-  const r = await pool.query('SELECT word, learn_lang, native_lang, translation, level, created_at FROM word_cache ORDER BY created_at DESC LIMIT 100');
+  const r = await pool.query('SELECT id, word, learn_lang, native_lang, translation, level, created_at FROM word_cache ORDER BY created_at DESC LIMIT 200');
   res.json(r.rows);
 });
 
@@ -283,6 +306,11 @@ app.post('/api/auth/email', async (req, res) => {
       const user = existing.rows[0];
       if (user.password_hash && user.password_hash !== hash) return res.status(401).json({ error: 'Wrong password' });
       if (!user.password_hash) await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2', [hash, user.id]);
+      // Auto-promote if ADMIN_EMAIL matches
+      if (process.env.ADMIN_EMAIL && email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase() && user.role !== 'admin') {
+        await pool.query('UPDATE users SET role=$1 WHERE id=$2', ['admin', user.id]);
+        user.role = 'admin';
+      }
       await pool.query('UPDATE users SET last_seen=NOW() WHERE id=$1', [user.id]);
       return res.json({ token: makeToken(user), user: formatUser(user) });
     } else {
