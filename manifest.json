@@ -1,0 +1,14 @@
+{
+  "name": "AI Dictionary",
+  "short_name": "AI Dict",
+  "description": "Learn English with AI-powered dictionary",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#00a876",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

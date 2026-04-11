@@ -103,3 +103,22 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-f
 .limf{height:100%;border-radius:20px;transition:width .4s ease}
 .hcard{background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:12px;margin-bottom:8px;cursor:pointer}
 .gcard{background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:13px;margin-bottom:9px;cursor:pointer}
+@media print{
+  .hdr,.nav,.fab,.ovl,.pills,.sw,.btn,.ib,#installBtn{display:none!important}
+  html,body,#app{height:auto;overflow:visible;background:#fff;font-size:12pt}
+  .content{overflow:visible;padding:0;height:auto}
+  #app{max-width:100%;box-shadow:none}
+  #app::before{display:none}
+  .sc{animation:none}
+  body::before{content:'AI Dictionary — Word List';display:block;font-size:18pt;font-weight:800;font-family:serif;margin-bottom:4pt;color:#000}
+  body::after{content:'Printed: ' attr(data-date);display:block;font-size:9pt;color:#666;margin-bottom:16pt}
+  .wli{border:none;border-bottom:1px solid #ddd;border-radius:0;padding:6pt 2pt;margin:0;page-break-inside:avoid;display:grid;grid-template-columns:160pt 1fr;gap:8pt;align-items:start}
+  .wli-ico,.wli>button{display:none!important}
+  .wen{font-size:13pt;color:#000}
+  .wru{font-size:11pt;color:#333;margin:0}
+  .wex{font-size:9pt;color:#666;white-space:normal;max-width:none;overflow:visible;text-overflow:clip}
+  .wgr{font-size:8pt;color:#888}
+  .badge{border:1px solid #ccc;background:none;color:#555;font-size:7pt}
+  .card,.modal,.empty,.se{display:none!important}
+  .pills+*>.wli~.card{display:none!important}
+}
