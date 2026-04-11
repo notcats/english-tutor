@@ -1,0 +1,105 @@
+#__aidtip {
+  position: absolute;
+  z-index: 2147483647;
+  background: #111420;
+  border: 1px solid #2e3350;
+  border-radius: 12px;
+  padding: 10px 13px 8px;
+  box-shadow: 0 8px 36px rgba(0,0,0,.6), 0 0 0 1px rgba(94,255,196,.08);
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: #eef0f8;
+  min-width: 155px;
+  max-width: 260px;
+  pointer-events: all;
+  user-select: none;
+  animation: __aidtip-in .15s ease;
+}
+
+@keyframes __aidtip-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#__aidtip .adt-word {
+  font-weight: 700;
+  font-size: 15px;
+  color: #5effc4;
+  margin-bottom: 5px;
+  letter-spacing: -.2px;
+}
+
+#__aidtip .adt-body {
+  font-size: 12px;
+  color: #a8adc8;
+  margin-bottom: 7px;
+  line-height: 1.4;
+}
+
+#__aidtip .adt-tr {
+  color: #eef0f8;
+  font-weight: 600;
+}
+
+#__aidtip .adt-ts {
+  color: #5a6080;
+  font-size: 11px;
+}
+
+#__aidtip .adt-lv {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(94,255,196,.12);
+  color: #5effc4;
+  margin-left: 4px;
+}
+
+#__aidtip .adt-spin {
+  display: inline-block;
+  animation: __adt-spin .8s linear infinite;
+}
+
+@keyframes __adt-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+#__aidtip .adt-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#__aidtip .adt-tts,
+#__aidtip .adt-add {
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 9px;
+  transition: opacity .15s, background .15s;
+  line-height: 1;
+}
+
+#__aidtip .adt-tts {
+  background: rgba(94,255,196,.1);
+  border: 1px solid rgba(94,255,196,.25);
+  color: #5effc4;
+  flex-shrink: 0;
+}
+
+#__aidtip .adt-tts:hover { background: rgba(94,255,196,.2); }
+
+#__aidtip .adt-add {
+  background: #5effc4;
+  color: #080a0f;
+  font-weight: 700;
+  flex: 1;
+}
+
+#__aidtip .adt-add:hover { background: #3ffdb6; }
+#__aidtip .adt-add:disabled { opacity: .5; cursor: default; }

@@ -535,7 +535,7 @@ app.post('/api/ai/text', auth, aiLimit, async (req, res) => {
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const raw = await callClaude(
-      [{ role: 'user', content: `Words to use: ${words.join(', ')}\nWrite a reading text in ${ll} ONLY (100-130 words, B2 level) using ALL words naturally. The text field MUST be entirely in ${ll}.\nQuestions and answer options must be in native language.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
+      [{ role: 'user', content: `Words to use: ${words.join(', ')}\nWrite a reading text in ${ll} ONLY (100-130 words, B2 level) using ALL words naturally. The text field MUST be entirely in ${ll}.\nComprehension questions and answer options must also be in ${ll}.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
       getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
       1500
     );
@@ -549,7 +549,7 @@ app.post('/api/ai/generate', auth, aiLimit, async (req, res) => {
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const raw = await callClaude(
-      [{ role: 'user', content: `Words: ${words.join(', ')}\nWrite a creative ${type || 'story'} in ${ll} ONLY (150-200 words) using ALL these words. The text field MUST be entirely in ${ll}. Make it engaging and educational.\nAdd 2 comprehension questions with answers in native language.\nReturn ONLY JSON:\n{"text":"...","wordsUsed":["w1","w2"],"questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
+      [{ role: 'user', content: `Words: ${words.join(', ')}\nWrite a creative ${type || 'story'} in ${ll} ONLY (150-200 words) using ALL these words. The text field MUST be entirely in ${ll}. Make it engaging and educational.\nAdd 2 comprehension questions and answer options in ${ll}.\nReturn ONLY JSON:\n{"text":"...","wordsUsed":["w1","w2"],"questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
       getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
       2000
     );
