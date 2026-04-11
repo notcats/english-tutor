@@ -1,5 +1,11 @@
 // ── CONFIG ──────────────────────────────────────────────
-(()=>{document.documentElement.setAttribute('data-theme','light');})();
+(()=>{
+  document.documentElement.setAttribute('data-theme','light');
+  // PWA install prompt
+  let _deferredInstall=null;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredInstall=e;const btn=document.getElementById('installBtn');if(btn)btn.style.display='flex';});
+  window.installApp=async()=>{if(!_deferredInstall)return;_deferredInstall.prompt();const r=await _deferredInstall.userChoice;if(r.outcome==='accepted')_deferredInstall=null;const btn=document.getElementById('installBtn');if(btn)btn.style.display='none';};
+})();
 const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},{code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},{code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},{code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},{code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},{code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},{code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},{code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},{code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},{code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},{code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},{code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},{code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},{code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},{code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"}];
 const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
@@ -136,7 +142,7 @@ function render(){
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
   const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
-  app.innerHTML='<header class="hdr"><div class="logo">AI <em>Dictionary</em></div><div class="hdr-r">'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
+  app.innerHTML='<header class="hdr"><div class="logo">AI <em>Dictionary</em></div><div class="hdr-r"><button id="installBtn" class="btn bp bsm" style="display:none;font-size:12px;padding:5px 10px" onclick="installApp()">📲 Install</button>'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
     +'<main class="content" id="mc">'+rMain()+'</main>'
     +'<nav class="nav">'+tabs.map(tb=>'<button class="nb'+(S.tab===tb.id&&!S.add?' on':'')+'" onclick="swT(\''+tb.id+'\')"><span class="ni">'+tb.i+'</span>'+tb.l+'</button>').join('')+'</nav>'
     +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
@@ -246,6 +252,11 @@ function rWM(){
   return modal(innerContent, 'ss({det:null})');
 }
 
+/function printWords(){
+  document.body.setAttribute('data-date', new Date().toLocaleDateString());
+  window.print();
+}
+
 // ── RENDER: DICTIONARY ──────────────────────────────────
 function rDict(){
   const list=S.words.filter(w=>{
@@ -253,9 +264,12 @@ function rDict(){
     if(S.filt==='All')return m;if(S.filt==='⭐')return m&&w.hard;return m&&w.lv===S.filt;
   });
   const guestBanner=S.guest?'<div class="rb" style="background:var(--acD);border-color:var(--ac);margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💾</span><div style="flex:1"><div class="fw6 f12">'+t('saveTitle')+'</div><div class="f11 c2 mt1">'+t('saveDesc')+'</div></div><button class="btn bp bsm" style="font-size:11px;white-space:nowrap" onclick="ss({scr:\'ob\',step:4})">'+t('register')+'</button></div>':'';
+  const printBtn=S.words.length?'<button class="btn bg_ bsm" style="margin-bottom:10px" onclick="printWords()">🖨 Print list</button>':'';
   return '<div class="sc">'+guestBanner
     +'<div class="sw"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
-    +'<div class="pills">'+['All','⭐',...LEVELS].map(f=>'<button class="pill'+(S.filt===f?' on':'')+'" onclick="S.filt=\''+f+'\';render()">'+(f==='⭐'?'⭐ Hard':f)+'</button>').join('')+'</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+    +'<div class="pills" style="margin-bottom:0;flex:1">'+['All','⭐',...LEVELS].map(f=>'<button class="pill'+(S.filt===f?' on':'')+'" onclick="S.filt=\''+f+'\';render()">'+(f==='⭐'?'⭐ Hard':f)+'</button>').join('')+'</div>'
+    +printBtn+'</div>'
     +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
     :list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
       +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
