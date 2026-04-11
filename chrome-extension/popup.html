@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Dictionary</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 280px;
+  background: #111420;
+  color: #eef0f8;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+}
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 15px 11px;
+  border-bottom: 1px solid #252840;
+  background: #080a0f;
+}
+.logo { font-weight: 800; font-size: 15px; letter-spacing: -.3px; }
+.logo em { color: #5effc4; font-style: normal; }
+.body { padding: 15px; }
+
+/* Login */
+.lbl { font-size: 10px; font-weight: 700; color: #5a6080; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 5px; }
+.inp {
+  width: 100%;
+  background: #181b28;
+  border: 1px solid #2e3350;
+  border-radius: 9px;
+  padding: 8px 11px;
+  color: #eef0f8;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 8px;
+  transition: border-color .2s;
+}
+.inp:focus { border-color: #5effc4; }
+.inp::placeholder { color: #5a6080; }
+.btn {
+  width: 100%;
+  background: #5effc4;
+  color: #080a0f;
+  border: none;
+  border-radius: 9px;
+  padding: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+.btn:hover { background: #3ffdb6; }
+.btn:disabled { opacity: .5; cursor: default; }
+.err { color: #ff5e6d; font-size: 11px; margin-top: 7px; text-align: center; min-height: 16px; }
+
+/* Logged in */
+.profile { text-align: center; }
+.ava {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 2px solid #5effc4;
+  margin: 0 auto 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #5effc4;
+  background: #181b28;
+}
+.uname { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+.hint { font-size: 11px; color: #5a6080; margin-bottom: 14px; line-height: 1.5; }
+.open-btn {
+  display: block;
+  width: 100%;
+  background: #181b28;
+  color: #eef0f8;
+  border: 1px solid #252840;
+  border-radius: 9px;
+  padding: 9px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: border-color .15s;
+}
+.open-btn:hover { border-color: #5effc4; }
+.logout-btn {
+  background: none;
+  border: none;
+  color: #5a6080;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.logout-btn:hover { color: #ff5e6d; }
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo">AI <em>Dictionary</em></div>
+</div>
+<div class="body" id="root">
+  <div style="color:#5a6080;text-align:center;padding:20px 0">Loading…</div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>
