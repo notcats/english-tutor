@@ -241,15 +241,15 @@ const adminAuth = async (req, res, next) => {
 
 app.get('/api/admin/stats', adminAuth, async (req, res) => {
   try {
-    const [users, words, sessions, cache, history] = await Promise.all([
+    const [users, words, sessions, cache, history, topWords, recentUsers] = await Promise.all([
       pool.query("SELECT COUNT(*) total, COUNT(*) FILTER(WHERE role='teacher') teachers, COUNT(*) FILTER(WHERE role='admin') admins, COUNT(*) FILTER(WHERE created_at > NOW()-INTERVAL '7 days') new_week, COUNT(*) FILTER(WHERE last_seen > NOW()-INTERVAL '1 day') active_today FROM users"),
       pool.query('SELECT COUNT(*) total, COUNT(*) FILTER(WHERE hard=true) hard FROM words'),
       pool.query('SELECT COUNT(*) total, SUM(correct_count) correct, SUM(words_count) words_total FROM sessions'),
       pool.query('SELECT COUNT(*) total FROM word_cache'),
       pool.query('SELECT COUNT(*) total FROM history'),
+      pool.query('SELECT word, COUNT(*) cnt FROM words GROUP BY word ORDER BY cnt DESC LIMIT 10'),
+      pool.query('SELECT id, name, email, role, created_at, last_seen FROM users ORDER BY created_at DESC LIMIT 20'),
     ]);
-    const topWords = await pool.query('SELECT word, COUNT(*) cnt FROM words GROUP BY word ORDER BY cnt DESC LIMIT 10');
-    const recentUsers = await pool.query('SELECT id, name, email, role, created_at, last_seen FROM users ORDER BY created_at DESC LIMIT 20');
     res.json({ users: users.rows[0], words: words.rows[0], sessions: sessions.rows[0], cache: cache.rows[0], history: history.rows[0], top_words: topWords.rows, recent_users: recentUsers.rows });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

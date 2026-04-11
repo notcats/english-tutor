@@ -41,10 +41,17 @@ function saveWord(s) {
   S.words = [mw(s), ...S.words.filter(x => x.word !== s.word)];
 }
 async function loadData(){
-  try{const w=await api('/api/words');S.words=w.map(mw);}catch{}
-  try{const st=await api('/api/stats');if(S.user){S.user.streak=st.streak?.current_streak||0;S.user.du=st.daily_used||0;S.user.dl=st.daily_limit||50;}}catch{}
-  try{const h=await api('/api/history');S.hist=h||[];}catch{}
-  if(S.user?.role==='teacher'){try{const g=await api('/api/groups');S.grps=g||[];}catch{}}
+  const isTA=S.user?.role==='teacher'||S.user?.role==='admin';
+  const [wR,stR,hR,gR]=await Promise.allSettled([
+    api('/api/words'),
+    api('/api/stats'),
+    api('/api/history'),
+    isTA?api('/api/groups'):Promise.resolve([]),
+  ]);
+  if(wR.status==='fulfilled')S.words=wR.value.map(mw);
+  if(stR.status==='fulfilled'){const st=stR.value;if(S.user){S.user.streak=st.streak?.current_streak||0;S.user.du=st.daily_used||0;S.user.dl=st.daily_limit||50;}}
+  if(hR.status==='fulfilled')S.hist=hR.value||[];
+  if(isTA&&gR.status==='fulfilled')S.grps=gR.value||[];
 }
 function fmtU(u){return{id:u.id,email:u.email,name:u.name,avatar:u.avatar,role:u.role||'student',nl:u.native_lang||'ru',ll:u.learn_lang||'en',streak:u.streak||0,du:u.daily_used||0,dl:u.daily_limit||50};}
 (async()=>{
@@ -138,7 +145,7 @@ function render(){
     +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
 function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();if(S.tab==='admin')return rAdmin();return rDict();}
-function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});}
+function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});if(t==='admin')admLoad(S.adm.tab);}
 
 // ── RENDER: ONBOARDING ──────────────────────────────────
 function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();if(S.step===3)return ob3();if(S.step===4)return ob4();return ob5();}
@@ -570,14 +577,16 @@ async function opGrp(id){
 
 // ── RENDER: PROGRESS ────────────────────────────────────
 function rProg(){
-  const total=S.words.length,hard=S.words.filter(w=>w.hard).length,prac=S.words.filter(w=>w.tp>0).length;
-  const byL=LEVELS.map(l=>({l,n:S.words.filter(w=>w.lv===l).length})).filter(x=>x.n>0);
+  let hardN=0,prac=0;const byLv={};const hardWords=[];
+  for(const w of S.words){if(w.hard){hardN++;hardWords.push(w);}if(w.tp>0)prac++;byLv[w.lv]=(byLv[w.lv]||0)+1;}
+  const total=S.words.length;const hard=hardN;
+  const byL=LEVELS.map(l=>({l,n:byLv[l]||0})).filter(x=>x.n>0);
   const lim=S.user?.dl||50,used=S.user?.du||0,pct=Math.min(100,Math.round(used/lim*100));
   return '<div class="sc"><div class="sht">Progress</div><div class="shs">Learning statistics</div>'
     +'<div class="sg"><div class="sc2"><div class="sv ca">'+total+'</div><div class="sl">Words</div></div><div class="sc2"><div class="sv" style="color:var(--warn)">'+hard+'</div><div class="sl">Hard</div></div><div class="sc2"><div class="sv" style="color:var(--ac3)">🔥'+(S.user?.streak||0)+'</div><div class="sl">Streak</div></div><div class="sc2"><div class="sv" style="color:var(--ac2)">'+prac+'</div><div class="sl">Practiced</div></div></div>'
     +'<div class="card mb2"><div class="rb2 mb2"><div class="fw6 f13">AI requests today</div><span class="f12 c3">'+used+'/'+lim+'</span></div><div style="display:flex;align-items:center;gap:8px">' + progressBar(pct, null, '8px') + '<span class="f11 c3">'+pct+'%</span></div></div>'
     +(byL.length?'<div class="card mb2"><div class="fw6 f13 mb3">📊 By level</div>'+byL.map(({l,n})=>'<div class="mb2"><div class="rb2 mb1"><div class="row">'+lvl(l)+'<span class="f11 c3">'+n+' words</span></div><span class="f11 c3">'+Math.round(n/total*100)+'%</span></div><div class="pbw" style="height:4px"><div class="pbf" style="width:'+n/total*100+'%;background:'+(l.startsWith('C')?'var(--ac3)':l.startsWith('B')?'var(--ac2)':'var(--ac)')+'"></div></div></div>').join('')+'</div>':'')
-    +(hard?'<div class="card mb2"><div class="fw6 f13 mb2">⭐ Hard words</div>'+S.words.filter(w=>w.hard).map(w=>'<div class="rb2" style="padding:7px 0;border-bottom:1px solid var(--brd)"><div class="row"><span class="fw6 f13">'+w.word+'</span><span class="c3 f12">'+w.tr+'</span></div><div class="row" style="gap:4px">'+lvl(w.lv)+'<button class="ib" style="font-size:12px" onclick="speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button></div></div>').join('')+'</div>':'')
+    +(hard?'<div class="card mb2"><div class="fw6 f13 mb2">⭐ Hard words</div>'+hardWords.map(w=>'<div class="rb2" style="padding:7px 0;border-bottom:1px solid var(--brd)"><div class="row"><span class="fw6 f13">'+w.word+'</span><span class="c3 f12">'+w.tr+'</span></div><div class="row" style="gap:4px">'+lvl(w.lv)+'<button class="ib" style="font-size:12px" onclick="speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button></div></div>').join('')+'</div>':'')
     +'<div class="card"><div class="fw6 f13 mb2">🏆 Achievements</div>'
     +[{i:'📖',l:'First word added',d:total>=1},{i:'📚',l:'10 words',d:total>=10},{i:'💯',l:'50 words',d:total>=50},{i:'🔥',l:'3-day streak',d:(S.user?.streak||0)>=3},{i:'⭐',l:'First hard word',d:hard>=1},{i:'🎯',l:'First practice',d:prac>=1}].map(a=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--brd);gap:10px"><span style="font-size:19px;filter:'+(a.d?'none':'grayscale(1) opacity(.3)')+'">'+a.i+'</span><span class="f12" style="color:'+(a.d?'var(--t)':'var(--t3)')+'">'+a.l+'</span>'+(a.d?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':'')+'</div>').join('')
     +'</div></div>';
@@ -586,19 +595,15 @@ function rProg(){
 // ── RENDER: ADMIN ────────────────────────────────────────
 function rAdmin(){
   const a=S.adm;
-  const tabs=['stats','users','cache'];
-  const tl=['📊 Stats','👤 Users','🗂 Cache'];
-  const nav='<div class="pills mb3">'+tabs.map((tb,i)=>'<button class="pill'+(a.tab===tb?' on':'')+'" onclick="S.adm.tab=\''+tb+'\';render();admLoad(\''+tb+'\')">'+tl[i]+'</button>').join('')+'</div>';
-
-  if(a.tab==='stats')  return '<div class="sc">'+nav+rAdmStats()+'</div>';
-  if(a.tab==='users')  return '<div class="sc">'+nav+rAdmUsers()+'</div>';
-  if(a.tab==='cache')  return '<div class="sc">'+nav+rAdmCache()+'</div>';
-  return '<div class="sc">'+nav+'</div>';
+  const admTabs=[['stats','📊 Stats'],['users','👤 Users'],['cache','🗂 Cache']];
+  const nav='<div class="pills mb3">'+admTabs.map(([tb,lb])=>'<button class="pill'+(a.tab===tb?' on':'')+'" onclick="S.adm.tab=\''+tb+'\';render();admLoad(\''+tb+'\')">'+lb+'</button>').join('')+'</div>';
+  const body=a.tab==='stats'?rAdmStats():a.tab==='users'?rAdmUsers():rAdmCache();
+  return '<div class="sc">'+nav+body+'</div>';
 }
 
 function rAdmStats(){
   const d=S.adm.data;
-  if(!d){if(!S.adm.loading){S.adm.loading=true;admLoad('stats');}return ld('Loading…');}
+  if(!d)return ld('Loading…');
   const u=d.users,w=d.words,s=d.sessions;
   return '<div class="sg mb3">'
     +'<div class="sc2"><div class="sv">'+u.total+'</div><div class="sl">Users</div></div>'
@@ -621,7 +626,6 @@ function rAdmStats(){
 function rAdmUsers(){
   const a=S.adm;
   const srch='<div class="sw mb3"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search email / name…" value="'+a.uSrch.replace(/"/g,'&quot;')+'" oninput="S.adm.uSrch=this.value" onkeydown="if(event.key===\'Enter\')admLoad(\'users\')"><button class="btn bs bsm" style="margin-left:6px;flex-shrink:0" onclick="admLoad(\'users\')">Go</button></div>';
-  if(!a.users.length&&!a.loading)admLoad('users');
   const list=a.users.filter(u=>!a.uSrch||(u.email+u.name).toLowerCase().includes(a.uSrch.toLowerCase()));
   return srch+(a.loading?ld('Loading…')
     :list.map(u=>'<div class="card mb2">'
@@ -635,7 +639,6 @@ function rAdmUsers(){
 
 function rAdmCache(){
   const a=S.adm;
-  if(!a.cache.length&&!a.loading)admLoad('cache');
   return (a.loading?ld('Loading…')
     :a.cache.map(c=>'<div class="rb2" style="padding:8px 0;border-bottom:1px solid var(--brd)">'
       +'<div><span class="fw7 f12">'+c.word+'</span><span class="f11 c3"> '+c.learn_lang+'/'+c.native_lang+'</span><span class="f11 c2 ml1"> — '+c.translation+'</span></div>'
@@ -651,10 +654,10 @@ function roleBadge(r){
 async function admLoad(tab){
   S.adm.loading=true;render();
   try{
-    if(tab==='stats'){const d=await api('/api/admin/stats');S.adm.data=d;}
-    if(tab==='users'){const d=await api('/api/admin/users'+(S.adm.uSrch?'?q='+encodeURIComponent(S.adm.uSrch):''));S.adm.users=d;}
-    if(tab==='cache'){const d=await api('/api/admin/cache');S.adm.cache=d;}
-  }catch{}
+    if(tab==='stats')S.adm.data=await api('/api/admin/stats');
+    else if(tab==='users')S.adm.users=await api('/api/admin/users'+(S.adm.uSrch?'?q='+encodeURIComponent(S.adm.uSrch):''));
+    else if(tab==='cache')S.adm.cache=await api('/api/admin/cache');
+  }catch(e){console.error('admLoad',tab,e);}
   S.adm.loading=false;render();
 }
 
