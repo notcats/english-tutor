@@ -242,6 +242,12 @@ async function getUserLangs(userId) {
 app.get('/health', (req, res) => res.json({ ok: true, time: new Date() }));
 
 // ── STATIC FILES ──────────────────────────────────────────────
+app.use((req, res, next) => {
+  if (/\.(js|css|html)$/.test(req.path) || req.path === '/') {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
 app.use(express.static(__dirname));
 
 // ── ADMIN ROUTES ──────────────────────────────────────────────
