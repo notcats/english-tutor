@@ -213,7 +213,7 @@ async function callClaude(messages, system, maxTokens = 1000) {
 function getSystemPrompt(userId, nativeLang, learnLang) {
   const nl = LANGS[nativeLang] || 'Russian';
   const ll = LEARN[learnLang] || 'English';
-  return `You are an AI language tutor. Student is learning ${ll}. Their native language is ${nl}. ALL translations and explanations MUST be in ${nl}. Respond with valid JSON only. No markdown fences, no extra text.`;
+  return `You are an AI language tutor. Student is learning ${ll}. Their native language is ${nl}. IMPORTANT: All reading texts, stories, and sentences MUST be written in ${ll}. Translations, explanations, questions, and answer options must be in ${nl}. Respond with valid JSON only. No markdown fences, no extra text.`;
 }
 
 async function getUserLangs(userId) {
@@ -501,7 +501,7 @@ app.post('/api/ai/word', optAuth, aiLimit, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/ai/extras', auth, aiLimit, checkLimit, async (req, res) => {
+app.post('/api/ai/extras', auth, aiLimit, async (req, res) => {
   try {
     const { word } = req.body;
     const langs = await getUserLangs(req.user.id);
@@ -514,7 +514,7 @@ app.post('/api/ai/extras', auth, aiLimit, checkLimit, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/ai/exercise', auth, aiLimit, checkLimit, async (req, res) => {
+app.post('/api/ai/exercise', auth, aiLimit, async (req, res) => {
   try {
     const { word, translation, grammarNote } = req.body;
     const langs = await getUserLangs(req.user.id);
@@ -529,13 +529,13 @@ app.post('/api/ai/exercise', auth, aiLimit, checkLimit, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/ai/text', auth, aiLimit, checkLimit, async (req, res) => {
+app.post('/api/ai/text', auth, aiLimit, async (req, res) => {
   try {
     const { words } = req.body;
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const raw = await callClaude(
-      [{ role: 'user', content: `Words to use: ${words.join(', ')}\nWrite a ${ll} text (100-130 words, B2 level) using ALL words naturally.\nQuestions and options in native language.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
+      [{ role: 'user', content: `Words to use: ${words.join(', ')}\nWrite a reading text in ${ll} ONLY (100-130 words, B2 level) using ALL words naturally. The text field MUST be entirely in ${ll}.\nQuestions and answer options must be in native language.\nReturn ONLY JSON:\n{"text":"...","questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
       getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
       1500
     );
@@ -543,13 +543,13 @@ app.post('/api/ai/text', auth, aiLimit, checkLimit, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/ai/generate', auth, aiLimit, checkLimit, async (req, res) => {
+app.post('/api/ai/generate', auth, aiLimit, async (req, res) => {
   try {
     const { words, type } = req.body;
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const raw = await callClaude(
-      [{ role: 'user', content: `Words: ${words.join(', ')}\nWrite a creative ${type || 'story'} in ${ll} (150-200 words) using ALL these words. Make it engaging and educational.\nAdd 2 comprehension questions with answers in native language.\nReturn ONLY JSON:\n{"text":"...","wordsUsed":["w1","w2"],"questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
+      [{ role: 'user', content: `Words: ${words.join(', ')}\nWrite a creative ${type || 'story'} in ${ll} ONLY (150-200 words) using ALL these words. The text field MUST be entirely in ${ll}. Make it engaging and educational.\nAdd 2 comprehension questions with answers in native language.\nReturn ONLY JSON:\n{"text":"...","wordsUsed":["w1","w2"],"questions":[{"q":"?","options":["A","B","C","D"],"correct":"A"}]}` }],
       getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
       2000
     );
@@ -557,7 +557,7 @@ app.post('/api/ai/generate', auth, aiLimit, checkLimit, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/ai/bulk', auth, aiLimit, checkLimit, async (req, res) => {
+app.post('/api/ai/bulk', auth, aiLimit, async (req, res) => {
   try {
     const { words } = req.body;
     const langs = await getUserLangs(req.user.id);
@@ -571,12 +571,12 @@ app.post('/api/ai/bulk', auth, aiLimit, checkLimit, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/ai/image', auth, aiLimit, checkLimit, async (req, res) => {
+app.post('/api/ai/image', auth, aiLimit, async (req, res) => {
   // Groq does not support image input — return helpful error
   res.status(400).json({ error: 'Photo mode requires a vision-capable AI. Use Manual or List mode instead.' });
 });
 
-app.post('/api/ai/analyze', auth, aiLimit, checkLimit, async (req, res) => {
+app.post('/api/ai/analyze', auth, aiLimit, async (req, res) => {
   try {
     const { text } = req.body;
     const langs = await getUserLangs(req.user.id);
