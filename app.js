@@ -144,7 +144,9 @@ function render(){
   const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
   app.innerHTML='<header class="hdr"><div class="logo">AI <em>Dictionary</em></div><div class="hdr-r"><button id="installBtn" class="btn bp bsm" style="display:none;font-size:12px;padding:5px 10px" onclick="installApp()">📲 Install</button>'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
     +'<main class="content" id="mc">'+rMain()+'</main>'
-    +'<nav class="nav">'+tabs.map(tb=>'<button class="nb'+(S.tab===tb.id&&!S.add?' on':'')+'" onclick="swT(\''+tb.id+'\')"><span class="ni">'+tb.i+'</span>'+tb.l+'</button>').join('')+'</nav>'
+    +'<nav class="nav" data-user="'+(u?.name||u?.email||'')+'">'
+    +tabs.map(tb=>'<button class="nb'+(S.tab===tb.id&&!S.add?' on':'')+'" onclick="swT(\''+tb.id+'\')"><span class="ni">'+tb.i+'</span>'+tb.l+'</button>').join('')
+    +'</nav>'
     +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
     +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
@@ -268,7 +270,7 @@ function rDict(){
     +'<div class="sw"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
     +'<div class="pills">'+['All','⭐',...LEVELS].map(f=>'<button class="pill'+(S.filt===f?' on':'')+'" onclick="S.filt=\''+f+'\';render()">'+(f==='⭐'?'⭐ Hard':f)+'</button>').join('')+'</div>'
     +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
-    :list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
+    :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
       +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
       +'<div class="wru">'+w.tr+'</div>'
       +(w.gr?'<div class="wgr">📝 '+w.gr+'</div>':'')
@@ -277,7 +279,7 @@ function rDict(){
       +'<button class="ib" onclick="event.stopPropagation();speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button>'
       +'<button class="ib" onclick="event.stopPropagation();togH('+w.id+')">'+(w.hard?'⭐':'☆')+'</button>'
       +'<button class="ib" onclick="event.stopPropagation();delW('+w.id+')">🗑</button>'
-      +'</div></div>').join(''))
+      +'</div></div>').join('')+'</div>')
     +'</div>';
 }
 function togH(id){S.words=S.words.map(w=>w.id===id?{...w,hard:!w.hard}:w);api('/api/words/'+id,{method:'PATCH',body:{hard:S.words.find(w=>w.id===id).hard}}).catch(()=>{});render();}
