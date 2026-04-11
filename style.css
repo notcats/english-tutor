@@ -103,6 +103,41 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-f
 .limf{height:100%;border-radius:20px;transition:width .4s ease}
 .hcard{background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:12px;margin-bottom:8px;cursor:pointer}
 .gcard{background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:13px;margin-bottom:9px;cursor:pointer}
+
+@media(min-width:768px){
+  html,body{font-size:17px;overflow:auto}
+  #app{max-width:100%;height:100vh;flex-direction:row;padding-bottom:0;overflow:hidden}
+  #app::before{display:none}
+  .hdr{display:none}
+  .nav{position:fixed;left:0;top:0;bottom:0;width:220px;max-width:220px;transform:none;flex-direction:column;border-top:none;border-right:1px solid var(--brd2);box-shadow:2px 0 16px rgba(0,0,0,.06);padding:0;background:#fff;justify-content:flex-start;align-items:stretch}
+  .nav::before{content:'AI Dictionary';display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;padding:24px 20px 20px;color:var(--t);border-bottom:1px solid var(--brd)}
+  .nav::after{content:attr(data-user);display:block;font-size:13px;color:var(--t3);padding:12px 20px;border-top:1px solid var(--brd);margin-top:auto}
+  .nb{flex-direction:row;justify-content:flex-start;gap:10px;padding:13px 20px;font-size:15px;font-weight:500;border-radius:0;text-align:left;color:var(--t2)}
+  .nb.on{background:var(--acD);color:var(--ac);font-weight:700}
+  .nb.on .ni{transform:none}
+  .ni{font-size:20px}
+  .content{margin-left:220px;padding:28px 32px;overflow-y:auto;height:100vh}
+  .fab{bottom:28px;right:32px;width:58px;height:58px;font-size:28px}
+  .sht{font-size:28px}
+  .shs{font-size:17px}
+  .wli{padding:14px 16px;margin-bottom:8px;border-radius:16px}
+  .wen{font-size:22px}
+  .wru{font-size:16px}
+  .wex{font-size:14px;max-width:340px}
+  .btn{font-size:15px}
+  .inp{font-size:15px}
+  .card{padding:18px;border-radius:18px}
+  .modal{border-radius:18px;max-width:600px;margin:0 auto}
+  .ovl{align-items:center}
+  .opts{grid-template-columns:1fr 1fr}
+  .opt{font-size:16px;padding:14px 12px}
+  .sg{grid-template-columns:repeat(4,1fr)}
+  .sv{font-size:32px}
+  .sc2{padding:16px}
+  .pill{font-size:13px;padding:6px 14px}
+  .rt{font-size:19px}
+  .dict-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+}
 @media print{
   .hdr,.nav,.fab,.ovl,.pills,.sw,.btn,.ib,#installBtn{display:none!important}
   html,body,#app{height:auto;overflow:visible;background:#fff;font-size:12pt}
