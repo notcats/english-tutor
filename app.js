@@ -27,7 +27,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false}};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -553,26 +553,62 @@ async function delH(id){S.hist=S.hist.filter(h=>h.id!==id);try{await api('/api/h
 // ── RENDER: GROUPS ──────────────────────────────────────
 function rGrps(){
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
+  const m=S.grpM;
+  const modal=m?'<div class="ovl" onclick="if(event.target===this)ss({grpM:null})">'+rGrpModal(m)+'</div>':'';
   return '<div class="sc"><div class="sht">Groups</div><div class="shs">'+(isT?'Your student groups':'My groups')+'</div>'
-    +(isT?'<button class="btn bp bfu mb3" onclick="crGrp()">＋ Create group</button>':'<button class="btn bs bfu mb3" onclick="joinGrp()">🔗 Join group by code</button>')
+    +(isT?'<button class="btn bp bfu mb3" onclick="ss({grpM:{t:\'create\',name:\'\',err:\'\'}})">＋ Create group</button>':'<button class="btn bs bfu mb3" onclick="ss({grpM:{t:\'join\',code:\'\',err:\'\'}})">🔗 Join group by code</button>')
     +(S.grps.length===0?'<div class="empty"><div style="font-size:40px;margin-bottom:10px">👥</div><div class="syn fw7 f13 mb1">No groups yet</div><div class="f12 c3">'+(isT?'Create a group and invite students':'Ask your teacher for the group code')+'</div></div>'
-    :S.grps.map(g=>'<div class="gcard" onclick="opGrp('+g.id+')"><div class="rb2 mb1"><div class="syn fw7 f13">'+g.name+'</div><span class="badge bv">'+(g.member_count||0)+' students</span></div><div class="f12 c3">Invite code: <strong style="color:var(--ac)">'+(g.code||'—')+'</strong></div></div>').join(''))
-    +'</div>';
+    :S.grps.map(g=>'<div class="gcard" onclick="opGrp('+g.id+')"><div class="rb2 mb1"><div class="syn fw7 f13">'+g.name+'</div><span class="badge bv">'+(g.member_count||0)+' students</span></div><div class="f12 c3">Invite code: <strong style="color:var(--ac);letter-spacing:2px">'+(g.code||'—')+'</strong></div></div>').join(''))
+    +'</div>'+modal;
+}
+function rGrpModal(m){
+  if(m.t==='create')return '<div class="modal"><div class="mh"></div><div class="sht mb2">New group</div>'
+    +'<input class="inp mb2" id="grpName" placeholder="Group name" value="'+(m.name||'')+'">'
+    +(m.err?'<div class="f12" style="color:var(--danger);margin-bottom:8px">'+m.err+'</div>':'')
+    +'<button class="btn bp bfu" onclick="crGrp()">'+(m.loading?'Creating…':'Create')+'</button></div>';
+  if(m.t==='join')return '<div class="modal"><div class="mh"></div><div class="sht mb2">Join group</div>'
+    +'<input class="inp mb2" id="joinCode" placeholder="Enter invite code" style="text-transform:uppercase;letter-spacing:2px" value="'+(m.code||'')+'" maxlength="10">'
+    +(m.err?'<div class="f12" style="color:var(--danger);margin-bottom:8px">'+m.err+'</div>':'')
+    +'<button class="btn bp bfu" onclick="joinGrp()">'+(m.loading?'Joining…':'Join')+'</button></div>';
+  if(m.t==='view')return '<div class="modal"><div class="mh"></div>'
+    +'<div class="rb2 mb3"><div class="sht">'+m.g.name+'</div></div>'
+    +'<div class="card mb3" style="text-align:center">'
+    +'<div class="f12 c3 mb1">Invite code — share with students</div>'
+    +'<div style="font-size:32px;font-weight:800;letter-spacing:6px;color:var(--ac);font-family:\'Syne\',sans-serif">'+m.g.code+'</div>'
+    +'<button class="btn bs bsm mt2" onclick="navigator.clipboard.writeText(\''+m.g.code+'\').then(()=>{this.textContent=\'✓ Copied!\';setTimeout(()=>this.textContent=\'📋 Copy code\',1500)})">📋 Copy code</button>'
+    +'</div>'
+    +(m.loading?'<div class="ail">'+ld('Loading members…')+'</div>'
+    :m.members?.length?'<div class="fw6 f13 mb2">👥 Members ('+m.members.length+')</div>'
+      +m.members.map(u=>'<div class="wli" style="cursor:default"><div class="syn fw7 f12">'+(u.name||u.email)+'</div><span class="badge bgr">'+u.word_count+' words</span></div>').join('')
+    :'<div class="f12 c3 mb2">No members yet</div>')
+    +'<button class="btn bg_ bfu mt2" onclick="ss({grpM:null})">Close</button></div>';
+  return '';
 }
 async function crGrp(){
-  const name=prompt('Group name:');if(!name)return;
-  try{const g=await api('/api/groups',{method:'POST',body:{name}});S.grps=[g,...S.grps];render();alert('Group created!\nInvite code: '+g.code);}
-  catch(e){alert('Error: '+e.message);}
+  const name=(document.getElementById('grpName')?.value||'').trim();
+  if(!name){ss({grpM:{...S.grpM,err:'Enter group name'}});return;}
+  ss({grpM:{...S.grpM,loading:true,err:''}});
+  try{
+    const g=await api('/api/groups',{method:'POST',body:{name}});
+    S.grps=[g,...S.grps];
+    ss({grpM:{t:'view',g,members:[],loading:false}});
+  }catch(e){ss({grpM:{...S.grpM,loading:false,err:e.message}});}
 }
 async function joinGrp(){
-  const code=prompt('Enter invite code:');if(!code)return;
-  try{const r=await api('/api/groups/join',{method:'POST',body:{code:code.trim().toUpperCase()}});alert('Joined group: '+r.group.name);S.grps=[r.group,...S.grps];render();}
-  catch(e){alert('Error: '+e.message);}
+  const code=(document.getElementById('joinCode')?.value||'').trim().toUpperCase();
+  if(!code){ss({grpM:{...S.grpM,err:'Enter invite code'}});return;}
+  ss({grpM:{...S.grpM,loading:true,err:''}});
+  try{
+    const r=await api('/api/groups/join',{method:'POST',body:{code}});
+    S.grps=[r.group,...S.grps];
+    ss({grpM:null});
+  }catch(e){ss({grpM:{...S.grpM,loading:false,err:e.message}});}
 }
 async function opGrp(id){
   const g=S.grps.find(x=>x.id===id);if(!g)return;
-  try{const m=await api('/api/groups/'+id+'/members');alert('Group: '+g.name+'\nCode: '+g.code+'\nMembers: '+m.length+'\n\n'+m.map(u=>u.name+' ('+u.word_count+' words)').join('\n'));}
-  catch{alert('Group: '+g.name+'\nCode: '+g.code);}
+  ss({grpM:{t:'view',g,members:[],loading:true}});
+  try{const m=await api('/api/groups/'+id+'/members');ss({grpM:{...S.grpM,members:m,loading:false}});}
+  catch{ss({grpM:{...S.grpM,loading:false}});}
 }
 
 // ── RENDER: PROGRESS ────────────────────────────────────
