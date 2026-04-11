@@ -27,7 +27,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add'};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false}};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -121,7 +121,11 @@ function render(){
   const app=document.getElementById('app');
   if(S.scr==='ob'){app.innerHTML=rOb();return;}
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
-  const tabs=isT?[{id:'dict',i:'📖',l:t('tabWords')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}]:[{id:'dict',i:'📖',l:t('tabWords')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
+  const isA=S.user?.role==='admin';
+  const tabs=isA
+    ?[{id:'dict',i:'📖',l:t('tabWords')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')},{id:'admin',i:'⚙️',l:'Admin'}]
+    :isT?[{id:'dict',i:'📖',l:t('tabWords')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}]
+    :[{id:'dict',i:'📖',l:t('tabWords')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
   const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
@@ -133,7 +137,7 @@ function render(){
     +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
     +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
-function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();return rDict();}
+function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();if(S.tab==='admin')return rAdmin();return rDict();}
 function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});}
 
 // ── RENDER: ONBOARDING ──────────────────────────────────
@@ -577,6 +581,98 @@ function rProg(){
     +'<div class="card"><div class="fw6 f13 mb2">🏆 Achievements</div>'
     +[{i:'📖',l:'First word added',d:total>=1},{i:'📚',l:'10 words',d:total>=10},{i:'💯',l:'50 words',d:total>=50},{i:'🔥',l:'3-day streak',d:(S.user?.streak||0)>=3},{i:'⭐',l:'First hard word',d:hard>=1},{i:'🎯',l:'First practice',d:prac>=1}].map(a=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--brd);gap:10px"><span style="font-size:19px;filter:'+(a.d?'none':'grayscale(1) opacity(.3)')+'">'+a.i+'</span><span class="f12" style="color:'+(a.d?'var(--t)':'var(--t3)')+'">'+a.l+'</span>'+(a.d?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':'')+'</div>').join('')
     +'</div></div>';
+}
+
+// ── RENDER: ADMIN ────────────────────────────────────────
+function rAdmin(){
+  const a=S.adm;
+  const tabs=['stats','users','cache'];
+  const tl=['📊 Stats','👤 Users','🗂 Cache'];
+  const nav='<div class="pills mb3">'+tabs.map((tb,i)=>'<button class="pill'+(a.tab===tb?' on':'')+'" onclick="S.adm.tab=\''+tb+'\';render();admLoad(\''+tb+'\')">'+tl[i]+'</button>').join('')+'</div>';
+
+  if(a.tab==='stats')  return '<div class="sc">'+nav+rAdmStats()+'</div>';
+  if(a.tab==='users')  return '<div class="sc">'+nav+rAdmUsers()+'</div>';
+  if(a.tab==='cache')  return '<div class="sc">'+nav+rAdmCache()+'</div>';
+  return '<div class="sc">'+nav+'</div>';
+}
+
+function rAdmStats(){
+  const d=S.adm.data;
+  if(!d){if(!S.adm.loading){S.adm.loading=true;admLoad('stats');}return ld('Loading…');}
+  const u=d.users,w=d.words,s=d.sessions;
+  return '<div class="sg mb3">'
+    +'<div class="sc2"><div class="sv">'+u.total+'</div><div class="sl">Users</div></div>'
+    +'<div class="sc2"><div class="sv">'+u.active_today+'</div><div class="sl">Active today</div></div>'
+    +'<div class="sc2"><div class="sv">'+w.total+'</div><div class="sl">Words</div></div>'
+    +'<div class="sc2"><div class="sv">'+u.new_week+'</div><div class="sl">New 7d</div></div>'
+    +'</div>'
+    +'<div class="card mb2"><div class="rb2 mb2"><span class="fw7 f13">Teachers</span><span class="f12 c3">'+u.teachers+'</span></div>'
+    +'<div class="rb2 mb2"><span class="fw7 f13">Admins</span><span class="f12 c3">'+u.admins+'</span></div>'
+    +'<div class="rb2 mb2"><span class="fw7 f13">Sessions</span><span class="f12 c3">'+(s.total||0)+'</span></div>'
+    +'<div class="rb2"><span class="fw7 f13">Cache entries</span><span class="f12 c3">'+d.cache.total+'</span></div></div>'
+    +'<div class="fw7 f13 mb2">Top words</div>'
+    +(d.top_words?.map(tw=>'<div class="rb2" style="padding:5px 0;border-bottom:1px solid var(--brd)"><span class="f12">'+tw.word+'</span><span class="f11 c3">×'+tw.cnt+'</span></div>').join('')||'')
+    +'<div class="fw7 f13 mt3 mb2">Recent users</div>'
+    +(d.recent_users?.map(u=>'<div class="wli" onclick="S.adm.tab=\'users\';S.adm.uSrch=\''+u.email+'\';render();admLoad(\'users\')">'
+      +'<div style="flex:1"><div class="wen">'+u.name+'</div><div class="wru">'+u.email+'</div></div>'
+      +roleBadge(u.role)+'</div>').join('')||'');
+}
+
+function rAdmUsers(){
+  const a=S.adm;
+  const srch='<div class="sw mb3"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search email / name…" value="'+a.uSrch.replace(/"/g,'&quot;')+'" oninput="S.adm.uSrch=this.value" onkeydown="if(event.key===\'Enter\')admLoad(\'users\')"><button class="btn bs bsm" style="margin-left:6px;flex-shrink:0" onclick="admLoad(\'users\')">Go</button></div>';
+  if(!a.users.length&&!a.loading)admLoad('users');
+  const list=a.users.filter(u=>!a.uSrch||(u.email+u.name).toLowerCase().includes(a.uSrch.toLowerCase()));
+  return srch+(a.loading?ld('Loading…')
+    :list.map(u=>'<div class="card mb2">'
+      +'<div class="rb2 mb1"><div><div class="fw7 f13">'+u.name+'</div><div class="f11 c3">'+u.email+'</div></div>'+roleBadge(u.role)+'</div>'
+      +'<div class="f11 c3 mb2">Words: '+u.word_count+' · Joined: '+u.created_at?.slice(0,10)+(u.last_seen?' · Seen: '+u.last_seen?.slice(0,10):'')+'</div>'
+      +'<div class="row" style="gap:5px;flex-wrap:wrap">'
+      +(['student','teacher','admin'].filter(r=>r!==u.role).map(r=>'<button class="btn bs bsm" onclick="admSetRole('+u.id+',\''+r+'\')">→ '+r+'</button>').join(''))
+      +'<button class="btn bd bsm" style="margin-left:auto" onclick="admDelUser('+u.id+',\''+u.email+'\')">🗑</button>'
+      +'</div></div>').join(''));
+}
+
+function rAdmCache(){
+  const a=S.adm;
+  if(!a.cache.length&&!a.loading)admLoad('cache');
+  return (a.loading?ld('Loading…')
+    :a.cache.map(c=>'<div class="rb2" style="padding:8px 0;border-bottom:1px solid var(--brd)">'
+      +'<div><span class="fw7 f12">'+c.word+'</span><span class="f11 c3"> '+c.learn_lang+'/'+c.native_lang+'</span><span class="f11 c2 ml1"> — '+c.translation+'</span></div>'
+      +'<button class="ib" style="color:var(--danger);font-size:13px" onclick="admDelCache('+c.id+')">✕</button>'
+      +'</div>').join(''));
+}
+
+function roleBadge(r){
+  const colors={admin:'var(--danger)',teacher:'var(--ac2)',student:'var(--t3)'};
+  return '<span style="font-size:10px;font-weight:700;color:'+colors[r]+';background:'+colors[r]+'20;padding:2px 7px;border-radius:10px">'+r+'</span>';
+}
+
+async function admLoad(tab){
+  S.adm.loading=true;render();
+  try{
+    if(tab==='stats'){const d=await api('/api/admin/stats');S.adm.data=d;}
+    if(tab==='users'){const d=await api('/api/admin/users'+(S.adm.uSrch?'?q='+encodeURIComponent(S.adm.uSrch):''));S.adm.users=d;}
+    if(tab==='cache'){const d=await api('/api/admin/cache');S.adm.cache=d;}
+  }catch{}
+  S.adm.loading=false;render();
+}
+
+async function admSetRole(id,role){
+  if(!confirm('Set '+role+' for user #'+id+'?'))return;
+  await api('/api/admin/user/'+id,{method:'PATCH',body:{role}});
+  admLoad('users');
+}
+
+async function admDelUser(id,email){
+  if(!confirm('Delete user '+email+'? This cannot be undone.'))return;
+  try{await api('/api/admin/user/'+id,{method:'DELETE'});admLoad('users');}
+  catch(e){alert(e.message);}
+}
+
+async function admDelCache(id){
+  await api('/api/admin/cache/'+id,{method:'DELETE'});
+  S.adm.cache=S.adm.cache.filter(c=>c.id!==id);render();
 }
 
 // ── INIT ────────────────────────────────────────────────
