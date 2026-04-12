@@ -627,7 +627,7 @@ app.post('/api/ai/image', auth, aiLimit, async (req, res) => {
     const nl = langs.native_lang || 'ru';
     const geminiKey = process.env.GEMINI_KEY;
     if (!geminiKey) return res.status(500).json({ error: 'Gemini API key not configured' });
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
