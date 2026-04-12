@@ -9,6 +9,12 @@
 const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},{code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},{code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},{code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},{code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},{code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},{code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},{code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},{code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},{code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},{code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},{code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},{code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},{code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},{code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"}];
 const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
+const WORD_PACKS=[
+  {id:'hotel',icon:'🏨',title:'Работа в отеле',words:['receptionist','check in','check out','concierge','housekeeping','room service','front desk','vacancy','amenities','occupancy','maintenance','reservation','suite','shift','overtime','tip','linen','complaint','bellboy']},
+  {id:'warehouse',icon:'📦',title:'Работа на складе',words:['forklift','loading dock','inventory','shipment','pallet','barcode','dispatch','stock','label','conveyor','shift supervisor','hazardous','throughput','returns','manifest','shrinkage']},
+  {id:'phrasal',icon:'💬',title:'Фразовые глаголы',words:['carry out','deal with','fill in','hand in','look into','put off','set up','take on','turn down','back up','bring up','come up with','follow up','get along','run out of','sort out','take over','work out']},
+  {id:'jobs',icon:'💼',title:'Поиск работы',words:['resume','cover letter','applicant','hiring manager','job posting','reference','probationary period','salary expectations','benefits','team player','multitasking','promotion','performance review','notice period','redundancy','freelance','background check']}
+];
 
 // ── I18N ────────────────────────────────────────────────
 const UI_LANG=(navigator.language||'en').slice(0,2).toLowerCase();
@@ -305,7 +311,8 @@ function rAdd(){
     +'<div class="pills mb3">'
     +'<button class="pill'+(S.addTab==='manual'?' on':'')+'" onclick="S.addTab=\'manual\';render()">✏️ Manual</button>'
     +'<button class="pill'+(S.addTab==='list'?' on':'')+'" onclick="S.addTab=\'list\';render()">📋 List</button>'
-    +'</div>'+(S.addTab==='list'?rAddL():rAddM())+'</div>';
+    +'<button class="pill'+(S.addTab==='packs'?' on':'')+'" onclick="S.addTab=\'packs\';_packSt={};render()">📦 Пакеты</button>'
+    +'</div>'+(S.addTab==='list'?rAddL():S.addTab==='packs'?rAddPacks():rAddM())+'</div>';
 }
 function rAddM(){
   return '<div><div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">Word or phrase</label>'
@@ -318,6 +325,36 @@ function rAddP(){
   return '<div><input type="file" id="pf" accept="image/*" style="display:none" onchange="hPhoto(this)">'
     +'<label for="pf" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:12px"><span style="font-size:26px">📷</span> Choose screenshot or photo</label>'
     +'<div id="pr"></div></div>';
+}
+let _packSt={};
+function rAddPacks(){
+  return '<div>'+WORD_PACKS.map(p=>{
+    const st=_packSt[p.id]||{};
+    const already=S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length;
+    return '<div class="card mb2">'
+      +'<div class="rb2 mb2">'
+        +'<div><div class="fw7 f14">'+p.icon+' '+p.title+'</div>'
+        +'<div class="f11 c3 mt1">'+p.words.length+' слов'+(already?' · '+already+' уже добавлено':'')+'</div></div>'
+      +(st.done?'<span style="color:var(--ac);font-size:12px;font-weight:600">✓ Добавлено</span>'
+        :st.loading?'<button class="btn bs bsm" disabled>Загрузка…</button>'
+        :st.err?'<button class="btn bs bsm" onclick="addPack(\''+p.id+'\')">Повторить</button>'
+        :'<button class="btn bp bsm" onclick="addPack(\''+p.id+'\')">+ Импорт</button>')
+      +'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:5px">'
+        +p.words.slice(0,8).map(w=>'<span class="badge bgr" style="font-size:10px">'+w+'</span>').join('')
+        +(p.words.length>8?'<span class="f11 c3" style="align-self:center;margin-left:2px">+'+( p.words.length-8)+' ещё</span>':'')
+      +'</div></div>';
+  }).join('')+'</div>';
+}
+async function addPack(id){
+  const p=WORD_PACKS.find(x=>x.id===id);if(!p)return;
+  _packSt[id]={loading:true,done:false,err:false};render();
+  try{
+    const d=await ai('bulk',{words:p.words});
+    for(const w of(d.words||[])){try{const s=await api('/api/words',{method:'POST',body:w});saveWord(s);}catch{}}
+    _packSt[id]={loading:false,done:true,err:false};
+  }catch{_packSt[id]={loading:false,done:false,err:true};}
+  render();
 }
 function rAddL(){
   return '<div><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">Word list (one per line or comma-separated)</label>'
