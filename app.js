@@ -39,7 +39,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -270,15 +270,22 @@ function printWords(){
 }
 
 // ── RENDER: DICTIONARY ──────────────────────────────────
+const SORT_LV={A1:0,A2:1,B1:2,B2:3,C1:4,C2:5};
 function rDict(){
-  const list=S.words.filter(w=>{
+  let list=S.words.filter(w=>{
     const m=w.word.toLowerCase().includes(S.srch.toLowerCase())||w.tr.toLowerCase().includes(S.srch.toLowerCase());
-    if(S.filt==='All')return m;if(S.filt==='⭐')return m&&w.hard;return m&&w.lv===S.filt;
+    return m;
   });
+  if(S.sort==='az')list=[...list].sort((a,b)=>a.word.localeCompare(b.word));
+  else if(S.sort==='za')list=[...list].sort((a,b)=>b.word.localeCompare(a.word));
+  else if(S.sort==='lvasc')list=[...list].sort((a,b)=>(SORT_LV[a.lv]??9)-(SORT_LV[b.lv]??9));
+  else if(S.sort==='lvdesc')list=[...list].sort((a,b)=>(SORT_LV[b.lv]??9)-(SORT_LV[a.lv]??9));
   const guestBanner=S.guest?'<div class="rb" style="background:var(--acD);border-color:var(--ac);margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💾</span><div style="flex:1"><div class="fw6 f12">'+t('saveTitle')+'</div><div class="f11 c2 mt1">'+t('saveDesc')+'</div></div><button class="btn bp bsm" style="font-size:11px;white-space:nowrap" onclick="ss({scr:\'ob\',step:4})">'+t('register')+'</button></div>':'';
   return '<div class="sc">'+guestBanner
-    +'<div class="sw"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
-    +'<div class="pills">'+['All','⭐',...LEVELS].map(f=>'<button class="pill'+(S.filt===f?' on':'')+'" onclick="S.filt=\''+f+'\';render()">'+(f==='⭐'?'⭐ Hard':f)+'</button>').join('')+'</div>'
+    +'<div class="row mb2" style="gap:8px"><div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
+    +'<select class="inp" style="flex-shrink:0;width:auto;padding:8px 10px;font-size:12px" onchange="S.sort=this.value;render()">'
+    +[['new','Новые'],['az','A → Z'],['za','Z → A'],['lvasc','A1 → C2'],['lvdesc','C2 → A1']].map(([v,l])=>'<option value="'+v+'"'+(S.sort===v?' selected':'')+'>'+l+'</option>').join('')
+    +'</select></div>'
     +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
     :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
       +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
