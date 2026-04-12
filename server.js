@@ -168,9 +168,6 @@ const checkLimit = async (req, res, next) => {
       await pool.query('UPDATE users SET daily_used=0, last_reset=CURRENT_DATE WHERE id=$1', [req.user.id]);
       user.daily_used = 0;
     }
-    if (user.daily_used >= user.daily_limit) {
-      return res.status(429).json({ error: `Daily AI limit reached (${user.daily_limit} requests). Try tomorrow!` });
-    }
     await pool.query('UPDATE users SET daily_used=daily_used+1 WHERE id=$1', [req.user.id]);
     next();
   } catch (err) {
@@ -535,7 +532,6 @@ app.post('/api/ai/word', optAuth, aiLimit, async (req, res) => {
       const today = new Date().toISOString().split('T')[0];
       const lastReset = user.last_reset?.toISOString?.()?.split('T')[0];
       if (lastReset !== today) await pool.query('UPDATE users SET daily_used=0, last_reset=CURRENT_DATE WHERE id=$1', [req.user.id]);
-      else if (user.daily_used >= user.daily_limit) return res.status(429).json({ error: `Daily limit reached (${user.daily_limit})` });
       await pool.query('UPDATE users SET daily_used=daily_used+1 WHERE id=$1', [req.user.id]);
     }
     const raw = await callClaude(

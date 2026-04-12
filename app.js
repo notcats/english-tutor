@@ -152,7 +152,7 @@ function render(){
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
   const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
-  app.innerHTML='<header class="hdr"><div class="logo">AI <em>Dictionary</em></div><div class="hdr-r"><button id="installBtn" class="btn bp bsm" style="display:none;font-size:12px;padding:5px 10px" onclick="installApp()">📲 Install</button>'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'+(u?'<div class="streak" style="'+(((u.dl||50)-(u.du||0))<10?'background:rgba(255,107,157,.15);color:var(--accent3)':'')+'" title="AI запросов осталось сегодня">⚡ '+Math.max(0,(u.dl||50)-(u.du||0))+'</div>':'')))+av+'</div></header>'
+  app.innerHTML='<header class="hdr"><div class="logo">AI <em>Dictionary</em></div><div class="hdr-r"><button id="installBtn" class="btn bp bsm" style="display:none;font-size:12px;padding:5px 10px" onclick="installApp()">📲 Install</button>'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
     +'<main class="content" id="mc">'+rMain()+'</main>'
     +'<nav class="nav" data-user="'+(u?.name||u?.email||'')+'">'
     +tabs.map(tb=>'<button class="nb'+(S.tab===tb.id&&!S.add?' on':'')+'" onclick="swT(\''+tb.id+'\')"><span class="ni">'+tb.i+'</span>'+tb.l+'</button>').join('')
