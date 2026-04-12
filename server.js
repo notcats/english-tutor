@@ -625,23 +625,26 @@ app.post('/api/ai/image', auth, aiLimit, async (req, res) => {
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const nl = langs.native_lang || 'ru';
-    const geminiKey = process.env.GEMINI_KEY;
-    if (!geminiKey) return res.status(500).json({ error: 'Gemini API key not configured' });
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${geminiKey}`, {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.GROQ_KEY },
       body: JSON.stringify({
-        contents: [{ parts: [
-          { text: `Extract all ${ll} words and phrases from this image that are useful for language learning. For each word provide translation in ${nl}, transcription (IPA), CEFR level, and a short example sentence. Return ONLY JSON: {"words":[{"word":"example","translation":"${nl} translation","transcription":"[ɪɡˈzɑːmpl]","level":"B1","example_en":"An example sentence.","example_ru":"Перевод примера.","grammar_note":"countable noun"}]}` },
-          { inline_data: { mime_type: mimeType, data: imageBase64 } }
-        ]}],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 2000 }
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        max_tokens: 2000,
+        temperature: 0.2,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: `Extract all ${ll} words and phrases from this image useful for language learning. For each word provide translation in ${nl}, IPA transcription, CEFR level, and a short example sentence. Return ONLY JSON: {"words":[{"word":"example","translation":"перевод","transcription":"[ɪɡˈzɑːmpl]","level":"B1","example_en":"An example sentence.","example_ru":"Перевод примера.","grammar_note":"countable noun"}]}` },
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } }
+          ]
+        }]
       })
     });
-    const gd = await geminiRes.json();
-    if (gd.error) return res.status(500).json({ error: gd.error.message });
-    const text = gd.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+    const d = await r.json();
+    if (d.error) return res.status(500).json({ error: d.error.message });
+    const text = (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
+    const json = JSON.parse(text);
     res.json(json);
   } catch (e) {
     res.status(500).json({ error: e.message });
