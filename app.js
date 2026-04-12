@@ -475,7 +475,7 @@ function rRead(){
     +q.options.map(opt=>'<button class="opt'+(s.rc?(opt===q.correct?' cor':s.ra[qi]===opt?' wrg':''):'')+'" style="'+((!s.rc&&s.ra[qi]===opt)?'border-color:var(--ac2);color:var(--ac2)':'')+'" onclick="pickR('+qi+',\''+opt.replace(/'/g,"\\'")+'\')"> '+opt+'</button>').join('')
     +'</div></div>').join('')
     +(!s.rc?'<button class="btn bp bfu" onclick="chkR()" '+(Object.keys(s.ra).length<s.rt.questions.length?'disabled':'')+'>Check answers</button>'
-    :'<div class="rb" style="text-align:center"><div class="sv ca" style="font-size:44px">'+s.rt.questions.filter((_,i)=>s.ra[i]===s.rt.questions[i].correct).length+'/'+s.rt.questions.length+'</div><div class="f12 c3 mt1">correct</div><div class="row mt2" style="justify-content:center;gap:8px"><button class="btn bs bsm" onclick="saveTH()">💾 Save</button><button class="btn bs bsm" onclick="lRead()">🔄 New</button></div></div>'):'')
+    :'<div class="rb" style="text-align:center"><div class="sv ca" style="font-size:44px">'+s.rt.questions.filter((_,i)=>s.ra[i]===s.rt.questions[i].correct).length+'/'+s.rt.questions.length+'</div><div class="f12 c3 mt1">correct</div><div class="row mt2" style="justify-content:center;gap:8px"><button class="btn bs bsm" onclick="saveTH()" '+(s.saving?'disabled':'')+'>'+( s.saving?'Saving…':'💾 Save')+'</button><button class="btn bs bsm" onclick="lRead()">🔄 New</button></div></div>'):'')
     +'</div>';
 }
 function tappableText(text){
@@ -539,6 +539,12 @@ async function lTxt(){
 }
 async function autoSaveHistory(text,words,type){
   try{const r=await api('/api/history',{method:'POST',body:{text,words,type}});S.hist=[r,...S.hist];}catch{}
+}
+async function saveTH(){
+  const s=S.sess;if(!s?.rt)return;
+  s.saving=true;render();
+  try{const r=await api('/api/history',{method:'POST',body:{text:s.rt.text,words:s.words.map(w=>w.word),type:'read'}});if(!S.hist.find(h=>h.id===r.id))S.hist=[r,...S.hist];}catch{}
+  ss({pm:null,sess:null,tab:'history'});
 }
 function rEnd(){
   const s=S.sess;
