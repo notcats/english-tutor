@@ -295,11 +295,13 @@ function rDict(){
   else if(S.sort==='lvasc')list=[...list].sort((a,b)=>(SORT_LV[a.lv]??9)-(SORT_LV[b.lv]??9));
   else if(S.sort==='lvdesc')list=[...list].sort((a,b)=>(SORT_LV[b.lv]??9)-(SORT_LV[a.lv]??9));
   else if(S.sort==='phrasal')list=list.filter(w=>w.word.includes(' '));
+  else if(S.sort.startsWith('pack_')){const pid=S.sort.slice(5);const p=WORD_PACKS.find(x=>x.id===pid);if(p)list=list.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()));}
   const guestBanner=S.guest?'<div class="rb" style="background:var(--acD);border-color:var(--ac);margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💾</span><div style="flex:1"><div class="fw6 f12">'+t('saveTitle')+'</div><div class="f11 c2 mt1">'+t('saveDesc')+'</div></div><button class="btn bp bsm" style="font-size:11px;white-space:nowrap" onclick="ss({scr:\'ob\',step:4})">'+t('register')+'</button></div>':'';
   return '<div class="sc">'+guestBanner
     +'<div class="row mb2" style="gap:8px"><div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
     +'<select class="inp" style="flex-shrink:0;width:auto;padding:8px 10px;font-size:12px" onchange="S.sort=this.value;render()">'
     +[['new','Новые'],['az','A → Z'],['za','Z → A'],['lvasc','A1 → C2'],['lvdesc','C2 → A1'],['phrasal','Фразовые глаголы']].map(([v,l])=>'<option value="'+v+'"'+(S.sort===v?' selected':'')+'>'+l+'</option>').join('')
+    +WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>'<option value="pack_'+p.id+'"'+(S.sort==='pack_'+p.id?' selected':'')+'>'+p.icon+' '+p.title+'</option>').join('')
     +'</select></div>'
     +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
     :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
