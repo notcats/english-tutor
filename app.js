@@ -53,7 +53,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -66,7 +66,7 @@ async function ai(type,data){
   if(S.user){S.user.du=(S.user.du||0)+1;}
   return r;
 }
-function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0};}
+function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0,ca:w.created_at||null};}
 function saveWord(s) {
   S.words = [mw(s), ...S.words.filter(x => x.word !== s.word)];
 }
@@ -468,23 +468,55 @@ async function savePh(){
 }
 
 // ── RENDER: PRACTICE ────────────────────────────────────
+function wsBySource(src){
+  const now=Date.now();
+  if(src==='hard')return S.words.filter(w=>w.hard);
+  if(src==='new7')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000);
+  if(src==='new30')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000);
+  if(src&&src.startsWith('pack_')){const p=WORD_PACKS.find(x=>x.id===src.slice(5));return p?S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())):S.words;}
+  return S.words;
+}
 function rPrac(){
   if(S.pm==='flash')return rFlash();if(S.pm==='fill')return rFill();if(S.pm==='read')return rRead();if(S.pm==='text')return rTxt();
-  const av=S.ho?S.words.filter(w=>w.hard):S.words;
-  return '<div class="sc"><div class="sht">Practice</div><div class="shs" style="margin-bottom:12px">Choose training mode</div>'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--sur);border:1px solid var(--brd);border-radius:13px;padding:11px 12px;margin-bottom:12px">'
-    +'<div><div class="fw6 f13">Hard words only</div><div class="f11 c3">'+S.words.filter(w=>w.hard).length+' words ⭐</div></div>'
-    +'<button class="tog" style="background:'+(S.ho?'var(--ac)':'var(--brd2)')+'" onclick="S.ho=!S.ho;render()"><div class="togk" style="left:'+(S.ho?22:3)+'px"></div></button></div>'
-    +(av.length<2?'<div class="empty"><div style="font-size:40px;margin-bottom:10px">📚</div><div class="syn fw7 f13 mb1">Not enough words</div><div class="f12 c3">Add at least 2 words'+(S.ho?' or disable Hard only':'')+'</div></div>'
-    :'<div class="mc" onclick="stM(\'flash\')"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Cards — remember translation</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="stM(\'fill\')"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">Missing word in sentence</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="stM(\'read\')"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Read AI text, tap words</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="stM(\'text\')"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI story with your words</div></div><span class="c3" style="font-size:17px">›</span></div>')
+  if(S.wmode)return rWSel();
+  return '<div class="sc"><div class="sht">Practice</div><div class="shs" style="margin-bottom:16px">Выбери режим тренировки</div>'
+    +'<div class="mc" onclick="ss({wmode:\'flash\'})"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Карточки — вспомни перевод</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="ss({wmode:\'fill\'})"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">Пропущенное слово в предложении</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="ss({wmode:\'read\'})"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Читай AI-текст, нажимай на слова</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="ss({wmode:\'text\'})"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI пишет историю на твоих словах</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'</div>';
+}
+function rWSel(){
+  const modes={flash:'🃏 Flashcards',fill:'✏️ Fill the blank',read:'📖 AI Reading',text:'✍️ Generate story'};
+  const now=Date.now();
+  const sources=[
+    ['all','📚','Все слова',S.words.length],
+    ['hard','⭐','Сложные слова',S.words.filter(w=>w.hard).length],
+    ['new7','🆕','Новые — последние 7 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000).length],
+    ['new30','📅','Новые — последние 30 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000).length],
+    ...WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>[
+      'pack_'+p.id, p.icon, p.title, S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length
+    ])
+  ];
+  const sel=S.wsrc||'all';
+  const selCount=wsBySource(sel).length;
+  return '<div class="sc">'
+    +'<div class="rb2 mb3"><button class="btn bg_ bsm" onclick="ss({wmode:null})">← Назад</button>'
+    +'<div class="syn fw7 f14">'+(modes[S.wmode]||'Practice')+'</div></div>'
+    +'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Какие слова тренируем?</div>'
+    +sources.map(([v,icon,label,cnt])=>'<div class="mc mb2" style="'+(sel===v?'border-color:var(--ac);background:var(--acD)':'')+'" onclick="S.wsrc=\''+v+'\';render()">'
+      +'<div class="mci" style="font-size:20px">'+icon+'</div>'
+      +'<div style="flex:1"><div class="fw6 f13">'+label+'</div><div class="f11 c3 mt1">'+cnt+' слов</div></div>'
+      +(sel===v?'<span style="color:var(--ac);font-size:18px">✓</span>':'<span class="c3" style="font-size:17px">›</span>')
+      +'</div>').join('')
+    +(selCount<2?'<div class="rb err f12 mt2">Недостаточно слов в выбранной категории (нужно минимум 2)</div>'
+      :'<button class="btn bp bfu mt2" onclick="stM(S.wmode)">Начать · '+selCount+' слов →</button>')
     +'</div>';
 }
 function stM(m){
-  const av=S.ho?S.words.filter(w=>w.hard):S.words;
-  S.pm=m;S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(10,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
+  const av=wsBySource(S.wsrc);
+  S.pm=m;S.wmode=null;
+  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(10,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
   render();if(m==='fill')lFill();if(m==='read')lRead();if(m==='text')lTxt();
 }
 function rFlash(){
