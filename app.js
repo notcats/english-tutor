@@ -53,7 +53,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US'};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -94,10 +94,16 @@ function fmtU(u){return{id:u.id,email:u.email,name:u.name,avatar:u.avatar,role:u
 
 // ── SPEECH ──────────────────────────────────────────────
 const LC={en:'en-US',de:'de-DE',fr:'fr-FR',es:'es-ES',it:'it-IT',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR'};
-function speak(w,slow){
+function setAccent(a){S.accent=a;localStorage.setItem('accent',a);render();}
+function speak(w,slow,accent){
   if(!window.speechSynthesis)return;speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(w);u.lang=LC[S.ll]||'en-US';u.rate=slow?0.6:0.9;
-  const vs=speechSynthesis.getVoices();const v=vs.find(v=>v.lang.startsWith(u.lang.slice(0,2))&&v.name.includes('Google'))||vs.find(v=>v.lang.startsWith(u.lang.slice(0,2)));
+  const lang=S.ll==='en'?(accent||S.accent||'en-US'):(LC[S.ll]||'en-US');
+  const u=new SpeechSynthesisUtterance(w);u.lang=lang;u.rate=slow?0.6:0.9;
+  const vs=speechSynthesis.getVoices();
+  const v=vs.find(v=>v.lang===lang&&v.name.includes('Google'))
+    ||vs.find(v=>v.lang===lang)
+    ||vs.find(v=>v.lang.startsWith(lang.slice(0,2))&&v.name.includes('Google'))
+    ||vs.find(v=>v.lang.startsWith(lang.slice(0,2)));
   if(v)u.voice=v;speechSynthesis.speak(u);
 }
 let _r=null,_ir=false;
@@ -114,7 +120,16 @@ function mic(tid,bid){
 // ── UI HELPERS ──────────────────────────────────────────
 function lvl(l){const c=l?.startsWith('C')?'bpk':l?.startsWith('B')?'bv':'bgr';return '<span class="badge '+c+'">'+(l||'?')+'</span>';}
 function ld(t){return '<div class="ail"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>'+(t||'AI…')+'</div>';}
-function tts(w){const e=(w||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<button class="ttsb" onclick="speak(\''+e+'\')">🔊</button> <button class="ttsb" onclick="speak(\''+e+'\',true)">🐢</button>';}
+function tts(w){
+  const e=(w||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  if(S.ll==='en'){
+    const isUS=S.accent==='en-US';
+    return '<button class="ttsb'+(isUS?' ttsb-on':'')+'" onclick="speak(\''+e+'\',false,\'en-US\')" title="American">🇺🇸</button>'
+      +' <button class="ttsb'+(!isUS?' ttsb-on':'')+'" onclick="speak(\''+e+'\',false,\'en-GB\')" title="British">🇬🇧</button>'
+      +' <button class="ttsb" onclick="speak(\''+e+'\',true)" title="Slow">🐢</button>';
+  }
+  return '<button class="ttsb" onclick="speak(\''+e+'\')">🔊</button> <button class="ttsb" onclick="speak(\''+e+'\',true)">🐢</button>';
+}
 function ge(id){return document.getElementById(id);}
 function ss(p){Object.assign(S,p);render();}
 function modal(content, closeAction) {
@@ -245,7 +260,9 @@ function rProf(){
     +'<div style="display:flex;align-items:center;gap:8px">' + progressBar(pct) + '</div></div>'
     +'<div class="card csm mb2"><div class="f12 fw6 mb2">Learning settings</div>'
     +'<div class="rb2 mb2"><span class="f12 c2">Native language</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'n\'})">'+(cl?cl.flag+' '+cl.name:'Select')+'</button></div>'
-    +'<div class="rb2"><span class="f12 c2">Learning</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'l\'})">'+(ll?ll.flag+' '+ll.name:'Select')+'</button></div></div>'
+    +'<div class="rb2 mb2"><span class="f12 c2">Learning</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'l\'})">'+(ll?ll.flag+' '+ll.name:'Select')+'</button></div>'
+    +(S.ll==='en'?'<div class="rb2"><span class="f12 c2">Акцент</span><div style="display:flex;gap:6px"><button class="btn bsm '+(S.accent==='en-US'?'bp':'bg_')+'" onclick="setAccent(\'en-US\')">🇺🇸 American</button><button class="btn bsm '+(S.accent==='en-GB'?'bp':'bg_')+'" onclick="setAccent(\'en-GB\')">🇬🇧 British</button></div></div>':'')
+    +'</div>'
     +(isT?'<button class="btn bs bfu bsm mb2" onclick="ss({prof:false,tab:\'groups\'})">👥 Manage groups</button>':'')
     +'<button class="btn bd bfu" onclick="logout()">Sign out</button>';
   return modal(innerContent, 'ss({prof:false})');
