@@ -604,6 +604,21 @@ app.post('/api/ai/generate', auth, aiLimit, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.post('/api/ai/topic', auth, aiLimit, async (req, res) => {
+  try {
+    const { topic, count = 20 } = req.body;
+    if (!topic) return res.status(400).json({ error: 'Topic required' });
+    const langs = await getUserLangs(req.user.id);
+    const ll = LEARN[langs.learn_lang] || 'English';
+    const raw = await callClaude(
+      [{ role: 'user', content: `Generate ${count} useful ${ll} words and phrases on the topic: "${topic}".\nFor each word provide translation, IPA transcription, CEFR level, example sentence, and grammar note.\nReturn ONLY JSON:\n{"words":[{"word":"example","translation":"перевод","transcription":"[ɪɡˈzɑːmpl]","level":"B1","example_en":"An example sentence.","example_ru":"Перевод примера.","grammar_note":"countable noun"}]}` }],
+      getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang),
+      3000
+    );
+    res.json(JSON.parse(raw));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.post('/api/ai/bulk', auth, aiLimit, async (req, res) => {
   try {
     const { words } = req.body;

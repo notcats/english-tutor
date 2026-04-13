@@ -355,9 +355,20 @@ function rAddP(){
     +'<label for="pf" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:12px"><span style="font-size:26px">📷</span> Choose screenshot or photo</label>'
     +'<div id="pr"></div></div>';
 }
-let _packSt={};
+let _packSt={},_customPack=null;
 function rAddPacks(){
-  return '<div>'+WORD_PACKS.map(p=>{
+  const cp=_customPack;
+  const customCard='<div class="card mb2" style="border-color:var(--ac2)">'
+    +'<div class="fw7 f14 mb2">✨ Своя тема</div>'
+    +'<div class="f12 c3 mb2">Введи любую тему — AI подберёт слова</div>'
+    +(cp&&cp.loading?'<div>'+ld('AI подбирает слова…')+'</div>'
+      :cp&&cp.words?'<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">'+cp.words.slice(0,8).map(w=>'<span class="badge bgr" style="font-size:10px">'+w.word+'</span>').join('')+(cp.words.length>8?'<span class="f11 c3" style="align-self:center;margin-left:2px">+'+( cp.words.length-8)+' ещё</span>':'')+'</div>'
+        +(cp.saved?'<span style="color:var(--ac);font-size:12px;font-weight:600">✓ Добавлено</span>'
+          :'<div class="row" style="gap:8px"><button class="btn bp bsm" onclick="saveCustomPack()">+ Добавить все</button><button class="btn bg_ bsm" onclick="_customPack=null;render()">✕ Сбросить</button></div>')
+      :'<div class="row" style="gap:8px"><input id="cpTopic" class="inp" style="flex:1" placeholder="Авиация, кулинария, спорт…" onkeydown="if(event.key===\'Enter\')genCustomPack()">'
+        +'<button class="btn bp bsm" onclick="genCustomPack()">✨ AI</button></div>')
+    +'</div>';
+  return '<div>'+customCard+WORD_PACKS.map(p=>{
     const st=_packSt[p.id]||{};
     const already=S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length;
     return '<div class="card mb2">'
@@ -374,6 +385,18 @@ function rAddPacks(){
         +(p.words.length>8?'<span class="f11 c3" style="align-self:center;margin-left:2px">+'+( p.words.length-8)+' ещё</span>':'')
       +'</div></div>';
   }).join('')+'</div>';
+}
+async function genCustomPack(){
+  const topic=ge('cpTopic')?.value?.trim();if(!topic)return;
+  _customPack={loading:true,words:null,saved:false,topic};render();
+  try{const d=await api('/api/ai/topic',{method:'POST',body:{topic,count:20}});_customPack={loading:false,words:d.words||[],saved:false,topic};}
+  catch(e){_customPack=null;alert(e.message);}
+  render();
+}
+async function saveCustomPack(){
+  if(!_customPack?.words)return;
+  for(const w of _customPack.words){try{const s=await api('/api/words',{method:'POST',body:w});saveWord(s);}catch{}}
+  _customPack.saved=true;render();
 }
 async function addPack(id){
   const p=WORD_PACKS.find(x=>x.id===id);if(!p)return;
