@@ -315,10 +315,11 @@ function rDict(){
   else if(S.sort.startsWith('pack_')){const pid=S.sort.slice(5);const p=WORD_PACKS.find(x=>x.id===pid);if(p)list=list.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()));}
   const guestBanner=S.guest?'<div class="rb" style="background:var(--acD);border-color:var(--ac);margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💾</span><div style="flex:1"><div class="fw6 f12">'+t('saveTitle')+'</div><div class="f11 c2 mt1">'+t('saveDesc')+'</div></div><button class="btn bp bsm" style="font-size:11px;white-space:nowrap" onclick="ss({scr:\'ob\',step:4})">'+t('register')+'</button></div>':'';
   return '<div class="sc">'+guestBanner
-    +'<div class="row mb2" style="gap:8px"><div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
-    +'<select class="inp" style="flex-shrink:0;width:auto;padding:8px 10px;font-size:12px" onchange="S.sort=this.value;render()">'
-    +[['new','Новые'],['az','A → Z'],['za','Z → A'],['lvasc','A1 → C2'],['lvdesc','C2 → A1'],['phrasal','Фразовые глаголы']].map(([v,l])=>'<option value="'+v+'"'+(S.sort===v?' selected':'')+'>'+l+'</option>').join('')
+    +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" style="width:100%;box-sizing:border-box" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
+    +'<select class="inp" style="flex-shrink:0;width:auto;font-size:13px;padding:11px 10px" onchange="S.sort=this.value;render()">'
+    +[['new','Новые'],['az','A → Z'],['za','Z → A'],['lvasc','A1 → C2'],['lvdesc','C2 → A1'],['phrasal','Фразовые']].map(([v,l])=>'<option value="'+v+'"'+(S.sort===v?' selected':'')+'>'+l+'</option>').join('')
     +WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>'<option value="pack_'+p.id+'"'+(S.sort==='pack_'+p.id?' selected':'')+'>'+p.icon+' '+p.title+'</option>').join('')
+    +getCustomPacks().filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map((p,i)=>'<option value="custom_'+i+'"'+(S.sort==='custom_'+i?' selected':'')+'>✨ '+p.topic+'</option>').join('')
     +'</select></div>'
     +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
     :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
@@ -385,6 +386,9 @@ function rAddPacks(){
       :'<div class="row" style="gap:8px"><input id="cpTopic" class="inp" style="flex:1" placeholder="Авиация, кулинария, спорт…" onkeydown="if(event.key===\'Enter\')genCustomPack()">'
         +'<button class="btn bp bsm" onclick="genCustomPack()">✨ AI</button></div>')
     +'</div>';
+  const stickyBar=cp&&cp.words&&!cp.saved
+    ?'<div style="position:sticky;bottom:0;padding:10px 0 0;background:var(--bg);border-top:1px solid var(--brd);margin-top:6px"><div style="display:flex;gap:8px"><button class="btn bp" style="flex:1;padding:12px;font-size:13px" onclick="saveCustomPack()">+ Добавить все ('+cp.words.length+')</button><button class="btn bg_ bsm" onclick="_customPack=null;render()">✕</button></div></div>'
+    :'';
   return '<div>'+customCard+WORD_PACKS.map(p=>{
     const st=_packSt[p.id]||{};
     const already=S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length;
@@ -401,7 +405,7 @@ function rAddPacks(){
         +p.words.slice(0,8).map(w=>'<span class="badge bgr" style="font-size:10px">'+w+'</span>').join('')
         +(p.words.length>8?'<span class="f11 c3" style="align-self:center;margin-left:2px">+'+( p.words.length-8)+' ещё</span>':'')
       +'</div></div>';
-  }).join('')+'</div>';
+  }).join('')+stickyBar+'</div>';
 }
 async function genCustomPack(){
   const topic=ge('cpTopic')?.value?.trim();if(!topic)return;
@@ -410,9 +414,12 @@ async function genCustomPack(){
   catch(e){_customPack=null;alert(e.message);}
   render();
 }
+function getCustomPacks(){try{return JSON.parse(localStorage.getItem('customPacks')||'[]');}catch{return[];}}
+function storeCustomPack(topic,words){const cp=getCustomPacks().filter(p=>p.topic!==topic);cp.unshift({topic,words:words.map(w=>w.word)});localStorage.setItem('customPacks',JSON.stringify(cp.slice(0,10)));}
 async function saveCustomPack(){
   if(!_customPack?.words)return;
   for(const w of _customPack.words){try{const s=await api('/api/words',{method:'POST',body:w});saveWord(s);}catch{}}
+  storeCustomPack(_customPack.topic,_customPack.words);
   _customPack.saved=true;render();
 }
 async function addPack(id){
@@ -514,6 +521,7 @@ function wsBySource(src){
   if(src==='new7')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000);
   if(src==='new30')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000);
   if(src&&src.startsWith('pack_')){const p=WORD_PACKS.find(x=>x.id===src.slice(5));return p?S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())):S.words;}
+  if(src&&src.startsWith('custom_')){const cp=getCustomPacks()[parseInt(src.slice(7))];return cp?S.words.filter(w=>cp.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())):S.words;}
   return S.words;
 }
 function rPrac(){
@@ -536,7 +544,10 @@ function rWSel(){
     ['new30','📅','Новые — последние 30 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000).length],
     ...WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>[
       'pack_'+p.id, p.icon, p.title, S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length
-    ])
+    ]),
+    ...getCustomPacks().map((p,i)=>[
+      'custom_'+i, '✨', p.topic, S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length
+    ]).filter(([,,, cnt])=>cnt>0)
   ];
   const sel=S.wsrc||'all';
   const selCount=wsBySource(sel).length;
