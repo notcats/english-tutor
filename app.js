@@ -53,7 +53,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US'};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',wcount:10,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US'};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -369,8 +369,14 @@ function rAddM(){
     +'<div id="ar"></div></div>';
 }
 function rAddP(){
-  return '<div><input type="file" id="pf" accept="image/*" style="display:none" onchange="hPhoto(this)">'
-    +'<label for="pf" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:12px"><span style="font-size:26px">📷</span> Choose screenshot or photo</label>'
+  const btnStyle='display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 10px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;flex:1;text-align:center';
+  return '<div>'
+    +'<input type="file" id="pfc" accept="image/*" capture="environment" style="display:none" onchange="hPhoto(this)">'
+    +'<input type="file" id="pf" accept="image/*" style="display:none" onchange="hPhoto(this)">'
+    +'<div style="display:flex;gap:10px;margin-bottom:12px">'
+    +'<label for="pfc" style="'+btnStyle+'"><div><span style="font-size:30px;display:block;margin-bottom:4px">📷</span>Камера</div></label>'
+    +'<label for="pf" style="'+btnStyle+'"><div><span style="font-size:30px;display:block;margin-bottom:4px">🖼️</span>Галерея / скрин</div></label>'
+    +'</div>'
     +'<div id="pr"></div></div>';
 }
 let _packSt={},_customPack=null;
@@ -415,6 +421,8 @@ async function genCustomPack(){
   render();
 }
 function getCustomPacks(){try{return JSON.parse(localStorage.getItem('customPacks')||'[]');}catch{return[];}}
+function getTextWords(){try{return JSON.parse(localStorage.getItem('textWords')||'[]');}catch{return[];}}
+function addTextWord(word){const tw=getTextWords().filter(w=>w!==word.toLowerCase());tw.unshift(word.toLowerCase());localStorage.setItem('textWords',JSON.stringify(tw.slice(0,500)));}
 function storeCustomPack(topic,words){const cp=getCustomPacks().filter(p=>p.topic!==topic);cp.unshift({topic,words:words.map(w=>w.word)});localStorage.setItem('customPacks',JSON.stringify(cp.slice(0,10)));}
 async function saveCustomPack(){
   if(!_customPack?.words)return;
@@ -520,6 +528,8 @@ function wsBySource(src){
   if(src==='hard')return S.words.filter(w=>w.hard);
   if(src==='new7')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000);
   if(src==='new30')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000);
+  if(src==='text'){const tw=new Set(getTextWords());return S.words.filter(w=>tw.has(w.word.toLowerCase()));}
+  if(src&&src.startsWith('last')){const n=parseInt(src.slice(4));const sorted=[...S.words].sort((a,b)=>new Date(b.ca||0)-new Date(a.ca||0));return sorted.slice(0,n);}
   if(src&&src.startsWith('pack_')){const p=WORD_PACKS.find(x=>x.id===src.slice(5));return p?S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())):S.words;}
   if(src&&src.startsWith('custom_')){const cp=getCustomPacks()[parseInt(src.slice(7))];return cp?S.words.filter(w=>cp.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())):S.words;}
   return S.words;
@@ -537,11 +547,16 @@ function rPrac(){
 function rWSel(){
   const modes={flash:'🃏 Flashcards',fill:'✏️ Fill the blank',read:'📖 AI Reading',text:'✍️ Generate story'};
   const now=Date.now();
+  const textCnt=(()=>{const tw=new Set(getTextWords());return S.words.filter(w=>tw.has(w.word.toLowerCase())).length;})();
   const sources=[
     ['all','📚','Все слова',S.words.length],
     ['hard','⭐','Сложные слова',S.words.filter(w=>w.hard).length],
-    ['new7','🆕','Новые — последние 7 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000).length],
-    ['new30','📅','Новые — последние 30 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000).length],
+    ['text','📖','Из AI-текстов',textCnt],
+    ['last10','🕐','Последние 10 добавленных',Math.min(10,S.words.length)],
+    ['last20','🕑','Последние 20 добавленных',Math.min(20,S.words.length)],
+    ['last50','🕒','Последние 50 добавленных',Math.min(50,S.words.length)],
+    ['new7','🆕','Добавлены за 7 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000).length],
+    ['new30','📅','Добавлены за 30 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000).length],
     ...WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>[
       'pack_'+p.id, p.icon, p.title, S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length
     ]),
@@ -551,6 +566,8 @@ function rWSel(){
   ];
   const sel=S.wsrc||'all';
   const selCount=wsBySource(sel).length;
+  const wc=S.wcount||10;
+  const actual=Math.min(wc===0?selCount:wc,selCount);
   return '<div class="sc">'
     +'<div class="rb2 mb3"><button class="btn bg_ bsm" onclick="ss({wmode:null})">← Назад</button>'
     +'<div class="syn fw7 f14">'+(modes[S.wmode]||'Practice')+'</div></div>'
@@ -561,13 +578,18 @@ function rWSel(){
       +(sel===v?'<span style="color:var(--ac);font-size:18px">✓</span>':'<span class="c3" style="font-size:17px">›</span>')
       +'</div>').join('')
     +(selCount<2?'<div class="rb err f12 mt2">Недостаточно слов в выбранной категории (нужно минимум 2)</div>'
-      :'<button class="btn bp bfu mt2" onclick="stM(S.wmode)">Начать · '+selCount+' слов →</button>')
+      :'<div style="margin-top:14px"><div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Сколько слов тренировать?</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +[[10,'10'],[20,'20'],[30,'30'],[50,'50'],[0,'Все']].map(([v,l])=>'<button class="btn '+(wc===v?'bp':'bg_')+' bsm" style="flex:1;min-width:50px" onclick="S.wcount='+v+';render()">'+l+'</button>').join('')
+        +'</div>'
+        +'<button class="btn bp bfu mt2" onclick="stM(S.wmode)">Начать · '+actual+' слов →</button></div>')
     +'</div>';
 }
 function stM(m){
   const av=wsBySource(S.wsrc);
   S.pm=m;S.wmode=null;
-  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(10,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
+  const wc=S.wcount||10;const wcLimit=wc===0?av.length:wc;
+  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
   render();if(m==='fill')lFill();if(m==='read')lRead();if(m==='text')lTxt();
 }
 function rFlash(){
@@ -649,6 +671,7 @@ async function addTipWord(){
   const body={word:tip.w,translation:tip.t,transcription:tip.ts||'',level:tip.lv||'B1',example_en:tip.ex||'',example_ru:'',grammar_note:tip.gr||'',hard:false};
   try{const s=await api('/api/words',{method:'POST',body});saveWord(s);}
   catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:'',gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
+  addTextWord(body.word);
   if(S.sess.tip)S.sess.tip.known=true;render();
 }
 function rTip(){
