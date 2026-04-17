@@ -666,6 +666,35 @@ app.post('/api/ai/image', auth, aiLimit, async (req, res) => {
   }
 });
 
+app.post('/api/ai/image-text', auth, aiLimit, async (req, res) => {
+  try {
+    const { imageBase64, mimeType = 'image/jpeg' } = req.body;
+    if (!imageBase64) return res.status(400).json({ error: 'No image provided' });
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.GROQ_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        max_tokens: 2048,
+        temperature: 0.1,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Extract ALL text visible in this image exactly as written. Return only the extracted text, no explanations.' },
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } }
+          ]
+        }]
+      })
+    });
+    const d = await r.json();
+    if (d.error) return res.status(500).json({ error: d.error.message });
+    const text = d.choices?.[0]?.message?.content || '';
+    res.json({ text });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.post('/api/ai/analyze', auth, aiLimit, async (req, res) => {
   try {
     const { text } = req.body;

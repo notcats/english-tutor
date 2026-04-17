@@ -7,7 +7,8 @@
   window.installApp=async()=>{if(!_deferredInstall)return;_deferredInstall.prompt();const r=await _deferredInstall.userChoice;if(r.outcome==='accepted')_deferredInstall=null;const btn=document.getElementById('installBtn');if(btn)btn.style.display='none';};
 })();
 const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},{code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},{code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},{code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},{code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},{code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},{code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},{code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},{code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},{code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},{code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},{code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},{code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},{code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},{code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"}];
-const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
+const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"},{code:"tr",flag:"🇹🇷",name:"Türkçe"}];
+function sortByPhone(list){const ph=(navigator.language||'').slice(0,2).toLowerCase();const idx=list.findIndex(l=>l.code===ph);if(idx<=0)return list;const r=[...list];r.unshift(r.splice(idx,1)[0]);return r;}
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
 const WORD_PACKS=[
   {id:'hotel',icon:'🏨',title:'Работа в отеле',words:['receptionist','check in','check out','concierge','housekeeping','room service','front desk','vacancy','amenities','occupancy','maintenance','reservation','suite','shift','overtime','tip','linen','complaint','bellboy']},
@@ -195,7 +196,7 @@ function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});if(t==='admin')
 // ── RENDER: ONBOARDING ──────────────────────────────────
 function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();if(S.step===3)return ob3();if(S.step===4)return ob4();return ob5();}
 function ob1(){
-  const list=LANGS.filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
+  const list=sortByPhone(LANGS).filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
   return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(94,255,196,.3))">🌍</div><div class="obl">AI Language <em>Tutor</em></div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step1')+'</div></div>'
     +'<div class="obs2 mb3"><div class="oblbl">'+t('nativeQ')+'</div>'
     +'<div class="obsw"><span class="obsico">🔍</span><input class="obsinp" placeholder="'+t('search')+'" value="'+(S.obs||'')+'" oninput="S.obs=this.value;render()"></div>'
@@ -205,7 +206,7 @@ function ob1(){
 function ob2(){
   return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📚</div><div class="obl">'+t('learnQ').replace(/\?/,'? <em>🎯</em>')+'</div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step2')+'</div></div>'
     +'<div class="obs2 mb3"><div class="oblbl">'+t('chooseLang')+'</div>'
-    +'<div class="lg">'+LLANGS.map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
+    +'<div class="lg">'+sortByPhone(LLANGS).map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
     +'<div style="width:100%;position:relative;z-index:1;margin-top:14px;display:flex;gap:9px"><button class="btn bg_ bfu" onclick="ss({step:1})">'+t('back')+'</button><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:3})">'+t('cont')+'</button></div></div>';
 }
 function ob3(){
@@ -268,7 +269,7 @@ function rProf(){
   return modal(innerContent, 'ss({prof:false})');
 }
 function rLP(){
-  const isN=S.lp==='n';const list=isN?LANGS:LLANGS;const cur=isN?S.nl:S.ll;
+  const isN=S.lp==='n';const list=sortByPhone(isN?LANGS:LLANGS);const cur=isN?S.nl:S.ll;
   const innerContent=
     '<div class="rb2 mb3"><div class="syn fw7" style="font-size:17px">'+(isN?'Native language':'Learning language')+'</div><button class="btn bg_ bsm" onclick="ss({lp:false})">✕</button></div>'
     +'<div class="lg" style="max-height:320px;overflow-y:auto;gap:6px">'+list.map(l=>'<div class="lc'+(cur===l.code?' sel':'')+'" onclick="selLang(\''+l.code+'\')"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(cur===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div>';
@@ -735,9 +736,16 @@ function rTexts(){
       +'</div></div>';
   }
   const inputSection=tx.mode==='input'
-    ?'<div class="card mb3"><div class="f12 fw6 mb2">Вставь текст для чтения:</div>'
+    ?'<div class="card mb3">'
+      +'<div class="f12 fw6 mb2">Вставь текст для чтения:</div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:10px">'
+        +'<button class="btn bg_ bsm" style="flex:1" onclick="pasteClipboardTx()">📋 Из буфера</button>'
+        +'<label for="txScan" class="btn bg_ bsm" style="flex:1;text-align:center;cursor:pointer;margin:0">📷 Сканировать</label>'
+        +'<input type="file" id="txScan" accept="image/*" capture="environment" style="display:none" onchange="scanTextPhoto(this)">'
+      +'</div>'
+      +(tx.scanLoading?'<div style="margin-bottom:8px">'+ld('Читаю текст с фото…')+'</div>':'')
       +'<textarea id="txIn" class="inp" style="height:130px;resize:none;font-size:13px;line-height:1.5" placeholder="Вставь любой текст на английском…">'+(tx.input||'')+'</textarea>'
-      +'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn bp" style="flex:1" onclick="startCustomTx()">▶ Читать</button><button class="btn bg_ bsm" onclick="S.tx.mode=\'home\';render()">✕</button></div></div>'
+      +'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn bp" style="flex:1" onclick="startCustomTx()">▶ Читать</button><button class="btn bg_ bsm" onclick="S.tx.mode=\'home\';S.tx.input=\'\';render()">✕</button></div></div>'
     :'';
   return '<div class="sc">'
     +'<div class="sht">Работа с текстом</div>'
@@ -800,6 +808,22 @@ function rTxTip(){
     +'<div class="row" style="gap:8px;align-items:center">'+tts(tip.w)
     +(tip.known?'<span class="f11 c3" style="margin-left:auto">✓ В словаре</span>':'<button class="btn bp bsm" style="margin-left:auto" onclick="addTxTip()">+ Добавить</button>')
     +'</div>')+'</div>';
+}
+async function pasteClipboardTx(){
+  try{const text=await navigator.clipboard.readText();if(!text)return;S.tx.input=text;const el=ge('txIn');if(el)el.value=text;else render();}
+  catch{alert('Нет доступа к буферу. Вставь текст вручную (удержи поле → Вставить).');}
+}
+async function scanTextPhoto(input){
+  const file=input.files[0];if(!file)return;
+  S.tx.scanLoading=true;render();
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const b64=ev.target.result.split(',')[1];const mt=file.type||'image/jpeg';
+    try{const r=await api('/api/ai/image-text',{method:'POST',body:{imageBase64:b64,mimeType:mt}});
+      S.tx.input=(r.text||'').trim();S.tx.scanLoading=false;render();const el=ge('txIn');if(el)el.value=S.tx.input;}
+    catch(e){S.tx.scanLoading=false;render();alert('Не удалось прочитать текст: '+e.message);}
+  };
+  reader.readAsDataURL(file);
 }
 function rEnd(){
   const s=S.sess;
