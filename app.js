@@ -163,7 +163,8 @@ async function emailAuth(){
     S.tok=d.token;localStorage.setItem('tok',d.token);S.user=fmtU(d.user);S.nl=S.user.nl;S.ll=S.user.ll;
     await loadData();
     for(const w of guestWords){try{const s=await api('/api/words',{method:'POST',body:{word:w.word,translation:w.tr,transcription:w.ts,level:w.lv,example_en:w.ex,example_ru:w.exr,grammar_note:w.gr,hard:w.hard}});saveWord(s);}catch{}}
-    ss({scr:'main',tab:'dict',guest:false,guestStep:'add'});
+    const isNew=S.words.length===0;
+    ss({scr:'main',tab:'dict',guest:false,guestStep:'add',...(isNew?{add:true,addTab:'packs'}:{})});
   }catch(err){showErr(err.message);}
 }
 function enterGuest(){ss({scr:'main',tab:'dict',guest:true,guestStep:'add'});}
@@ -322,7 +323,14 @@ function rDict(){
     +WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>'<option value="pack_'+p.id+'"'+(S.sort==='pack_'+p.id?' selected':'')+'>'+p.icon+' '+p.title+'</option>').join('')
     +getCustomPacks().filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map((p,i)=>'<option value="custom_'+i+'"'+(S.sort==='custom_'+i?' selected':'')+'>✨ '+p.topic+'</option>').join('')
     +'</select></div>'
-    +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
+    +(list.length===0
+      ? S.words.length===0
+        ? '<div style="margin-top:4px"><div class="f14 fw7 mb3">👋 С чего начать?</div>'
+          +'<div class="mc mb2" onclick="ss({add:true,addTab:\'manual\'})"><div class="mci">✏️</div><div style="flex:1"><div class="fw6 f13">Добавить слово вручную</div><div class="f11 c3 mt1">Введи слово — AI переведёт и объяснит</div></div><span class="c3">›</span></div>'
+          +'<div class="mc mb2" onclick="ss({add:true,addTab:\'photo\'})"><div class="mci">📷</div><div style="flex:1"><div class="fw6 f13">Сфотографировать текст</div><div class="f11 c3 mt1">AI найдёт все слова на фото</div></div><span class="c3">›</span></div>'
+          +'<div class="mc mb2" onclick="ss({add:true,addTab:\'packs\'})"><div class="mci">📦</div><div style="flex:1"><div class="fw6 f13">Выбрать готовый набор</div><div class="f11 c3 mt1">Отель, работа, фразовые глаголы…</div></div><span class="c3">›</span></div>'
+          +'</div>'
+        : '<div class="empty"><div style="font-size:44px;margin-bottom:10px">🔍</div><div class="syn fw7 f13 mb1">Ничего не найдено</div><div class="f12 c3">Попробуй другой запрос или сбрось фильтр</div></div>'
     :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
       +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
       +'<div class="wru">'+w.tr+'</div>'
@@ -538,11 +546,21 @@ function wsBySource(src){
 function rPrac(){
   if(S.pm==='flash')return rFlash();if(S.pm==='fill')return rFill();if(S.pm==='read')return rRead();if(S.pm==='text')return rTxt();
   if(S.wmode)return rWSel();
-  return '<div class="sc"><div class="sht">Practice</div><div class="shs" style="margin-bottom:16px">Выбери режим тренировки</div>'
-    +'<div class="mc" onclick="ss({wmode:\'flash\'})"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Карточки — вспомни перевод</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="ss({wmode:\'fill\'})"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">Пропущенное слово в предложении</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="ss({wmode:\'read\'})"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Читай AI-текст, нажимай на слова</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="ss({wmode:\'text\'})"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI пишет историю на твоих словах</div></div><span class="c3" style="font-size:17px">›</span></div>'
+  const streak=S.user?.streak||0;
+  const streakBar=S.guest?'':streak===0
+    ?'<div class="rb mb3" style="background:rgba(255,140,0,.07);border-color:rgba(255,140,0,.35);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔥</span><div><div class="fw6 f13">Начни серию!</div><div class="f12 c3 mt1">Потренируй хотя бы 5 слов сегодня</div></div></div>'
+    :streak>=7?'<div class="rb mb3" style="background:rgba(255,140,0,.07);border-color:rgba(255,140,0,.35);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔥</span><div class="fw6 f13">'+streak+' дней подряд — ты молодец! 💪</div></div>'
+    :streak>=3?'<div class="rb mb3" style="background:rgba(255,140,0,.07);border-color:rgba(255,140,0,.35);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔥</span><div class="fw6 f13">'+streak+' '+( streak===3||streak===4?'дня':'дней')+' подряд! Продолжай!</div></div>'
+    :'';
+  const seenHint=localStorage.getItem('seenPracHint');
+  const hintCard=seenHint?'':'<div class="rb mb3" style="position:relative"><button class="ib" style="position:absolute;top:0;right:0;font-size:16px" onclick="localStorage.setItem(\'seenPracHint\',1);render()">✕</button><div class="fw6 f13 mb1">💡 Как это работает?</div><div class="f12 c2">Выбери режим → выбери слова для тренировки → начни. <strong>Flashcards</strong> — лучший старт, если ты новичок.</div></div>';
+  return '<div class="sc"><div class="sht">Practice</div>'
+    +streakBar+hintCard
+    +'<div class="shs" style="margin-bottom:12px">Выбери режим тренировки</div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'flash\'})"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Увидишь слово — вспомни перевод, потом переверни</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'fill\'})"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">AI даёт предложение — выбери пропущенное слово</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'read\'})"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Читай текст, нажимай на незнакомые слова</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="ss({wmode:\'text\'})"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI пишет историю именно на твоих словах</div></div><span class="c3" style="font-size:17px">›</span></div>'
     +'</div>';
 }
 function rWSel(){
@@ -641,7 +659,9 @@ function rRead(){
   const s=S.sess;
   return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><button class="btn bs bsm" onclick="lRead()" '+(s.rl?'disabled':'')+'>🔄 New</button></div>'
     +rTip()
-    +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">📄 Tap any word for translation</div>'+(s.rl?ld('AI writing…'):'<div class="rt">'+(s.rt?tappableText(s.rt.text):'')+'</div>')+'</div>'
+    +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">📄 Tap any word for translation</div>'
+    +'<div style="display:flex;gap:14px;font-size:10px;color:var(--t3);margin-bottom:10px;flex-wrap:wrap"><span><span style="color:var(--ac);font-weight:700;border-bottom:1px solid rgba(94,255,196,.4)">word</span> in dict</span><span><span style="border-bottom:1px dashed var(--brd2)">word</span> tap to translate</span></div>'
+    +(s.rl?ld('AI writing…'):'<div class="rt">'+(s.rt?tappableText(s.rt.text):'')+'</div>')+'</div>'
     +(s.rt?.questions&&!s.rl?'<div class="syn fw7 f13 mb2">Questions</div>'
     +s.rt.questions.map((q,qi)=>'<div class="card mb2"><div class="fw6 f13 mb2">'+q.q+'</div><div style="display:flex;flex-direction:column;gap:6px">'
     +q.options.map(opt=>'<button class="opt'+(s.rc?(opt===q.correct?' cor':s.ra[qi]===opt?' wrg':''):'')+'" style="'+((!s.rc&&s.ra[qi]===opt)?'border-color:var(--ac2);color:var(--ac2)':'')+'" onclick="pickR('+qi+',\''+opt.replace(/'/g,"\\'")+'\')"> '+opt+'</button>').join('')
@@ -741,8 +761,12 @@ function rTexts(){
         +(selPhrase?'<button class="btn bg_ bsm" onclick="S.tx.sel=[];render()">✕</button>':'')
         +'</div>':'')
       +rTxTip()
-      +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">'
+      +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">'
       +(tx.selMode?'✂️ Фраза: нажимай слова подряд':'📄 Нажми на слово — увидишь перевод')+'</div>'
+      +'<div style="display:flex;gap:14px;font-size:10px;color:var(--t3);margin-bottom:10px;flex-wrap:wrap">'
+      +'<span><span style="color:var(--ac);font-weight:700;border-bottom:1px solid rgba(94,255,196,.4)">word</span> — в словаре</span>'
+      +'<span><span style="border-bottom:1px dashed var(--brd2)">word</span> — нажми, переведу</span>'
+      +'</div>'
       +(tx.loading?ld('AI пишет текст…'):tx.text?'<div class="rt">'+tappableTextTx(tx.text)+'</div>':'')
       +'</div></div>';
   }
@@ -876,11 +900,20 @@ async function scanTextPhoto(input){
   reader.readAsDataURL(file);
 }
 function rEnd(){
-  const s=S.sess;
-  return '<div class="sc"><button class="btn bg_ bsm mb3" onclick="ss({pm:null,sess:null})">← Back</button>'
-    +'<div class="se"><div class="syn fw7" style="font-size:68px;color:var(--ac);line-height:1">'+s.score+'</div>'
-    +'<div class="syn fw7 f13 mt1">words learned!</div><div class="f12 c3 mt1">of '+s.words.length+' cards</div>'
-    +'<div class="row mt3" style="justify-content:center;gap:9px"><button class="btn bp" onclick="stM(\''+S.pm+'\')">🔄 Again</button><button class="btn bs" onclick="ss({pm:null,sess:null})">← Menu</button></div></div></div>';
+  const s=S.sess;const pm=S.pm;
+  const pct=s.words.length?Math.round(s.score/s.words.length*100):0;
+  const msg=pct===100?'🎉 Отлично! Все верно!':pct>=70?'💪 Хороший результат!':pct>=40?'📈 Продолжай тренироваться!':'🔄 Повтори ещё раз!';
+  const hardCount=S.words.filter(w=>w.hard).length;
+  return '<div class="sc">'
+    +'<div class="se"><div class="syn fw7" style="font-size:72px;color:var(--ac);line-height:1">'+s.score+'<span style="font-size:32px;color:var(--t3)">/'+s.words.length+'</span></div>'
+    +'<div class="fw6 f14 mt2 mb1">'+msg+'</div>'
+    +'<div class="f12 c3 mb4">'+pct+'% правильно</div></div>'
+    +'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Что дальше?</div>'
+    +'<div class="mc mb2" onclick="stM(\''+pm+'\')"><div class="mci">🔄</div><div style="flex:1"><div class="fw6 f13">Повторить этот набор</div><div class="f11 c3 mt1">Те же слова, новый порядок</div></div></div>'
+    +(hardCount>0?'<div class="mc mb2" onclick="S.wsrc=\'hard\';S.wmode=\''+pm+'\';render()"><div class="mci">⭐</div><div style="flex:1"><div class="fw6 f13">Потренировать сложные</div><div class="f11 c3 mt1">'+hardCount+' слов отмечено звёздочкой</div></div></div>':'')
+    +'<div class="mc mb2" onclick="ss({add:true,addTab:\'manual\'})"><div class="mci">➕</div><div style="flex:1"><div class="fw6 f13">Добавить новые слова</div><div class="f11 c3 mt1">Расширь свой словарь</div></div></div>'
+    +'<div class="mc" onclick="ss({pm:null,sess:null})"><div class="mci">📋</div><div style="flex:1"><div class="fw6 f13">В меню режимов</div><div class="f11 c3 mt1">Выбрать другой тип тренировки</div></div></div>'
+    +'</div>';
 }
 
 // ── RENDER: HISTORY ─────────────────────────────────────
