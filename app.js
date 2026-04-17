@@ -54,7 +54,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',wcount:10,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US',tx:{mode:'home',loading:false,text:null,tip:null,ai:false,input:''}};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',wcount:10,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US',tx:{mode:'home',loading:false,text:null,tip:null,ai:false,input:'',sel:[],selMode:false}};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -726,12 +726,22 @@ function rTexts(){
   const tw=new Set(getTextWords());
   const textWords=S.words.filter(w=>tw.has(w.word.toLowerCase()));
   if(tx.mode==='read'){
+    const selPhrase=(tx.sel||[]).join(' ');
     return '<div class="sc">'
-      +'<div class="rb2 mb2"><button class="btn bg_ bsm" onclick="S.tx=Object.assign(S.tx,{mode:\'home\',text:null,tip:null});render()">← Назад</button>'
-      +(tx.ai?'<button class="btn bs bsm" onclick="lGenTx()" '+(tx.loading?'disabled':'')+'>🔄 Новый</button>':'')
-      +'</div>'
+      +'<div class="rb2 mb2"><button class="btn bg_ bsm" onclick="S.tx=Object.assign(S.tx,{mode:\'home\',text:null,tip:null,sel:[],selMode:false});render()">← Назад</button>'
+      +'<div style="display:flex;gap:6px">'
+      +(tx.ai?'<button class="btn bs bsm" onclick="lGenTx()" '+(tx.loading?'disabled':'')+'>🔄</button>':'')
+      +'<button class="btn '+(tx.selMode?'bp':'bg_')+' bsm" onclick="S.tx.selMode=!S.tx.selMode;S.tx.sel=[];S.tx.tip=null;render()" title="Выделить фразу">✂️ Фраза</button>'
+      +'</div></div>'
+      +(tx.selMode?'<div class="rb mb2" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<span class="f11 c3">Нажимай слова по очереди:</span>'
+        +(selPhrase?'<span class="fw6 f13" style="flex:1;color:var(--ac)">«'+selPhrase+'»</span>':'<span class="f12 c3" style="flex:1">—</span>')
+        +(selPhrase?'<button class="btn bp bsm" onclick="txTranslatePhrase()">Перевести</button>':'')
+        +(selPhrase?'<button class="btn bg_ bsm" onclick="S.tx.sel=[];render()">✕</button>':'')
+        +'</div>':'')
       +rTxTip()
-      +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">📄 Нажми на слово — увидишь перевод</div>'
+      +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">'
+      +(tx.selMode?'✂️ Фраза: нажимай слова подряд':'📄 Нажми на слово — увидишь перевод')+'</div>'
       +(tx.loading?ld('AI пишет текст…'):tx.text?'<div class="rt">'+tappableTextTx(tx.text)+'</div>':'')
       +'</div></div>';
   }
@@ -788,20 +798,39 @@ function openSavedTx(id){
   S.tx={mode:'read',loading:false,text:h.text,tip:null,ai:false,input:h.text};render();
 }
 function tappableTextTx(text){
+  const selSet=new Set((S.tx.sel||[]).map(w=>w.toLowerCase()));
   return text.split(/(\s+)/).map(tk=>{
     const cl=tk.replace(/[.,!?;:'"()\-]/g,'').toLowerCase().trim();
     if(!cl||cl.length<2)return tk;
+    const isSel=selSet.has(cl);
     const inDict=S.words.some(w=>w.word.toLowerCase()===cl);
-    return '<span style="cursor:pointer;'+(inDict?'color:var(--ac);font-weight:600;border-bottom:1px solid rgba(94,255,196,.35)':'border-bottom:1px dashed var(--brd2)')+'" onclick="txTapWord(\''+cl.replace(/'/g,"\\'")+'\')">'+tk+'</span>';
+    const style=isSel
+      ?'background:var(--ac);color:#000;border-radius:3px;padding:0 1px;font-weight:700;cursor:pointer'
+      :inDict?'color:var(--ac);font-weight:600;border-bottom:1px solid rgba(94,255,196,.35);cursor:pointer'
+      :'border-bottom:1px dashed var(--brd2);cursor:pointer';
+    return '<span style="'+style+'" onclick="txTapWord(\''+cl.replace(/'/g,"\\'")+'\')">'+tk+'</span>';
   }).join('');
 }
 async function txTapWord(word){
   if(!word||word.length<2)return;
+  if(S.tx.selMode){
+    const sel=S.tx.sel||[];
+    const i=sel.map(w=>w.toLowerCase()).lastIndexOf(word.toLowerCase());
+    if(i>=0)sel.splice(i,1);else sel.push(word);
+    S.tx.sel=sel;S.tx.tip=null;render();return;
+  }
   const ex=S.words.find(w=>w.word.toLowerCase()===word.toLowerCase());
   if(ex){S.tx.tip={w:ex.word,t:ex.tr,ts:ex.ts,lv:ex.lv,gr:ex.gr,known:true};render();return;}
   S.tx.tip={w:word,t:'',ts:'',loading:true,known:false};render();
   try{const d=await ai('word',{word});S.tx.tip={w:word,t:d.translation,ts:d.transcription,lv:d.level,gr:d.grammar_note,ex:d.example_en,loading:false,known:false};}
   catch{S.tx.tip={w:word,t:'?',ts:'',loading:false,known:false};}
+  render();
+}
+async function txTranslatePhrase(){
+  const phrase=(S.tx.sel||[]).join(' ');if(!phrase)return;
+  S.tx.tip={w:phrase,t:'',ts:'',loading:true,known:false};render();
+  try{const d=await ai('word',{word:phrase});S.tx.tip={w:phrase,t:d.translation,ts:d.transcription,lv:d.level,gr:d.grammar_note,ex:d.example_en,loading:false,known:false};}
+  catch{S.tx.tip={w:phrase,t:'?',ts:'',loading:false,known:false};}
   render();
 }
 async function addTxTip(){
