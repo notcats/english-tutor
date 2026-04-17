@@ -721,6 +721,7 @@ async function saveTH(){
 }
 
 // ── TEXTS TAB ────────────────────────────────────────────
+function txTitle(text){const s=(text||'').trim().split(/[.!?\n]/)[0].trim();return(s.length>65?s.slice(0,62)+'…':s)||text.slice(0,65);}
 function rTexts(){
   const tx=S.tx;
   const tw=new Set(getTextWords());
@@ -766,16 +767,21 @@ function rTexts(){
       +'<div style="font-size:30px;margin-bottom:6px">📝</div><div class="fw7 f13">Свой текст</div><div class="f11 c3 mt1">Вставить и читать</div></div>'
     +'</div>'
     +inputSection
-    +(S.hist.length?'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Сохранённые тексты · '+S.hist.length+'</div>'
-      +S.hist.slice(0,10).map(h=>'<div class="hcard mb2" style="cursor:pointer" onclick="openSavedTx('+h.id+')">'
-        +'<div class="rb2 mb1"><div class="f11 c3">'+new Date(h.created_at||Date.now()).toLocaleDateString('ru-RU')+'</div>'
-        +'<div style="display:flex;gap:4px">'+(h.words||[]).slice(0,3).map(w=>'<span class="badge bgr" style="font-size:9px">'+w+'</span>').join('')+'</div></div>'
-        +'<div class="f12 c2" style="line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+h.text+'</div></div>').join('')
-      :'')
-    +(textWords.length
-      ?'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Слова из текстов · '+textWords.length+'</div>'
+    +(S.hist.length
+      ?'<div class="f11 fw7 c3 mb2 mt1" style="text-transform:uppercase;letter-spacing:.7px">Сохранённые тексты · '+S.hist.length+'</div>'
+        +[...S.hist].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).map(h=>{
+          const d=new Date(h.created_at||Date.now());
+          const dateStr=d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+          const title=txTitle(h.text);
+          return '<div class="card mb2" style="cursor:pointer;padding:12px 14px" onclick="openSavedTx('+h.id+')">'
+            +'<div class="rb2 mb1"><div class="fw6 f13" style="flex:1;margin-right:8px">'+title+'</div><div class="f11 c3" style="white-space:nowrap">'+dateStr+'</div></div>'
+            +(h.words?.length?'<div style="display:flex;gap:4px;flex-wrap:wrap">'+(h.words||[]).slice(0,5).map(w=>'<span class="badge bgr" style="font-size:9px">'+w+'</span>').join('')+'</div>':'')
+            +'</div>';
+        }).join('')
+      :'<div class="empty" style="margin-top:16px"><div style="font-size:40px;margin-bottom:8px">📖</div><div class="f13 fw7 mb1">Текстов пока нет</div><div class="f12 c3">Нажми «AI Текст» или вставь свой — они сохранятся здесь</div></div>')
+    +(textWords.length?'<div class="f11 fw7 c3 mt3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Слова из текстов · '+textWords.length+'</div>'
         +textWords.slice(0,40).map(w=>'<div class="mc mb2" style="padding:10px 12px"><div style="flex:1"><div class="fw6 f13">'+w.word+'</div><div class="f11 c3 mt1">'+w.tr+'</div></div>'+lvl(w.lv)+'</div>').join('')
-      :(S.hist.length?'':'<div class="empty" style="margin-top:16px"><div style="font-size:40px;margin-bottom:8px">📖</div><div class="f13 fw7 mb1">Слов из текстов пока нет</div><div class="f12 c3">Читай тексты и нажимай на незнакомые слова — они сохранятся здесь</div></div>'))
+      :'')
     +'</div>';
 }
 async function lGenTx(){
