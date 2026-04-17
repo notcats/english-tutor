@@ -756,21 +756,36 @@ function rTexts(){
       +'<div style="font-size:30px;margin-bottom:6px">📝</div><div class="fw7 f13">Свой текст</div><div class="f11 c3 mt1">Вставить и читать</div></div>'
     +'</div>'
     +inputSection
+    +(S.hist.length?'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Сохранённые тексты · '+S.hist.length+'</div>'
+      +S.hist.slice(0,10).map(h=>'<div class="hcard mb2" style="cursor:pointer" onclick="openSavedTx('+h.id+')">'
+        +'<div class="rb2 mb1"><div class="f11 c3">'+new Date(h.created_at||Date.now()).toLocaleDateString('ru-RU')+'</div>'
+        +'<div style="display:flex;gap:4px">'+(h.words||[]).slice(0,3).map(w=>'<span class="badge bgr" style="font-size:9px">'+w+'</span>').join('')+'</div></div>'
+        +'<div class="f12 c2" style="line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+h.text+'</div></div>').join('')
+      :'')
     +(textWords.length
       ?'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Слова из текстов · '+textWords.length+'</div>'
         +textWords.slice(0,40).map(w=>'<div class="mc mb2" style="padding:10px 12px"><div style="flex:1"><div class="fw6 f13">'+w.word+'</div><div class="f11 c3 mt1">'+w.tr+'</div></div>'+lvl(w.lv)+'</div>').join('')
-      :'<div class="empty" style="margin-top:16px"><div style="font-size:40px;margin-bottom:8px">📖</div><div class="f13 fw7 mb1">Слов из текстов пока нет</div><div class="f12 c3">Читай тексты и нажимай на незнакомые слова — они сохранятся здесь</div></div>')
+      :(S.hist.length?'':'<div class="empty" style="margin-top:16px"><div style="font-size:40px;margin-bottom:8px">📖</div><div class="f13 fw7 mb1">Слов из текстов пока нет</div><div class="f12 c3">Читай тексты и нажимай на незнакомые слова — они сохранятся здесь</div></div>'))
     +'</div>';
 }
 async function lGenTx(){
   S.tx={mode:'read',loading:true,text:null,tip:null,ai:true,input:''};render();
-  try{const words=S.words.slice(0,6).map(w=>w.word);const d=await ai('text',{words});S.tx.text=d.text||'';}
+  const words=S.words.slice(0,6).map(w=>w.word);
+  try{const d=await ai('text',{words});S.tx.text=d.text||'';}
   catch{S.tx.text='Reading regularly helps you build vocabulary and improves your understanding of the language naturally.';}
   S.tx.loading=false;render();
+  autoSaveHistory(S.tx.text,words,'read');
 }
 function startCustomTx(){
   const inp=ge('txIn')?.value?.trim();if(!inp)return;
   S.tx={mode:'read',loading:false,text:inp,tip:null,ai:false,input:inp};render();
+  const tw=new Set(inp.split(/\W+/).map(w=>w.toLowerCase()).filter(Boolean));
+  const wordsInText=S.words.filter(w=>tw.has(w.word.toLowerCase())).map(w=>w.word);
+  autoSaveHistory(inp,wordsInText,'text');
+}
+function openSavedTx(id){
+  const h=S.hist.find(x=>x.id===id);if(!h)return;
+  S.tx={mode:'read',loading:false,text:h.text,tip:null,ai:false,input:h.text};render();
 }
 function tappableTextTx(text){
   return text.split(/(\s+)/).map(tk=>{
