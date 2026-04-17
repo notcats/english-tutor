@@ -53,7 +53,7 @@ function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',wcount:10,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US'};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',wcount:10,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US',tx:{mode:'home',loading:false,text:null,tip:null,ai:false,input:''}};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -174,9 +174,9 @@ function render(){
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
   const isA=S.user?.role==='admin';
   const tabs=isA
-    ?[{id:'dict',i:'📖',l:t('tabWords')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')},{id:'admin',i:'⚙️',l:'Admin'}]
-    :isT?[{id:'dict',i:'📖',l:t('tabWords')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}]
-    :[{id:'dict',i:'📖',l:t('tabWords')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
+    ?[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:'Тексты'},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')},{id:'admin',i:'⚙️',l:'Admin'}]
+    :isT?[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:'Тексты'},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}]
+    :[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:'Тексты'},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
   const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
@@ -189,7 +189,7 @@ function render(){
     +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
     +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
-function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();if(S.tab==='admin')return rAdmin();return rDict();}
+function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='texts')return rTexts();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();if(S.tab==='admin')return rAdmin();return rDict();}
 function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});if(t==='admin')admLoad(S.adm.tab);}
 
 // ── RENDER: ONBOARDING ──────────────────────────────────
@@ -717,6 +717,89 @@ async function saveTH(){
   s.saving=true;render();
   try{const r=await api('/api/history',{method:'POST',body:{text:s.rt.text,words:s.words.map(w=>w.word),type:'read'}});if(!S.hist.find(h=>h.id===r.id))S.hist=[r,...S.hist];}catch{}
   ss({pm:null,sess:null,tab:'history'});
+}
+
+// ── TEXTS TAB ────────────────────────────────────────────
+function rTexts(){
+  const tx=S.tx;
+  const tw=new Set(getTextWords());
+  const textWords=S.words.filter(w=>tw.has(w.word.toLowerCase()));
+  if(tx.mode==='read'){
+    return '<div class="sc">'
+      +'<div class="rb2 mb2"><button class="btn bg_ bsm" onclick="S.tx=Object.assign(S.tx,{mode:\'home\',text:null,tip:null});render()">← Назад</button>'
+      +(tx.ai?'<button class="btn bs bsm" onclick="lGenTx()" '+(tx.loading?'disabled':'')+'>🔄 Новый</button>':'')
+      +'</div>'
+      +rTxTip()
+      +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">📄 Нажми на слово — увидишь перевод</div>'
+      +(tx.loading?ld('AI пишет текст…'):tx.text?'<div class="rt">'+tappableTextTx(tx.text)+'</div>':'')
+      +'</div></div>';
+  }
+  const inputSection=tx.mode==='input'
+    ?'<div class="card mb3"><div class="f12 fw6 mb2">Вставь текст для чтения:</div>'
+      +'<textarea id="txIn" class="inp" style="height:130px;resize:none;font-size:13px;line-height:1.5" placeholder="Вставь любой текст на английском…">'+(tx.input||'')+'</textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn bp" style="flex:1" onclick="startCustomTx()">▶ Читать</button><button class="btn bg_ bsm" onclick="S.tx.mode=\'home\';render()">✕</button></div></div>'
+    :'';
+  return '<div class="sc">'
+    +'<div class="sht">Работа с текстом</div>'
+    +'<div style="display:flex;gap:10px;margin-bottom:12px">'
+    +'<div class="mc" style="flex:1;flex-direction:column;align-items:center;padding:16px 10px;text-align:center;gap:0;cursor:pointer" onclick="lGenTx()">'
+      +'<div style="font-size:30px;margin-bottom:6px">🤖</div><div class="fw7 f13">AI Текст</div><div class="f11 c3 mt1">На моих словах</div></div>'
+    +'<div class="mc" style="flex:1;flex-direction:column;align-items:center;padding:16px 10px;text-align:center;gap:0;cursor:pointer'+(tx.mode==='input'?';border-color:var(--ac);background:var(--acD)':'')+'" onclick="S.tx.mode=\'input\';render()">'
+      +'<div style="font-size:30px;margin-bottom:6px">📝</div><div class="fw7 f13">Свой текст</div><div class="f11 c3 mt1">Вставить и читать</div></div>'
+    +'</div>'
+    +inputSection
+    +(textWords.length
+      ?'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Слова из текстов · '+textWords.length+'</div>'
+        +textWords.slice(0,40).map(w=>'<div class="mc mb2" style="padding:10px 12px"><div style="flex:1"><div class="fw6 f13">'+w.word+'</div><div class="f11 c3 mt1">'+w.tr+'</div></div>'+lvl(w.lv)+'</div>').join('')
+      :'<div class="empty" style="margin-top:16px"><div style="font-size:40px;margin-bottom:8px">📖</div><div class="f13 fw7 mb1">Слов из текстов пока нет</div><div class="f12 c3">Читай тексты и нажимай на незнакомые слова — они сохранятся здесь</div></div>')
+    +'</div>';
+}
+async function lGenTx(){
+  S.tx={mode:'read',loading:true,text:null,tip:null,ai:true,input:''};render();
+  try{const words=S.words.slice(0,6).map(w=>w.word);const d=await ai('text',{words});S.tx.text=d.text||'';}
+  catch{S.tx.text='Reading regularly helps you build vocabulary and improves your understanding of the language naturally.';}
+  S.tx.loading=false;render();
+}
+function startCustomTx(){
+  const inp=ge('txIn')?.value?.trim();if(!inp)return;
+  S.tx={mode:'read',loading:false,text:inp,tip:null,ai:false,input:inp};render();
+}
+function tappableTextTx(text){
+  return text.split(/(\s+)/).map(tk=>{
+    const cl=tk.replace(/[.,!?;:'"()\-]/g,'').toLowerCase().trim();
+    if(!cl||cl.length<2)return tk;
+    const inDict=S.words.some(w=>w.word.toLowerCase()===cl);
+    return '<span style="cursor:pointer;'+(inDict?'color:var(--ac);font-weight:600;border-bottom:1px solid rgba(94,255,196,.35)':'border-bottom:1px dashed var(--brd2)')+'" onclick="txTapWord(\''+cl.replace(/'/g,"\\'")+'\')">'+tk+'</span>';
+  }).join('');
+}
+async function txTapWord(word){
+  if(!word||word.length<2)return;
+  const ex=S.words.find(w=>w.word.toLowerCase()===word.toLowerCase());
+  if(ex){S.tx.tip={w:ex.word,t:ex.tr,ts:ex.ts,lv:ex.lv,gr:ex.gr,known:true};render();return;}
+  S.tx.tip={w:word,t:'',ts:'',loading:true,known:false};render();
+  try{const d=await ai('word',{word});S.tx.tip={w:word,t:d.translation,ts:d.transcription,lv:d.level,gr:d.grammar_note,ex:d.example_en,loading:false,known:false};}
+  catch{S.tx.tip={w:word,t:'?',ts:'',loading:false,known:false};}
+  render();
+}
+async function addTxTip(){
+  const tip=S.tx.tip;if(!tip||tip.known||tip.loading)return;
+  const body={word:tip.w,translation:tip.t,transcription:tip.ts||'',level:tip.lv||'B1',example_en:tip.ex||'',example_ru:'',grammar_note:tip.gr||'',hard:false};
+  try{const s=await api('/api/words',{method:'POST',body});saveWord(s);}
+  catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:'',gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
+  addTextWord(body.word);
+  if(S.tx.tip)S.tx.tip.known=true;render();
+}
+function rTxTip(){
+  const tip=S.tx?.tip;if(!tip)return '';
+  return '<div class="card csm mb2" style="border-color:var(--ac)">'
+    +'<div class="rb2 mb1"><div class="row" style="gap:6px"><span class="syn fw7 f13">'+tip.w+'</span>'+(tip.lv?lvl(tip.lv):'')+'</div><button class="ib" onclick="S.tx.tip=null;render()">✕</button></div>'
+    +(tip.loading?ld('Translating…')
+    :'<div class="f13 fw6 ca mb1">'+tip.t+'</div>'
+    +(tip.ts?'<div class="f11 c3 mb1">['+tip.ts+']</div>':'')
+    +(tip.gr?'<div class="f11 c3 mb1">'+tip.gr+'</div>':'')
+    +'<div class="row" style="gap:8px;align-items:center">'+tts(tip.w)
+    +(tip.known?'<span class="f11 c3" style="margin-left:auto">✓ В словаре</span>':'<button class="btn bp bsm" style="margin-left:auto" onclick="addTxTip()">+ Добавить</button>')
+    +'</div>')+'</div>';
 }
 function rEnd(){
   const s=S.sess;
