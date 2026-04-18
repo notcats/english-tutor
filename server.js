@@ -138,6 +138,8 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_word_cache ON word_cache(word, learn_lang, native_lang);
   `);
   await pool.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);`);
+  // Clear images from multi-word phrases (could be inappropriate Wikipedia results)
+  await pool.query(`UPDATE words SET image_url=NULL WHERE word LIKE '% %' AND image_url IS NOT NULL`);
   console.log('✅ DB ready');
 }
 
@@ -430,24 +432,14 @@ app.get('/api/ai/word-image', auth, async (req, res) => {
       if (d.urls?.small) return res.json({ url: d.urls.small });
     } catch {}
   }
-  // Fallback 1: Wikipedia summary thumbnail (works for concrete nouns / proper nouns)
-  try {
-    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(word)}`);
-    const d = await r.json();
-    if (d.thumbnail?.source) return res.json({ url: d.thumbnail.source });
-  } catch {}
-  // Fallback 2: MediaWiki search → get thumbnail of first result
-  try {
-    const searchR = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&srlimit=1&format=json&origin=*`);
-    const searchD = await searchR.json();
-    const title = searchD.query?.search?.[0]?.title;
-    if (title) {
-      const pageR = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=400&format=json&origin=*`);
-      const pageD = await pageR.json();
-      const page = Object.values(pageD.query?.pages || {})[0];
-      if (page?.thumbnail?.source) return res.json({ url: page.thumbnail.source });
-    }
-  } catch {}
+  // Only try Wikipedia for single concrete words (not phrases/idioms)
+  if (!word.includes(' ')) {
+    try {
+      const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(word)}`);
+      const d = await r.json();
+      if (d.thumbnail?.source) return res.json({ url: d.thumbnail.source });
+    } catch {}
+  }
   res.json({ url: null });
 });
 
