@@ -188,7 +188,11 @@ function render(){
     +'<nav class="nav" data-user="'+(u?.name||u?.email||'')+'">'
     +tabs.map(tb=>'<button class="nb'+(S.tab===tb.id&&!S.add?' on':'')+'" onclick="swT(\''+tb.id+'\')"><span class="ni">'+tb.i+'</span>'+tb.l+'</button>').join('')
     +'</nav>'
-    +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
+    +(!S.add&&!S.pm&&!S.wmode?'<div class="fab-group">'
+      +'<button class="fab fab-sm" title="Вставить текст для чтения" onclick="swT(\'texts\');S.tx.mode=\'input\';render()">✂️</button>'
+      +'<button class="fab fab-sm" title="Добавить слова с фото" onclick="ss({add:true,addTab:\'photo\'})">📷</button>'
+      +'<button class="fab" title="Добавить слово" onclick="ss({add:true,addTab:\'manual\'})">＋</button>'
+      +'</div>':'')
     +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
 function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='texts')return rTexts();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();if(S.tab==='admin')return rAdmin();return rDict();}
