@@ -380,20 +380,46 @@ async function fetchEx(id){
 // ── RENDER: ADD WORD ────────────────────────────────────
 let _ad=null;
 function rAdd(){
-  return '<div class="sc"><div class="rb2 mb3"><div class="syn fw7" style="font-size:19px">Add word</div><button class="btn bg_ bsm" onclick="ss({add:false})">✕</button></div>'
-    +'<div class="pills mb3">'
-    +'<button class="pill'+(S.addTab==='manual'?' on':'')+'" onclick="S.addTab=\'manual\';render()">✏️ Manual</button>'
-    +'<button class="pill'+(S.addTab==='photo'?' on':'')+'" onclick="S.addTab=\'photo\';render()">📷 Фото</button>'
-    +'<button class="pill'+(S.addTab==='list'?' on':'')+'" onclick="S.addTab=\'list\';render()">📋 List</button>'
-    +'<button class="pill'+(S.addTab==='packs'?' on':'')+'" onclick="S.addTab=\'packs\';_packSt={};render()">📦 Пакеты</button>'
-    +'</div>'+(S.addTab==='photo'?rAddP():S.addTab==='list'?rAddL():S.addTab==='packs'?rAddPacks():rAddM())+'</div>';
+  const tabs=[
+    ['manual','✏️','Вручную','Ввести слово'],
+    ['photo','📷','Фото','Сфотографировать'],
+    ['list','📋','Список','Несколько слов'],
+    ['packs','📦','Пакеты','Готовые наборы'],
+  ];
+  return '<div class="sc">'
+    +'<div class="rb2 mb3"><div><div class="sht" style="font-size:20px;margin-bottom:0">Добавить слова</div><div class="f12 c3">Пополни свой словарь</div></div><button class="ib" style="font-size:22px;color:var(--t3);padding:6px" onclick="ss({add:false})">✕</button></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">'
+    +tabs.map(([id,icon,label,sub])=>'<button onclick="S.addTab=\''+id+'\';_ad=null;'+(id==='packs'?'_packSt={};':'')+'render()" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px;border-radius:14px;border:2px solid '+(S.addTab===id?'var(--ac)':'var(--brd)')+';background:'+(S.addTab===id?'var(--acD)':'var(--sur)')+';cursor:pointer;text-align:left">'
+      +'<span style="font-size:22px;margin-bottom:2px">'+icon+'</span>'
+      +'<span style="font-size:13px;font-weight:700;color:'+(S.addTab===id?'var(--ac)':'var(--t)')+'">'+label+'</span>'
+      +'<span style="font-size:11px;color:var(--t3)">'+sub+'</span>'
+      +'</button>').join('')
+    +'</div>'
+    +(S.addTab==='photo'?rAddP():S.addTab==='list'?rAddL():S.addTab==='packs'?rAddPacks():rAddM())
+    +'</div>';
 }
 function rAddM(){
-  return '<div><div style="margin-bottom:12px"><label style="display:block;font-size:10px;font-weight:700;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.7px">Word or phrase</label>'
-    +'<div class="row"><input id="nw" class="inp" style="flex:1" placeholder="Enter word…" onkeydown="if(event.key===\'Enter\')fwAI()">'
-    +'<button class="micb" id="mic1" onclick="mic(\'nw\',\'mic1\')" style="margin-left:7px;white-space:nowrap">🎤 Voice</button>'
-    +'<button class="btn bp bsm" style="margin-left:6px" onclick="fwAI()">✨ AI</button></div></div>'
-    +'<div id="ar"></div></div>';
+  const examples=['curious','resilient','inevitable','eloquent','ambiguous','diligent','peculiar','vivid'];
+  const recent=S.words.slice(0,4);
+  return '<div>'
+    +'<div style="position:relative;margin-bottom:10px">'
+    +'<input id="nw" class="inp" style="font-size:16px;padding:14px 16px;padding-right:52px" placeholder="Слово или фраза на английском…" autocorrect="off" spellcheck="false" onkeydown="if(event.key===\'Enter\')fwAI()">'
+    +'<button class="micb" id="mic1" onclick="mic(\'nw\',\'mic1\')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:4px 7px;font-size:16px;border-radius:8px">🎤</button>'
+    +'</div>'
+    +'<button class="btn bp bfu mb4" style="padding:14px;font-size:15px;gap:8px" onclick="fwAI()">✨ AI — найти перевод</button>'
+    +'<div id="ar"></div>'
+    +(!_ad
+      ?'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Попробуй эти слова</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">'
+        +examples.map(w=>'<button class="pill" style="font-size:13px;padding:6px 14px" onclick="ge(\'nw\').value=\''+w+'\';fwAI()">'+w+'</button>').join('')
+        +'</div>'
+        +(recent.length?'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Последние добавленные</div>'
+          +recent.map(w=>'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--brd)">'
+            +'<div style="flex:1"><div class="fw6 f13">'+w.word+'</div><div class="f12 c3 mt1">'+w.tr+'</div></div>'
+            +lvl(w.lv)+'</div>').join('')
+          :'')
+      :'')
+    +'</div>';
 }
 function rAddP(){
   const btnStyle='display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 10px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;flex:1;text-align:center';
