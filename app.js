@@ -133,6 +133,7 @@ function tts(w){
 }
 function ge(id){return document.getElementById(id);}
 function ss(p){Object.assign(S,p);render();}
+function toast(msg,ok){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;background:'+(ok?'var(--ac)':'var(--danger)')+';color:'+(ok?'var(--bg)':'#fff')+';padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;max-width:320px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4)';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 function modal(content, closeAction) {
   return '<div class="ovl" onclick="if(event.target.classList.contains(\'ovl\'))' + closeAction + '">'
     + '<div class="modal" onclick="event.stopPropagation()"><div class="mh"></div>'
@@ -612,9 +613,11 @@ async function saveW(word){
     else ss({add:false});
     return;
   }
+  let saveErr=null;
   try{const s=await api('/api/words',{method:'POST',body});S.words=[mw(s),...S.words];}
-  catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0,img:null},...S.words];}
+  catch(e){saveErr=e.message;S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0,img:null},...S.words];}
   ss({add:false});
+  if(saveErr)setTimeout(()=>toast('Ошибка сохранения: '+saveErr),200);
   if(S.tok){api('/api/ai/word-image?word='+encodeURIComponent(body.word)).then(r=>{if(r.url){const w=S.words.find(x=>x.word===body.word);if(w){w.img=r.url;render();api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});}}}).catch(()=>{});}
 }
 async function procList(){

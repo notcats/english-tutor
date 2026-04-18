@@ -138,8 +138,8 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_word_cache ON word_cache(word, learn_lang, native_lang);
   `);
   await pool.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);`);
-  // Clear images from multi-word phrases (could be inappropriate Wikipedia results)
-  await pool.query(`UPDATE words SET image_url=NULL WHERE word LIKE '% %' AND image_url IS NOT NULL`);
+  // Clear images from multi-word phrases that may be inappropriate
+  try { await pool.query(`UPDATE words SET image_url=NULL WHERE word LIKE '% %' AND image_url IS NOT NULL`); } catch {}
   console.log('✅ DB ready');
 }
 
