@@ -592,7 +592,7 @@ async function saveW(word){
   try{const s=await api('/api/words',{method:'POST',body});S.words=[mw(s),...S.words];}
   catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0,img:null},...S.words];}
   ss({add:false});
-  if(S.tok){api('/api/ai/word-image?word='+encodeURIComponent(body.word)).then(r=>{if(r.url){const w=S.words.find(x=>x.word===body.word);if(w){w.img=r.url;api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});}}}).catch(()=>{});}
+  if(S.tok){api('/api/ai/word-image?word='+encodeURIComponent(body.word)).then(r=>{if(r.url){const w=S.words.find(x=>x.word===body.word);if(w){w.img=r.url;render();api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});}}}).catch(()=>{});}
 }
 async function procList(){
   const raw=ge('wl')?.value?.trim();if(!raw)return;
@@ -714,7 +714,7 @@ function stM(m){
   const av=wsBySource(S.wsrc);
   S.pm=m;S.wmode=null;
   const wc=S.wcount||10;const wcLimit=wc===0?av.length:wc;
-  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false,startTime:Date.now(),saved:false};
+  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false,startTime:Date.now(),saved:false,typeRes:null,lisOpts:null,lisSel:null,mBatch:0,mCards:null,mSel:null,mDone:null,mErr:null};
   render();if(m==='fill')lFill();if(m==='read')lRead();if(m==='text')lTxt();
 }
 async function saveSess(){
@@ -1025,6 +1025,112 @@ async function scanTextPhoto(input){
   };
   reader.readAsDataURL(file);
 }
+// ── PRACTICE: TYPING ────────────────────────────────────
+function rType(){
+  const s=S.sess;if(s.done)return rEnd();const w=s.words[s.idx];const res=s.typeRes;
+  return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Назад</button><span class="f12 c3">'+(s.idx+1)+'/'+s.words.length+' · ✅'+s.score+'</span></div>'
+    +'<div class="pbw"><div class="pbf" style="width:'+(s.idx/s.words.length*100)+'%"></div></div>'
+    +'<div class="card mb3" style="text-align:center">'
+    +'<div class="f11 c3 mb3" style="text-transform:uppercase;letter-spacing:1px">Напиши слово по-английски</div>'
+    +'<div class="syn fw7 ca" style="font-size:26px;margin-bottom:6px">'+(w?.tr||'')+'</div>'
+    +(w?.gr?'<div class="f11 c3">'+w.gr+'</div>':'')
+    +'</div>'
+    +(res===null||res===undefined
+      ?'<input id="typeIn" class="inp mb2" placeholder="Введи слово…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key===\'Enter\')checkType()">'
+       +'<button class="btn bp bfu" onclick="checkType()">Проверить</button>'
+      :'<div class="'+(res.ok?'rb':'rb err')+' mb3"><div class="fw7 mb1">'+(res.ok?'✅ Правильно!':'❌ Неверно')+'</div>'
+       +(res.ok?'':'<div class="f13 c2">Правильно: <strong>'+w.word+'</strong></div>')
+       +(res.close?'<div class="f11 c3 mt1">Ты написал: "'+res.typed+'"</div>':'')
+       +'<div class="row mt2">'+tts(w?.word||'')+'</div></div>'
+       +'<button class="btn bp bfu" onclick="nxType()">'+(s.idx+1>=s.words.length?'Завершить':'Следующее →')+'</button>'
+    )+'</div>';
+}
+function levenshtein(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const dp=Array.from({length:m+1},(_,i)=>{const r=new Array(n+1).fill(0);r[0]=i;return r;});for(let j=0;j<=n;j++)dp[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);return dp[m][n];}
+function checkType(){
+  const s=S.sess;const w=s.words[s.idx];
+  const typed=(ge('typeIn')?.value||'').trim().toLowerCase();
+  const correct=w.word.toLowerCase();
+  const ok=typed===correct;
+  const dist=levenshtein(typed,correct);
+  const close=!ok&&dist<=1;
+  if(ok||close)s.score++;
+  s.typeRes={ok:ok||close,typed,close};render();
+}
+function nxType(){const s=S.sess;s.idx++;s.typeRes=null;if(s.idx>=s.words.length){s.done=true;saveSess();}render();}
+
+// ── PRACTICE: MATCHING ───────────────────────────────────
+function initMatch(){
+  const s=S.sess;if(s.mCards)return;
+  const batch=s.words.slice(0,Math.min(6,s.words.length));
+  const pairs=batch.flatMap(w=>[{id:'w'+w.id,text:w.word,pair:w.id},{id:'t'+w.id,text:w.tr,pair:w.id}]);
+  s.mCards=pairs.sort(()=>Math.random()-.5);s.mSel=null;s.mDone=new Set();s.mErr=null;
+}
+function rMatch(){
+  const s=S.sess;if(s.done)return rEnd();
+  initMatch();
+  const batchStart=s.mBatch*6;const total=s.words.length;
+  const done=(s.mBatch*6+(s.mDone?s.mDone.size/2:0));
+  const pct=Math.round(done/total*100);
+  return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Назад</button><span class="f12 c3">'+pct+'% · ✅'+s.score+'</span></div>'
+    +'<div class="pbw"><div class="pbf" style="width:'+pct+'%"></div></div>'
+    +'<div class="f11 c3 mb3 mt2" style="text-align:center;text-transform:uppercase;letter-spacing:.7px">Найди все пары</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    +s.mCards.map(c=>{
+      const done=s.mDone?.has(c.id);const sel=s.mSel===c.id;const err=s.mErr===c.id;
+      if(done)return '<div style="height:58px;background:var(--acD);border-radius:10px;border:1.5px solid var(--ac);display:flex;align-items:center;justify-content:center"><span style="color:var(--ac);font-size:18px">✓</span></div>';
+      return '<button onclick="tapMatch(\''+c.id+'\')" style="height:58px;padding:6px 8px;background:'+(sel?'var(--ac)':err?'rgba(255,80,80,.15)':'var(--sur2)')+';border-radius:10px;border:1.5px solid '+(err?'var(--danger)':sel?'var(--ac)':'var(--brd2)')+';color:'+(sel?'var(--bg)':'var(--t)')+';font-size:12px;font-weight:600;cursor:pointer;transition:.15s;word-break:break-word;line-height:1.3;width:100%">'+c.text+'</button>';
+    }).join('')
+    +'</div></div>';
+}
+function tapMatch(id){
+  const s=S.sess;if(!s.mDone)s.mDone=new Set();if(s.mDone.has(id))return;
+  const c=s.mCards.find(x=>x.id===id);if(!c)return;
+  if(!s.mSel){s.mSel=id;render();return;}
+  if(s.mSel===id){s.mSel=null;render();return;}
+  const prev=s.mCards.find(x=>x.id===s.mSel);
+  if(prev&&prev.pair===c.pair){
+    s.mDone.add(id);s.mDone.add(s.mSel);s.mSel=null;s.mErr=null;s.score++;
+    const batchSz=Math.min(6,s.words.length-s.mBatch*6);
+    if(s.mDone.size>=batchSz*2){
+      s.mBatch++;const nextStart=s.mBatch*6;
+      if(nextStart>=s.words.length){s.done=true;saveSess();render();return;}
+      const batch=s.words.slice(nextStart,nextStart+6);
+      const pairs=batch.flatMap(w=>[{id:'w'+w.id,text:w.word,pair:w.id},{id:'t'+w.id,text:w.tr,pair:w.id}]);
+      s.mCards=pairs.sort(()=>Math.random()-.5);s.mDone=new Set();s.mSel=null;
+    }
+    render();
+  } else {
+    const prevSel=s.mSel;s.mSel=null;s.mErr=id;render();
+    setTimeout(()=>{if(S.sess)S.sess.mErr=null;render();},600);
+  }
+}
+
+// ── PRACTICE: LISTENING ──────────────────────────────────
+function rListen(){
+  const s=S.sess;if(s.done)return rEnd();const w=s.words[s.idx];
+  if(!s.lisOpts){
+    const others=S.words.filter(x=>x.id!==w.id);
+    const dist=others.sort(()=>Math.random()-.5).slice(0,3).map(x=>x.tr);
+    s.lisOpts=[w.tr,...dist].sort(()=>Math.random()-.5);s.lisSel=null;
+    setTimeout(()=>speak(w.word),400);
+  }
+  return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Назад</button><span class="f12 c3">'+(s.idx+1)+'/'+s.words.length+' · ✅'+s.score+'</span></div>'
+    +'<div class="pbw"><div class="pbf" style="width:'+(s.idx/s.words.length*100)+'%"></div></div>'
+    +'<div class="card mb3" style="text-align:center">'
+    +'<div class="f11 c3 mb3" style="text-transform:uppercase;letter-spacing:1px">Послушай — выбери перевод</div>'
+    +'<div class="row" style="justify-content:center;gap:12px">'
+    +'<button class="btn bp" style="font-size:22px;padding:10px 22px" onclick="speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button>'
+    +(s.lisSel!==null?'<span class="syn fw7 f15">'+w.word+'</span>':'<span class="f13 c3">Нажми для повтора</span>')
+    +'</div></div>'
+    +'<div class="opts">'
+    +s.lisOpts.map(opt=>'<button class="opt'+(s.lisSel!==null?(opt===w.tr?' cor':opt===s.lisSel?' wrg':''):'')+'" onclick="ansLis(\''+opt.replace(/'/g,"\\'")+'\')">'+opt+'</button>').join('')
+    +'</div>'
+    +(s.lisSel!==null?'<button class="btn bp bfu mt3" onclick="nxLis()">'+(s.idx+1>=s.words.length?'Завершить':'Следующее →')+'</button>':'')
+    +'</div>';
+}
+function ansLis(opt){const s=S.sess;if(s.lisSel!==null)return;const w=s.words[s.idx];s.lisSel=opt;if(opt===w.tr)s.score++;render();}
+function nxLis(){const s=S.sess;s.idx++;s.lisOpts=null;s.lisSel=null;if(s.idx>=s.words.length){s.done=true;saveSess();}render();}
+
 function rEnd(){
   const s=S.sess;const pm=S.pm;
   const pct=s.words.length?Math.round(s.score/s.words.length*100):0;

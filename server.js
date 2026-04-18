@@ -430,11 +430,23 @@ app.get('/api/ai/word-image', auth, async (req, res) => {
       if (d.urls?.small) return res.json({ url: d.urls.small });
     } catch {}
   }
-  // Fallback: Wikipedia thumbnail
+  // Fallback 1: Wikipedia summary thumbnail (works for concrete nouns / proper nouns)
   try {
     const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(word)}`);
     const d = await r.json();
     if (d.thumbnail?.source) return res.json({ url: d.thumbnail.source });
+  } catch {}
+  // Fallback 2: MediaWiki search → get thumbnail of first result
+  try {
+    const searchR = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(word)}&srlimit=1&format=json&origin=*`);
+    const searchD = await searchR.json();
+    const title = searchD.query?.search?.[0]?.title;
+    if (title) {
+      const pageR = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=400&format=json&origin=*`);
+      const pageD = await pageR.json();
+      const page = Object.values(pageD.query?.pages || {})[0];
+      if (page?.thumbnail?.source) return res.json({ url: page.thumbnail.source });
+    }
   } catch {}
   res.json({ url: null });
 });
