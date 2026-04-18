@@ -110,8 +110,10 @@ async function initDB() {
       mode VARCHAR(20),
       words_count INTEGER DEFAULT 0,
       correct_count INTEGER DEFAULT 0,
+      duration_seconds INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT NOW()
     );
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS duration_seconds INTEGER DEFAULT 0;
 
     CREATE TABLE IF NOT EXISTS word_cache (
       id SERIAL PRIMARY KEY,
@@ -416,17 +418,19 @@ app.delete('/api/words/:id', auth, async (req, res) => {
 
 // ── STATS ─────────────────────────────────────────────────────
 app.get('/api/stats', auth, async (req, res) => {
-  const [w, s, u] = await Promise.all([
+  const [w, s, u, sess] = await Promise.all([
     pool.query('SELECT COUNT(*) total, COUNT(*) FILTER(WHERE hard) hard, COUNT(*) FILTER(WHERE times_practiced>0) practiced FROM words WHERE user_id=$1', [req.user.id]),
     pool.query('SELECT current_streak, longest_streak FROM streaks WHERE user_id=$1', [req.user.id]),
     pool.query('SELECT daily_used, daily_limit FROM users WHERE id=$1', [req.user.id]),
+    pool.query('SELECT COUNT(*) total_sessions, COALESCE(SUM(correct_count),0) total_correct, COALESCE(SUM(words_count),0) total_words, COALESCE(SUM(duration_seconds),0) total_seconds, json_agg(json_build_object(\'mode\',mode,\'correct\',correct_count,\'words\',words_count,\'secs\',duration_seconds,\'date\',created_at) ORDER BY created_at DESC) AS recent FROM sessions WHERE user_id=$1', [req.user.id]),
   ]);
-  res.json({ words: w.rows[0], streak: s.rows[0] || { current_streak: 0 }, daily_used: u.rows[0]?.daily_used || 0, daily_limit: u.rows[0]?.daily_limit || 50 });
+  const sesData = sess.rows[0];
+  res.json({ words: w.rows[0], streak: s.rows[0] || { current_streak: 0 }, daily_used: u.rows[0]?.daily_used || 0, daily_limit: u.rows[0]?.daily_limit || 50, sessions: { total: parseInt(sesData.total_sessions)||0, correct: parseInt(sesData.total_correct)||0, words: parseInt(sesData.total_words)||0, seconds: parseInt(sesData.total_seconds)||0, recent: (sesData.recent||[]).filter(Boolean).slice(0,10) } });
 });
 
 app.post('/api/stats/session', auth, async (req, res) => {
-  const { mode, words_count, correct_count } = req.body;
-  await pool.query('INSERT INTO sessions (user_id,mode,words_count,correct_count) VALUES ($1,$2,$3,$4)', [req.user.id, mode, words_count, correct_count]);
+  const { mode, words_count, correct_count, duration_seconds = 0 } = req.body;
+  await pool.query('INSERT INTO sessions (user_id,mode,words_count,correct_count,duration_seconds) VALUES ($1,$2,$3,$4,$5)', [req.user.id, mode, words_count, correct_count, duration_seconds]);
   const s = await pool.query('SELECT * FROM streaks WHERE user_id=$1', [req.user.id]);
   const streak = s.rows[0];
   const today = new Date().toISOString().split('T')[0];

@@ -80,7 +80,7 @@ async function loadData(){
     isTA?api('/api/groups'):Promise.resolve([]),
   ]);
   if(wR.status==='fulfilled')S.words=wR.value.map(mw);
-  if(stR.status==='fulfilled'){const st=stR.value;if(S.user){S.user.streak=st.streak?.current_streak||0;S.user.du=st.daily_used||0;S.user.dl=st.daily_limit||50;}}
+  if(stR.status==='fulfilled'){const st=stR.value;if(S.user){S.user.streak=st.streak?.current_streak||0;S.user.du=st.daily_used||0;S.user.dl=st.daily_limit||50;S.user.sessData=st.sessions||{total:0,correct:0,words:0,seconds:0,recent:[]};S.user.longestStreak=st.streak?.longest_streak||0;}}
   if(hR.status==='fulfilled')S.hist=hR.value||[];
   if(isTA&&gR.status==='fulfilled')S.grps=gR.value||[];
 }
@@ -612,8 +612,13 @@ function stM(m){
   const av=wsBySource(S.wsrc);
   S.pm=m;S.wmode=null;
   const wc=S.wcount||10;const wcLimit=wc===0?av.length:wc;
-  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
+  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false,startTime:Date.now(),saved:false};
   render();if(m==='fill')lFill();if(m==='read')lRead();if(m==='text')lTxt();
+}
+async function saveSess(){
+  const s=S.sess;if(!s||s.saved||!S.tok)return;s.saved=true;
+  const dur=Math.round((Date.now()-(s.startTime||Date.now()))/1000);
+  try{await api('/api/stats/session',{method:'POST',body:{mode:S.pm,words_count:s.words.length,correct_count:s.score,duration_seconds:dur}});}catch{}
 }
 function rFlash(){
   const s=S.sess;if(s.done)return rEnd();const all=[...s.words,...s.extra];const w=all[s.idx];
@@ -637,7 +642,7 @@ function rFlash(){
 function flipC(){S.sess.flip=!S.sess.flip;render();}
 function ansF(r){
   const s=S.sess;if(r==='yes')s.score++;else s.extra.push([...s.words,...s.extra][s.idx]);
-  s.flip=false;const all=[...s.words,...s.extra];if(s.idx+1>=all.length)s.done=true;else s.idx++;render();
+  s.flip=false;const all=[...s.words,...s.extra];if(s.idx+1>=all.length){s.done=true;saveSess();}else s.idx++;render();
 }
 function rFill(){
   const s=S.sess;if(s.done)return rEnd();const w=s.words[s.idx];const ex=s.ex;
@@ -658,7 +663,7 @@ async function lFill(){
   s.load=false;render();
 }
 function chF(opt){const s=S.sess;if(s.sel)return;s.sel=opt;if(opt===s.ex.answer)s.score++;render();}
-function nxF(){const s=S.sess;s.idx++;if(s.idx>=s.words.length){s.done=true;render();return;}s.ex=null;s.sel=null;render();lFill();}
+function nxF(){const s=S.sess;s.idx++;if(s.idx>=s.words.length){s.done=true;saveSess();render();return;}s.ex=null;s.sel=null;render();lFill();}
 function rRead(){
   const s=S.sess;
   return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><button class="btn bs bsm" onclick="lRead()" '+(s.rl?'disabled':'')+'>🔄 New</button></div>'
@@ -997,19 +1002,34 @@ async function opGrp(id){
 }
 
 // ── RENDER: PROGRESS ────────────────────────────────────
+function fmtTime(secs){
+  if(!secs)return '0 мин';
+  const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60);
+  return h>0?h+' ч '+(m>0?m+' мин':''):m+' мин';
+}
 function rProg(){
   let hardN=0,prac=0;const byLv={};const hardWords=[];
   for(const w of S.words){if(w.hard){hardN++;hardWords.push(w);}if(w.tp>0)prac++;byLv[w.lv]=(byLv[w.lv]||0)+1;}
   const total=S.words.length;const hard=hardN;
   const byL=LEVELS.map(l=>({l,n:byLv[l]||0})).filter(x=>x.n>0);
   const lim=S.user?.dl||50,used=S.user?.du||0,pct=Math.min(100,Math.round(used/lim*100));
-  return '<div class="sc"><div class="sht">Progress</div><div class="shs">Learning statistics</div>'
-    +'<div class="sg"><div class="sc2"><div class="sv ca">'+total+'</div><div class="sl">Words</div></div><div class="sc2"><div class="sv" style="color:var(--warn)">'+hard+'</div><div class="sl">Hard</div></div><div class="sc2"><div class="sv" style="color:var(--ac3)">🔥'+(S.user?.streak||0)+'</div><div class="sl">Streak</div></div><div class="sc2"><div class="sv" style="color:var(--ac2)">'+prac+'</div><div class="sl">Practiced</div></div></div>'
-    +'<div class="card mb2"><div class="rb2 mb2"><div class="fw6 f13">AI requests today</div><span class="f12 c3">'+used+'/'+lim+'</span></div><div style="display:flex;align-items:center;gap:8px">' + progressBar(pct, null, '8px') + '<span class="f11 c3">'+pct+'%</span></div></div>'
-    +(byL.length?'<div class="card mb2"><div class="fw6 f13 mb3">📊 By level</div>'+byL.map(({l,n})=>'<div class="mb2"><div class="rb2 mb1"><div class="row">'+lvl(l)+'<span class="f11 c3">'+n+' words</span></div><span class="f11 c3">'+Math.round(n/total*100)+'%</span></div><div class="pbw" style="height:4px"><div class="pbf" style="width:'+n/total*100+'%;background:'+(l.startsWith('C')?'var(--ac3)':l.startsWith('B')?'var(--ac2)':'var(--ac)')+'"></div></div></div>').join('')+'</div>':'')
-    +(hard?'<div class="card mb2"><div class="fw6 f13 mb2">⭐ Hard words</div>'+hardWords.map(w=>'<div class="rb2" style="padding:7px 0;border-bottom:1px solid var(--brd)"><div class="row"><span class="fw6 f13">'+w.word+'</span><span class="c3 f12">'+w.tr+'</span></div><div class="row" style="gap:4px">'+lvl(w.lv)+'<button class="ib" style="font-size:12px" onclick="speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button></div></div>').join('')+'</div>':'')
-    +'<div class="card"><div class="fw6 f13 mb2">🏆 Achievements</div>'
-    +[{i:'📖',l:'First word added',d:total>=1},{i:'📚',l:'10 words',d:total>=10},{i:'💯',l:'50 words',d:total>=50},{i:'🔥',l:'3-day streak',d:(S.user?.streak||0)>=3},{i:'⭐',l:'First hard word',d:hard>=1},{i:'🎯',l:'First practice',d:prac>=1}].map(a=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--brd);gap:10px"><span style="font-size:19px;filter:'+(a.d?'none':'grayscale(1) opacity(.3)')+'">'+a.i+'</span><span class="f12" style="color:'+(a.d?'var(--t)':'var(--t3)')+'">'+a.l+'</span>'+(a.d?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':'')+'</div>').join('')
+  const sd=S.user?.sessData||{total:0,correct:0,words:0,seconds:0,recent:[]};
+  const acc=sd.words>0?Math.round(sd.correct/sd.words*100):0;
+  const modeNames={flash:'Карточки',fill:'Пропуски',read:'Чтение',text:'Текст'};
+  const byMode={};(sd.recent||[]).forEach(s=>{if(!s)return;const k=s.mode||'?';byMode[k]=(byMode[k]||{n:0,correct:0,words:0,secs:0});byMode[k].n++;byMode[k].correct+=s.correct||0;byMode[k].words+=s.words||0;byMode[k].secs+=s.secs||0;});
+  return '<div class="sc"><div class="sht">Прогресс</div><div class="shs">Статистика обучения</div>'
+    +'<div class="sg"><div class="sc2"><div class="sv ca">'+total+'</div><div class="sl">Слов</div></div><div class="sc2"><div class="sv" style="color:var(--warn)">'+hard+'</div><div class="sl">Сложных</div></div><div class="sc2"><div class="sv" style="color:var(--ac3)">🔥'+(S.user?.streak||0)+'</div><div class="sl">Дней</div></div><div class="sc2"><div class="sv" style="color:var(--ac2)">'+sd.total+'</div><div class="sl">Тренировок</div></div></div>'
+    +'<div class="card mb2"><div class="rb2 mb2"><div class="fw6 f13">🏋️ Упражнения</div><span class="f11 c3">всего '+sd.total+'</span></div>'
+    +'<div class="sg" style="margin-bottom:10px"><div class="sc2"><div class="sv ca">'+sd.words+'</div><div class="sl">Заданий</div></div><div class="sc2"><div class="sv" style="color:var(--ac)">'+acc+'%</div><div class="sl">Точность</div></div><div class="sc2"><div class="sv" style="color:var(--ac2)">'+fmtTime(sd.seconds)+'</div><div class="sl">Время</div></div></div>'
+    +(Object.keys(byMode).length?'<div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">По режимам</div>'
+      +Object.entries(byMode).map(([m,v])=>'<div class="rb2 mb1"><span class="f12">'+(modeNames[m]||m)+'</span><span class="f11 c3">'+v.n+' сес · '+Math.round(v.correct/(v.words||1)*100)+'% · '+fmtTime(v.secs)+'</span></div>').join(''):'')
+    +'</div>'
+    +'<div class="card mb2"><div class="rb2 mb2"><div class="fw6 f13">🤖 Запросов AI сегодня</div><span class="f12 c3">'+used+'/'+lim+'</span></div><div style="display:flex;align-items:center;gap:8px">' + progressBar(pct, null, '8px') + '<span class="f11 c3">'+pct+'%</span></div></div>'
+    +(S.user?.longestStreak>1?'<div class="card mb2"><div class="rb2"><div class="f12 fw6">🔥 Серия дней</div><div class="f12 c3">Лучшая: '+(S.user?.longestStreak||0)+' дн · Текущая: '+(S.user?.streak||0)+' дн</div></div></div>':'')
+    +(byL.length?'<div class="card mb2"><div class="fw6 f13 mb3">📊 По уровням</div>'+byL.map(({l,n})=>'<div class="mb2"><div class="rb2 mb1"><div class="row">'+lvl(l)+'<span class="f11 c3">'+n+' слов</span></div><span class="f11 c3">'+Math.round(n/total*100)+'%</span></div><div class="pbw" style="height:4px"><div class="pbf" style="width:'+n/total*100+'%;background:'+(l.startsWith('C')?'var(--ac3)':l.startsWith('B')?'var(--ac2)':'var(--ac)')+'"></div></div></div>').join('')+'</div>':'')
+    +(hard?'<div class="card mb2"><div class="fw6 f13 mb2">⭐ Сложные слова</div>'+hardWords.map(w=>'<div class="rb2" style="padding:7px 0;border-bottom:1px solid var(--brd)"><div class="row"><span class="fw6 f13">'+w.word+'</span><span class="c3 f12">'+w.tr+'</span></div><div class="row" style="gap:4px">'+lvl(w.lv)+'<button class="ib" style="font-size:12px" onclick="speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button></div></div>').join('')+'</div>':'')
+    +'<div class="card"><div class="fw6 f13 mb2">🏆 Достижения</div>'
+    +[{i:'📖',l:'Первое слово',d:total>=1},{i:'📚',l:'10 слов',d:total>=10},{i:'💯',l:'50 слов',d:total>=50},{i:'🔥',l:'Серия 3 дня',d:(S.user?.streak||0)>=3},{i:'⭐',l:'Первое сложное',d:hard>=1},{i:'🎯',l:'Первая тренировка',d:sd.total>=1},{i:'💪',l:'10 тренировок',d:sd.total>=10},{i:'🎖',l:'Точность 80%+',d:acc>=80&&sd.total>=5}].map(a=>'<div class="row" style="padding:7px 0;border-bottom:1px solid var(--brd);gap:10px"><span style="font-size:19px;filter:'+(a.d?'none':'grayscale(1) opacity(.3)')+'">'+a.i+'</span><span class="f12" style="color:'+(a.d?'var(--t)':'var(--t3)')+'">'+a.l+'</span>'+(a.d?'<span style="margin-left:auto;font-size:11px;color:var(--ac)">✓</span>':'')+'</div>').join('')
     +'</div></div>';
 }
 
