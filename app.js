@@ -386,11 +386,68 @@ function rAddP(){
   return '<div>'
     +'<input type="file" id="pfc" accept="image/*" capture="environment" style="display:none" onchange="hPhoto(this)">'
     +'<input type="file" id="pf" accept="image/*" style="display:none" onchange="hPhoto(this)">'
-    +'<div style="display:flex;gap:10px;margin-bottom:12px">'
+    +'<div style="display:flex;gap:10px;margin-bottom:10px">'
     +'<label for="pfc" style="'+btnStyle+'"><div><span style="font-size:30px;display:block;margin-bottom:4px">📷</span>Камера</div></label>'
-    +'<label for="pf" style="'+btnStyle+'"><div><span style="font-size:30px;display:block;margin-bottom:4px">🖼️</span>Галерея / скрин</div></label>'
+    +'<label for="pf" style="'+btnStyle+'"><div><span style="font-size:30px;display:block;margin-bottom:4px">🖼️</span>Галерея</div></label>'
     +'</div>'
+    +'<button class="btn bg_ bfu mb3" style="font-size:13px;gap:8px" onclick="openLiveCam(\'words\')">🎥 Живая камера — наведи и переведи</button>'
     +'<div id="pr"></div></div>';
+}
+let _camStream=null;
+function openLiveCam(purpose){
+  const html='<div id="camModal" style="position:fixed;inset:0;z-index:300;background:#000;display:flex;flex-direction:column;max-width:430px;left:50%;transform:translateX(-50%)">'
+    +'<div style="position:relative;flex:1;overflow:hidden">'
+    +'<video id="camVid" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>'
+    +'<div id="camOverlay" style="position:absolute;inset:0;display:flex;align-items:flex-end;pointer-events:none">'
+    +'<div id="camResult" style="width:100%;background:rgba(0,0,0,.75);color:#fff;padding:14px 16px;font-size:13px;line-height:1.6;max-height:45%;overflow-y:auto;pointer-events:auto"></div>'
+    +'</div>'
+    +'</div>'
+    +'<div style="background:var(--sur);padding:12px 16px;display:flex;gap:8px;align-items:center;flex-shrink:0">'
+    +'<button class="btn bg_" onclick="closeLiveCam()" style="flex-shrink:0">✕</button>'
+    +'<button id="camSnBtn" class="btn bp" style="flex:1;font-size:14px" onclick="camSnap(\''+purpose+'\')">📸 Перевести / найти слова</button>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+  navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}})
+    .then(stream=>{_camStream=stream;const v=ge('camVid');if(v)v.srcObject=stream;})
+    .catch(e=>{const r=ge('camResult');if(r)r.innerHTML='<span style="color:#ff6b6b">Нет доступа к камере: '+e.message+'</span>';});
+}
+function closeLiveCam(){
+  if(_camStream){_camStream.getTracks().forEach(t=>t.stop());_camStream=null;}
+  ge('camModal')?.remove();
+}
+async function camSnap(purpose){
+  const vid=ge('camVid');const res=ge('camResult');const btn=ge('camSnBtn');
+  if(!vid||!res)return;
+  const canvas=document.createElement('canvas');
+  canvas.width=vid.videoWidth||640;canvas.height=vid.videoHeight||480;
+  canvas.getContext('2d').drawImage(vid,0,0);
+  const b64=canvas.toDataURL('image/jpeg',0.85).split(',')[1];
+  res.innerHTML=ld('Обрабатываю…');if(btn)btn.disabled=true;
+  try{
+    if(purpose==='words'){
+      const r=await api('/api/ai/image',{method:'POST',body:{imageBase64:b64,mimeType:'image/jpeg'}});
+      const words=r.words||[];
+      res.innerHTML=words.length
+        ?'<div style="margin-bottom:8px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#aaa">Найдено '+words.length+' слов</div>'
+          +words.map(w=>'<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.1)"><span style="font-weight:600">'+w.word+'</span><span style="color:#aaa;font-size:12px">'+w.tr+'</span></div>').join('')
+          +'<button onclick="camSaveWords('+JSON.stringify(JSON.stringify(words))+')" style="margin-top:10px;background:var(--ac);color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;width:100%">+ Добавить в словарь</button>'
+        :'<span style="color:#aaa">Слов не найдено. Попробуй другой ракурс.</span>';
+    } else {
+      const r=await api('/api/ai/image-text',{method:'POST',body:{imageBase64:b64,mimeType:'image/jpeg'}});
+      const text=(r.text||'').trim();
+      res.innerHTML=text
+        ?'<div style="margin-bottom:8px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#aaa">Распознан текст</div>'
+          +'<div style="margin-bottom:10px;line-height:1.6">'+text.slice(0,300)+(text.length>300?'…':'')+'</div>'
+          +'<button onclick="closeLiveCam();S.tx.input='+JSON.stringify(text)+';swT(\'texts\');S.tx.mode=\'input\';render()" style="background:var(--ac);color:#000;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;width:100%">▶ Читать этот текст</button>'
+        :'<span style="color:#aaa">Текст не найден. Наведи камеру ближе.</span>';
+    }
+  }catch(e){res.innerHTML='<span style="color:#ff6b6b">Ошибка: '+e.message+'</span>';}
+  if(btn)btn.disabled=false;
+}
+async function camSaveWords(jsonStr){
+  const words=JSON.parse(jsonStr);
+  for(const w of words){try{const s=await api('/api/words',{method:'POST',body:{word:w.word,translation:w.tr,transcription:w.ts,level:w.lv,example_en:w.ex,example_ru:w.exr}});saveWord(s);}catch{}}
+  const res=ge('camResult');if(res)res.innerHTML='<span style="color:var(--ac);font-weight:700">✓ Слова добавлены в словарь!</span>';
 }
 let _packSt={},_customPack=null;
 function rAddPacks(){
@@ -799,7 +856,10 @@ function rTexts(){
       +'<div style="font-size:30px;margin-bottom:6px">📝</div><div class="fw7 f13">Свой текст</div><div class="f11 c3 mt1">Вставить и читать</div></div>'
     +'</div>'
     +'<input type="file" id="txScanMain" accept="image/*" capture="environment" style="display:none" onchange="scanTextPhoto(this)">'
-    +'<label for="txScanMain" class="btn bg_ bfu mb3" style="font-size:13px;padding:10px;gap:8px;cursor:pointer;margin:0">📷 С фото — сканировать текст для чтения</label>'
+    +'<div style="display:flex;gap:8px;margin-bottom:12px">'
+    +'<label for="txScanMain" class="btn bg_" style="flex:1;font-size:13px;padding:10px;gap:6px;cursor:pointer;margin:0;text-align:center">📷 Фото</label>'
+    +'<button class="btn bg_" style="flex:1;font-size:13px;padding:10px;gap:6px" onclick="openLiveCam(\'text\')">🎥 Живая камера</button>'
+    +'</div>'
     +(tx.scanLoading&&tx.mode!=='input'?'<div style="margin-bottom:8px">'+ld('Читаю текст с фото…')+'</div>':'')
     +inputSection
     +(S.hist.length
