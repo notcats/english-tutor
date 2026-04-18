@@ -302,6 +302,22 @@ function rWM(){
   return modal(innerContent, 'ss({det:null})');
 }
 
+let _imgFetching=false,_imgFetched=0,_imgTotal=0,_imgStop=false;
+async function fetchAllImgs(){
+  if(_imgFetching)return;
+  const missing=S.words.filter(w=>!w.img&&w.id&&S.tok);
+  if(!missing.length)return;
+  _imgFetching=true;_imgFetched=0;_imgTotal=missing.length;_imgStop=false;render();
+  for(const w of missing){
+    if(_imgStop)break;
+    try{
+      const r=await api('/api/ai/word-image?word='+encodeURIComponent(w.word));
+      if(r.url){w.img=r.url;_imgFetched++;api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});render();}
+    }catch{}
+    await new Promise(res=>setTimeout(res,300));
+  }
+  _imgFetching=false;render();
+}
 async function fetchWImg(id,word){
   if(!S.tok)return;
   try{
@@ -335,12 +351,18 @@ function rDict(){
   else if(S.sort.startsWith('pack_')){const pid=S.sort.slice(5);const p=WORD_PACKS.find(x=>x.id===pid);if(p)list=list.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()));}
   const guestBanner=S.guest?'<div class="rb" style="background:var(--acD);border-color:var(--ac);margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💾</span><div style="flex:1"><div class="fw6 f12">'+t('saveTitle')+'</div><div class="f11 c2 mt1">'+t('saveDesc')+'</div></div><button class="btn bp bsm" style="font-size:11px;white-space:nowrap" onclick="ss({scr:\'ob\',step:4})">'+t('register')+'</button></div>':'';
   return '<div class="sc">'+guestBanner
-    +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" style="width:100%;box-sizing:border-box" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
+    +'<div class="row mb2" style="gap:8px;align-items:center">'
+    +'<div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" style="width:100%;box-sizing:border-box" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
     +'<select class="inp" style="flex-shrink:0;width:auto;font-size:13px;padding:11px 10px" onchange="S.sort=this.value;render()">'
     +[['new','Новые'],['az','A → Z'],['za','Z → A'],['lvasc','A1 → C2'],['lvdesc','C2 → A1'],['phrasal','Фразовые']].map(([v,l])=>'<option value="'+v+'"'+(S.sort===v?' selected':'')+'>'+l+'</option>').join('')
     +WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>'<option value="pack_'+p.id+'"'+(S.sort==='pack_'+p.id?' selected':'')+'>'+p.icon+' '+p.title+'</option>').join('')
     +getCustomPacks().filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map((p,i)=>'<option value="custom_'+i+'"'+(S.sort==='custom_'+i?' selected':'')+'>✨ '+p.topic+'</option>').join('')
     +'</select></div>'
+    +(_imgFetching
+      ?'<div class="rb mb2" style="display:flex;align-items:center;gap:8px"><span class="f12 c3">🖼 Загружаю фото… '+_imgFetched+'/'+_imgTotal+'</span><button class="btn bg_ bsm" onclick="_imgStop=true">✕</button></div>'
+      :S.words.filter(w=>!w.img).length>0&&S.tok
+        ?'<button class="btn bg_ bsm mb2" onclick="fetchAllImgs()" style="width:100%;font-size:12px">🖼 Найти фото для всех слов ('+S.words.filter(w=>!w.img).length+')</button>'
+        :'')
     +(list.length===0
       ? S.words.length===0
         ? '<div style="margin-top:4px"><div class="f14 fw7 mb3">👋 С чего начать?</div>'
@@ -349,7 +371,8 @@ function rDict(){
           +'<div class="mc mb2" onclick="ss({add:true,addTab:\'packs\'})"><div class="mci">📦</div><div style="flex:1"><div class="fw6 f13">Выбрать готовый набор</div><div class="f11 c3 mt1">Отель, работа, фразовые глаголы…</div></div><span class="c3">›</span></div>'
           +'</div>'
         : '<div class="empty"><div style="font-size:44px;margin-bottom:10px">🔍</div><div class="syn fw7 f13 mb1">Ничего не найдено</div><div class="f12 c3">Попробуй другой запрос или сбрось фильтр</div></div>'
-    :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
+    :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})" style="align-items:flex-start">'
+      +(w.img?'<img src="'+w.img+'" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;margin-top:2px">':'')
       +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
       +'<div class="wru">'+w.tr+'</div>'
       +(w.gr?'<div class="wgr">📝 '+w.gr+'</div>':'')
