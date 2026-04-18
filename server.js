@@ -137,6 +137,7 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_group_members ON group_members(group_id);
     CREATE INDEX IF NOT EXISTS idx_word_cache ON word_cache(word, learn_lang, native_lang);
   `);
+  await pool.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);`);
   console.log('✅ DB ready');
 }
 
@@ -374,13 +375,13 @@ app.get('/api/words', auth, async (req, res) => {
 
 app.post('/api/words', auth, async (req, res) => {
   try {
-    const { word, translation, transcription, level, example_en, example_ru, grammar_note, hard } = req.body;
+    const { word, translation, transcription, level, example_en, example_ru, grammar_note, hard, image_url } = req.body;
     const r = await pool.query(
-      `INSERT INTO words (user_id,word,translation,transcription,level,example_en,example_ru,grammar_note,hard)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       ON CONFLICT (user_id,word) DO UPDATE SET translation=$3,transcription=$4,level=$5,example_en=$6,example_ru=$7,grammar_note=$8
+      `INSERT INTO words (user_id,word,translation,transcription,level,example_en,example_ru,grammar_note,hard,image_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       ON CONFLICT (user_id,word) DO UPDATE SET translation=$3,transcription=$4,level=$5,example_en=$6,example_ru=$7,grammar_note=$8,image_url=COALESCE($10,words.image_url)
        RETURNING *`,
-      [req.user.id, (word||'').toLowerCase().trim(), translation, transcription, level||'B1', example_en, example_ru, grammar_note||'', hard||false]
+      [req.user.id, (word||'').toLowerCase().trim(), translation, transcription, level||'B1', example_en, example_ru, grammar_note||'', hard||false, image_url||null]
     );
     res.json(r.rows[0]);
   } catch (err) { res.status(400).json({ error: err.message }); }
@@ -403,10 +404,10 @@ app.post('/api/words/bulk', auth, async (req, res) => {
 });
 
 app.patch('/api/words/:id', auth, async (req, res) => {
-  const { hard, times_practiced, times_correct } = req.body;
+  const { hard, times_practiced, times_correct, image_url } = req.body;
   const r = await pool.query(
-    'UPDATE words SET hard=COALESCE($1,hard), times_practiced=COALESCE($2,times_practiced), times_correct=COALESCE($3,times_correct), last_practiced=NOW() WHERE id=$4 AND user_id=$5 RETURNING *',
-    [hard, times_practiced, times_correct, req.params.id, req.user.id]
+    'UPDATE words SET hard=COALESCE($1,hard), times_practiced=COALESCE($2,times_practiced), times_correct=COALESCE($3,times_correct), image_url=COALESCE($4,image_url), last_practiced=NOW() WHERE id=$5 AND user_id=$6 RETURNING *',
+    [hard, times_practiced, times_correct, image_url||null, req.params.id, req.user.id]
   );
   res.json(r.rows[0]);
 });
@@ -414,6 +415,28 @@ app.patch('/api/words/:id', auth, async (req, res) => {
 app.delete('/api/words/:id', auth, async (req, res) => {
   await pool.query('DELETE FROM words WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
   res.json({ ok: true });
+});
+
+app.get('/api/ai/word-image', auth, async (req, res) => {
+  const word = req.query.word;
+  if (!word) return res.json({ url: null });
+  // Try Unsplash if key configured
+  if (process.env.UNSPLASH_KEY) {
+    try {
+      const r = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(word)}&orientation=landscape&content_filter=high`, {
+        headers: { Authorization: `Client-ID ${process.env.UNSPLASH_KEY}` }
+      });
+      const d = await r.json();
+      if (d.urls?.small) return res.json({ url: d.urls.small });
+    } catch {}
+  }
+  // Fallback: Wikipedia thumbnail
+  try {
+    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(word)}`);
+    const d = await r.json();
+    if (d.thumbnail?.source) return res.json({ url: d.thumbnail.source });
+  } catch {}
+  res.json({ url: null });
 });
 
 // ── STATS ─────────────────────────────────────────────────────

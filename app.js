@@ -67,7 +67,7 @@ async function ai(type,data){
   if(S.user){S.user.du=(S.user.du||0)+1;}
   return r;
 }
-function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0,ca:w.created_at||null};}
+function mw(w){return{id:w.id,word:w.word,tr:w.translation||'',ts:w.transcription||'',lv:w.level||'B1',ex:w.example_en||'',exr:w.example_ru||'',gr:w.grammar_note||'',hard:w.hard||false,tp:w.times_practiced||0,tc:w.times_correct||0,ca:w.created_at||null,img:w.image_url||null};}
 function saveWord(s) {
   S.words = [mw(s), ...S.words.filter(x => x.word !== s.word)];
 }
@@ -284,7 +284,8 @@ function rWM(){
   const w=S.det;if(!w)return '';
   const innerContent=
     '<div class="rb2 mb2"><div><div class="syn fw7" style="font-size:24px">'+w.word+'</div><div class="f12 c3">'+w.ts+'</div></div>'+lvl(w.lv)+'</div>'
-    +'<div class="row mb2">'+tts(w.word)+'</div>'
+    +(w.img?'<img src="'+w.img+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px">':'')
+    +'<div class="row mb2">'+tts(w.word)+'<button class="btn bg_ bsm" style="margin-left:auto" onclick="fetchWImg('+w.id+',\''+w.word.replace(/'/g,"\\'")+'\')">'+(w.img?'🔄 Обновить фото':'📷 Найти фото')+'</button></div>'
     +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
     +'<div class="fw6 f13">'+w.tr+'</div>'
     +(w.gr?'<div style="margin-top:5px;padding:4px 8px;background:var(--acD);border-radius:7px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')+'</div>'
@@ -299,6 +300,19 @@ function rWM(){
     +'<button class="btn bg_ bsm" style="margin-left:auto" onclick="ss({det:null})">Close</button>'
     +'</div>';
   return modal(innerContent, 'ss({det:null})');
+}
+
+async function fetchWImg(id,word){
+  if(!S.tok)return;
+  try{
+    const r=await api('/api/ai/word-image?word='+encodeURIComponent(word));
+    if(r.url){
+      const w=S.words.find(x=>x.id===id);if(w)w.img=r.url;
+      if(S.det&&S.det.id===id)S.det.img=r.url;
+      api('/api/words/'+id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});
+      render();
+    }
+  }catch{}
 }
 
 function printWords(){
@@ -550,8 +564,9 @@ async function saveW(word){
     return;
   }
   try{const s=await api('/api/words',{method:'POST',body});S.words=[mw(s),...S.words];}
-  catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
+  catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0,img:null},...S.words];}
   ss({add:false});
+  if(S.tok){api('/api/ai/word-image?word='+encodeURIComponent(body.word)).then(r=>{if(r.url){const w=S.words.find(x=>x.word===body.word);if(w){w.img=r.url;api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});}}}).catch(()=>{});}
 }
 async function procList(){
   const raw=ge('wl')?.value?.trim();if(!raw)return;
@@ -605,7 +620,7 @@ function wsBySource(src){
   return S.words;
 }
 function rPrac(){
-  if(S.pm==='flash')return rFlash();if(S.pm==='fill')return rFill();if(S.pm==='read')return rRead();if(S.pm==='text')return rTxt();
+  if(S.pm==='flash')return rFlash();if(S.pm==='fill')return rFill();if(S.pm==='read')return rRead();if(S.pm==='text')return rTxt();if(S.pm==='rev')return rFlash();if(S.pm==='type')return rType();if(S.pm==='match')return rMatch();if(S.pm==='listen')return rListen();
   if(S.wmode)return rWSel();
   const streak=S.user?.streak||0;
   const streakBar=S.guest?'':streak===0
@@ -619,13 +634,17 @@ function rPrac(){
     +streakBar+hintCard
     +'<div class="shs" style="margin-bottom:12px">Выбери режим тренировки</div>'
     +'<div class="mc mb2" onclick="ss({wmode:\'flash\'})"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Увидишь слово — вспомни перевод, потом переверни</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'rev\'})"><div class="mci">🔄</div><div style="flex:1"><div class="syn fw7 f13">Реверс</div><div class="f12 c2 mt1">Видишь перевод — вспоминаешь слово</div></div><span class="c3" style="font-size:17px">›</span></div>'
     +'<div class="mc mb2" onclick="ss({wmode:\'fill\'})"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">AI даёт предложение — выбери пропущенное слово</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'type\'})"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Набор слова</div><div class="f12 c2 mt1">Видишь перевод — пишешь слово на клавиатуре</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'match\'})"><div class="mci">🔗</div><div style="flex:1"><div class="syn fw7 f13">Пары</div><div class="f12 c2 mt1">Соединяй слова с переводами — на скорость</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'listen\'})"><div class="mci">🎧</div><div style="flex:1"><div class="syn fw7 f13">Аудирование</div><div class="f12 c2 mt1">Слушай слово — выбери правильный перевод</div></div><span class="c3" style="font-size:17px">›</span></div>'
     +'<div class="mc mb2" onclick="ss({wmode:\'read\'})"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Читай текст, нажимай на незнакомые слова</div></div><span class="c3" style="font-size:17px">›</span></div>'
     +'<div class="mc" onclick="ss({wmode:\'text\'})"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI пишет историю именно на твоих словах</div></div><span class="c3" style="font-size:17px">›</span></div>'
     +'</div>';
 }
 function rWSel(){
-  const modes={flash:'🃏 Flashcards',fill:'✏️ Fill the blank',read:'📖 AI Reading',text:'✍️ Generate story'};
+  const modes={flash:'🃏 Flashcards',fill:'✏️ Fill the blank',read:'📖 AI Reading',text:'✍️ Generate story',rev:'🔄 Реверс',type:'✍️ Набор слова',match:'🔗 Пары',listen:'🎧 Аудирование'};
   const now=Date.now();
   const textCnt=(()=>{const tw=new Set(getTextWords());return S.words.filter(w=>tw.has(w.word.toLowerCase())).length;})();
   const sources=[
@@ -679,21 +698,31 @@ async function saveSess(){
 }
 function rFlash(){
   const s=S.sess;if(s.done)return rEnd();const all=[...s.words,...s.extra];const w=all[s.idx];
+  const isRev=S.pm==='rev';
   return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><span class="f12 c3">'+(s.idx+1)+'/'+all.length+' · ✅'+s.score+'</span></div>'
     +'<div class="pbw"><div class="pbf" style="width:'+(s.idx/all.length*100)+'%"></div></div>'
     +'<div class="fcw" onclick="flipC()"><div class="fc'+(s.flip?' flip':'')+'"><div class="fcf">'
     +'<div class="f11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Tap to flip</div>'
-    +'<div class="syn fw7" style="font-size:32px;letter-spacing:-.5px;margin-bottom:5px">'+(w?.word||'')+'</div>'
-    +'<div class="f13 c2">'+(w?.ts||'')+'</div>'
-    +(w?.gr?'<div style="margin-top:8px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')
+    +(isRev
+      ?'<div class="syn fw7 ca" style="font-size:28px;letter-spacing:-.5px;margin-bottom:5px">'+(w?.tr||'')+'</div>'
+       +(w?.gr?'<div style="margin-top:8px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')
+      :'<div class="syn fw7" style="font-size:32px;letter-spacing:-.5px;margin-bottom:5px">'+(w?.word||'')+'</div>'
+       +'<div class="f13 c2">'+(w?.ts||'')+'</div>'
+       +(w?.gr?'<div style="margin-top:8px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':''))
     +'</div><div class="fcf fcb">'
-    +'<div class="f11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Translation</div>'
-    +'<div class="syn fw7 ca" style="font-size:22px;margin-bottom:7px">'+(w?.tr||'')+'</div>'
-    +'<div class="f12 c2 ita" style="line-height:1.6">"'+(w?.ex||'')+'"</div>'
+    +(isRev
+      ?'<div class="f11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Word</div>'
+       +(w?.img?'<img src="'+w.img+'" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;margin-bottom:10px">':'')
+       +'<div class="syn fw7" style="font-size:28px;margin-bottom:7px">'+(w?.word||'')+'</div>'
+       +'<div class="f13 c2">'+(w?.ts||'')+'</div>'
+      :'<div class="f11 c3" style="text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Translation</div>'
+       +(w?.img?'<img src="'+w.img+'" style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;margin-bottom:10px">':'')
+       +'<div class="syn fw7 ca" style="font-size:22px;margin-bottom:7px">'+(w?.tr||'')+'</div>'
+       +'<div class="f12 c2 ita" style="line-height:1.6">"'+(w?.ex||'')+'"</div>')
     +'</div></div></div>'
     +'<div class="row mb2">'+tts(w?.word||'')+'</div>'
     +(s.flip?'<div class="row" style="gap:8px"><button class="btn bd bfu" onclick="ansF(\'no\')">❌ Don\'t know</button><button class="btn bp bfu" onclick="ansF(\'yes\')">✅ Know it</button></div>'
-    :'<button class="btn bs bfu" onclick="flipC()">Show translation 👁</button>')
+    :'<button class="btn bs bfu" onclick="flipC()">Show '+(isRev?'word':'translation')+' 👁</button>')
     +'</div>';
 }
 function flipC(){S.sess.flip=!S.sess.flip;render();}
