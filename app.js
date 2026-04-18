@@ -779,8 +779,7 @@ function rTexts(){
       +'<div class="f12 fw6 mb2">Вставь текст для чтения:</div>'
       +'<div style="display:flex;gap:8px;margin-bottom:10px">'
         +'<button class="btn bg_ bsm" style="flex:1" onclick="pasteClipboardTx()">📋 Из буфера</button>'
-        +'<label for="txScan" class="btn bg_ bsm" style="flex:1;text-align:center;cursor:pointer;margin:0">📷 Сканировать</label>'
-        +'<input type="file" id="txScan" accept="image/*" capture="environment" style="display:none" onchange="scanTextPhoto(this)">'
+        +'<label for="txScanMain" class="btn bg_ bsm" style="flex:1;text-align:center;cursor:pointer;margin:0">📷 С фото</label>'
       +'</div>'
       +(tx.scanLoading?'<div style="margin-bottom:8px">'+ld('Читаю текст с фото…')+'</div>':'')
       +'<textarea id="txIn" class="inp" style="height:130px;resize:none;font-size:13px;line-height:1.5" placeholder="Вставь любой текст на английском…">'+(tx.input||'')+'</textarea>'
@@ -794,6 +793,9 @@ function rTexts(){
     +'<div class="mc" style="flex:1;flex-direction:column;align-items:center;padding:16px 10px;text-align:center;gap:0;cursor:pointer'+(tx.mode==='input'?';border-color:var(--ac);background:var(--acD)':'')+'" onclick="S.tx.mode=\'input\';render()">'
       +'<div style="font-size:30px;margin-bottom:6px">📝</div><div class="fw7 f13">Свой текст</div><div class="f11 c3 mt1">Вставить и читать</div></div>'
     +'</div>'
+    +'<input type="file" id="txScanMain" accept="image/*" capture="environment" style="display:none" onchange="scanTextPhoto(this)">'
+    +'<label for="txScanMain" class="btn bg_ bfu mb3" style="font-size:13px;padding:10px;gap:8px;cursor:pointer;margin:0">📷 С фото — сканировать текст для чтения</label>'
+    +(tx.scanLoading&&tx.mode!=='input'?'<div style="margin-bottom:8px">'+ld('Читаю текст с фото…')+'</div>':'')
     +inputSection
     +(S.hist.length
       ?'<div class="f11 fw7 c3 mb2 mt1" style="text-transform:uppercase;letter-spacing:.7px">Сохранённые тексты · '+S.hist.length+'</div>'
@@ -898,7 +900,7 @@ async function scanTextPhoto(input){
   reader.onload=async(ev)=>{
     const b64=ev.target.result.split(',')[1];const mt=file.type||'image/jpeg';
     try{const r=await api('/api/ai/image-text',{method:'POST',body:{imageBase64:b64,mimeType:mt}});
-      S.tx.input=(r.text||'').trim();S.tx.scanLoading=false;render();const el=ge('txIn');if(el)el.value=S.tx.input;}
+      S.tx.input=(r.text||'').trim();S.tx.mode='input';S.tx.scanLoading=false;render();const el=ge('txIn');if(el)el.value=S.tx.input;}
     catch(e){S.tx.scanLoading=false;render();alert('Не удалось прочитать текст: '+e.message);}
   };
   reader.readAsDataURL(file);
