@@ -7,7 +7,8 @@
   window.installApp=async()=>{if(!_deferredInstall)return;_deferredInstall.prompt();const r=await _deferredInstall.userChoice;if(r.outcome==='accepted')_deferredInstall=null;const btn=document.getElementById('installBtn');if(btn)btn.style.display='none';};
 })();
 const LANGS=[{code:"ru",flag:"🇷🇺",name:"Русский",nameEn:"Russian"},{code:"es",flag:"🇪🇸",name:"Español",nameEn:"Spanish"},{code:"fr",flag:"🇫🇷",name:"Français",nameEn:"French"},{code:"de",flag:"🇩🇪",name:"Deutsch",nameEn:"German"},{code:"zh",flag:"🇨🇳",name:"中文",nameEn:"Chinese"},{code:"ar",flag:"🇸🇦",name:"العربية",nameEn:"Arabic"},{code:"pt",flag:"🇧🇷",name:"Português",nameEn:"Portuguese"},{code:"tr",flag:"🇹🇷",name:"Türkçe",nameEn:"Turkish"},{code:"it",flag:"🇮🇹",name:"Italiano",nameEn:"Italian"},{code:"ko",flag:"🇰🇷",name:"한국어",nameEn:"Korean"},{code:"ja",flag:"🇯🇵",name:"日本語",nameEn:"Japanese"},{code:"pl",flag:"🇵🇱",name:"Polski",nameEn:"Polish"},{code:"uk",flag:"🇺🇦",name:"Українська",nameEn:"Ukrainian"},{code:"nl",flag:"🇳🇱",name:"Nederlands",nameEn:"Dutch"},{code:"hi",flag:"🇮🇳",name:"हिन्दी",nameEn:"Hindi"}];
-const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"}];
+const LLANGS=[{code:"en",flag:"🇬🇧",name:"English"},{code:"de",flag:"🇩🇪",name:"Deutsch"},{code:"fr",flag:"🇫🇷",name:"Français"},{code:"es",flag:"🇪🇸",name:"Español"},{code:"it",flag:"🇮🇹",name:"Italiano"},{code:"zh",flag:"🇨🇳",name:"中文"},{code:"ja",flag:"🇯🇵",name:"日本語"},{code:"ko",flag:"🇰🇷",name:"한국어"},{code:"tr",flag:"🇹🇷",name:"Türkçe"}];
+function sortByPhone(list){const ph=(navigator.language||'').slice(0,2).toLowerCase();const idx=list.findIndex(l=>l.code===ph);if(idx<=0)return list;const r=[...list];r.unshift(r.splice(idx,1)[0]);return r;}
 const LEVELS = ['A1','A2','B1','B2','C1','C2'];
 const WORD_PACKS=[
   {id:'hotel',icon:'🏨',title:'Работа в отеле',words:['receptionist','check in','check out','concierge','housekeeping','room service','front desk','vacancy','amenities','occupancy','maintenance','reservation','suite','shift','overtime','tip','linen','complaint','bellboy']},
@@ -33,27 +34,27 @@ const WORD_PACKS=[
 // ── I18N ────────────────────────────────────────────────
 const UI_LANG=(navigator.language||'en').slice(0,2).toLowerCase();
 const I18N={
-  en:{nativeQ:'What is your native language?',learnQ:'What will you learn?',step1:'Step 1 of 3 — Your native language',step2:'Step 2 of 3 — Language to learn',step3:'Step 3 of 3',cont:'Continue →',back:'← Back',search:'Search…',chooseLang:'Choose language to learn',addWord:'Add a word',noAccount:'No account needed',signInBtn:'Sign in',signInSub:'Save & sync progress',saveTitle:'Save your progress!',saveDesc:'Create a free account to keep your words safe.',register:'Create account',skip:'Skip for now',wordAdded:'Word added!',tabWords:'Words',tabPractice:'Practice',tabHistory:'History',tabStats:'Stats',tabGroups:'Groups'},
-  ru:{nativeQ:'Какой ваш родной язык?',learnQ:'Какой язык вы учите?',step1:'Шаг 1 из 3 — Родной язык',step2:'Шаг 2 из 3 — Язык для изучения',step3:'Шаг 3 из 3',cont:'Продолжить →',back:'← Назад',search:'Поиск…',chooseLang:'Выберите язык',addWord:'Добавить слово',noAccount:'Без регистрации',signInBtn:'Войти',signInSub:'Синхронизация прогресса',saveTitle:'Сохраните прогресс!',saveDesc:'Создайте бесплатный аккаунт, чтобы слова не потерялись.',register:'Создать аккаунт',skip:'Пропустить',wordAdded:'Слово добавлено!',tabWords:'Слова',tabPractice:'Практика',tabHistory:'История',tabStats:'Статус',tabGroups:'Группы'},
-  es:{nativeQ:'¿Cuál es tu idioma nativo?',learnQ:'¿Qué idioma aprenderás?',step1:'Paso 1/3 — Tu idioma nativo',step2:'Paso 2/3 — Idioma a aprender',step3:'Paso 3/3',cont:'Continuar →',back:'← Atrás',search:'Buscar…',chooseLang:'Elige idioma',addWord:'Añadir palabra',noAccount:'Sin cuenta',signInBtn:'Iniciar sesión',signInSub:'Guardar progreso',saveTitle:'¡Guarda tu progreso!',saveDesc:'Crea una cuenta gratuita para guardar tus palabras.',register:'Crear cuenta',skip:'Omitir',wordAdded:'¡Palabra añadida!',tabWords:'Palabras',tabPractice:'Práctica',tabHistory:'Historial',tabStats:'Stats',tabGroups:'Grupos'},
-  fr:{nativeQ:'Quelle est votre langue maternelle?',learnQ:'Quelle langue apprendrez-vous?',step1:'Étape 1/3 — Langue maternelle',step2:'Étape 2/3 — Langue à apprendre',step3:'Étape 3/3',cont:'Continuer →',back:'← Retour',search:'Rechercher…',chooseLang:'Choisissez une langue',addWord:'Ajouter un mot',noAccount:'Sans compte',signInBtn:'Se connecter',signInSub:'Sauvegarder la progression',saveTitle:'Sauvegardez vos progrès!',saveDesc:'Créez un compte gratuit pour ne pas perdre vos mots.',register:'Créer un compte',skip:'Passer',wordAdded:'Mot ajouté!',tabWords:'Mots',tabPractice:'Pratique',tabHistory:'Historique',tabStats:'Stats',tabGroups:'Groupes'},
-  de:{nativeQ:'Was ist Ihre Muttersprache?',learnQ:'Welche Sprache lernen Sie?',step1:'Schritt 1/3 — Muttersprache',step2:'Schritt 2/3 — Lernsprache',step3:'Schritt 3/3',cont:'Weiter →',back:'← Zurück',search:'Suchen…',chooseLang:'Lernsprache wählen',addWord:'Wort hinzufügen',noAccount:'Ohne Konto',signInBtn:'Anmelden',signInSub:'Fortschritt synchronisieren',saveTitle:'Fortschritt speichern!',saveDesc:'Erstellen Sie ein kostenloses Konto für Ihre Wörter.',register:'Konto erstellen',skip:'Überspringen',wordAdded:'Wort hinzugefügt!',tabWords:'Wörter',tabPractice:'Übung',tabHistory:'Verlauf',tabStats:'Stats',tabGroups:'Gruppen'},
-  zh:{nativeQ:'您的母语是什么?',learnQ:'您要学习哪种语言?',step1:'第1/3步 — 您的母语',step2:'第2/3步 — 学习语言',step3:'第3/3步',cont:'继续 →',back:'← 返回',search:'搜索…',chooseLang:'选择学习语言',addWord:'添加单词',noAccount:'无需账户',signInBtn:'登录',signInSub:'同步进度',saveTitle:'保存您的进度！',saveDesc:'创建免费账户以保留您的单词。',register:'创建账户',skip:'跳过',wordAdded:'单词已添加！',tabWords:'单词',tabPractice:'练习',tabHistory:'历史',tabStats:'统计',tabGroups:'小组'},
-  ja:{nativeQ:'母語は何ですか？',learnQ:'学ぶ言語は何ですか？',step1:'ステップ1/3 — 母語',step2:'ステップ2/3 — 学習言語',step3:'ステップ3/3',cont:'続ける →',back:'← 戻る',search:'検索…',chooseLang:'学習言語を選択',addWord:'単語を追加',noAccount:'アカウント不要',signInBtn:'サインイン',signInSub:'進捗を同期',saveTitle:'進捗を保存！',saveDesc:'無料アカウントを作成して単語を保存しましょう。',register:'アカウント作成',skip:'後で',wordAdded:'単語が追加されました！',tabWords:'単語',tabPractice:'練習',tabHistory:'履歴',tabStats:'統計',tabGroups:'グループ'},
-  ko:{nativeQ:'모국어가 무엇인가요?',learnQ:'어떤 언어를 배울 건가요?',step1:'1/3단계 — 모국어',step2:'2/3단계 — 학습 언어',step3:'3/3단계',cont:'계속 →',back:'← 뒤로',search:'검색…',chooseLang:'학습 언어 선택',addWord:'단어 추가',noAccount:'계정 불필요',signInBtn:'로그인',signInSub:'진행 상황 동기화',saveTitle:'진행 상황을 저장하세요!',saveDesc:'무료 계정을 만들어 단어를 보관하세요.',register:'계정 만들기',skip:'나중에',wordAdded:'단어가 추가되었습니다!',tabWords:'단어',tabPractice:'연습',tabHistory:'기록',tabStats:'통계',tabGroups:'그룹'},
-  uk:{nativeQ:'Яка ваша рідна мова?',learnQ:'Яку мову ви вивчаєте?',step1:'Крок 1/3 — Рідна мова',step2:'Крок 2/3 — Мова для вивчення',step3:'Крок 3/3',cont:'Продовжити →',back:'← Назад',search:'Пошук…',chooseLang:'Оберіть мову',addWord:'Додати слово',noAccount:'Без реєстрації',signInBtn:'Увійти',signInSub:'Синхронізація прогресу',saveTitle:'Збережіть прогрес!',saveDesc:'Створіть безкоштовний акаунт, щоб не втратити слова.',register:'Створити акаунт',skip:'Пропустити',wordAdded:'Слово додано!',tabWords:'Слова',tabPractice:'Практика',tabHistory:'Історія',tabStats:'Статус',tabGroups:'Групи'},
-  pt:{nativeQ:'Qual é a sua língua materna?',learnQ:'Qual idioma vai aprender?',step1:'Passo 1/3 — Idioma nativo',step2:'Passo 2/3 — Idioma a aprender',step3:'Passo 3/3',cont:'Continuar →',back:'← Voltar',search:'Pesquisar…',chooseLang:'Escolha o idioma',addWord:'Adicionar palavra',noAccount:'Sem conta',signInBtn:'Entrar',signInSub:'Salvar progresso',saveTitle:'Salve seu progresso!',saveDesc:'Crie uma conta gratuita para guardar suas palavras.',register:'Criar conta',skip:'Pular',wordAdded:'Palavra adicionada!',tabWords:'Palavras',tabPractice:'Prática',tabHistory:'Histórico',tabStats:'Stats',tabGroups:'Grupos'},
-  tr:{nativeQ:'Ana diliniz nedir?',learnQ:'Hangi dili öğreneceksiniz?',step1:'Adım 1/3 — Ana dil',step2:'Adım 2/3 — Öğrenilecek dil',step3:'Adım 3/3',cont:'Devam →',back:'← Geri',search:'Ara…',chooseLang:'Dil seçin',addWord:'Kelime ekle',noAccount:'Hesap gerekmez',signInBtn:'Giriş yap',signInSub:'İlerlemeyi kaydet',saveTitle:'İlerlemenizi kaydedin!',saveDesc:'Kelimelerinizi korumak için ücretsiz hesap oluşturun.',register:'Hesap oluştur',skip:'Atla',wordAdded:'Kelime eklendi!',tabWords:'Kelimeler',tabPractice:'Pratik',tabHistory:'Geçmiş',tabStats:'İstatistik',tabGroups:'Gruplar'},
-  it:{nativeQ:'Qual è la tua lingua madre?',learnQ:'Quale lingua stai imparando?',step1:'Passo 1/3 — Lingua madre',step2:'Passo 2/3 — Lingua da imparare',step3:'Passo 3/3',cont:'Continua →',back:'← Indietro',search:'Cerca…',chooseLang:'Scegli la lingua',addWord:'Aggiungi parola',noAccount:'Senza account',signInBtn:'Accedi',signInSub:'Salva i progressi',saveTitle:'Salva i tuoi progressi!',saveDesc:'Crea un account gratuito per non perdere le parole.',register:'Crea account',skip:'Salta',wordAdded:'Parola aggiunta!',tabWords:'Parole',tabPractice:'Pratica',tabHistory:'Cronologia',tabStats:'Stats',tabGroups:'Gruppi'},
-  pl:{nativeQ:'Jaki jest twój ojczysty język?',learnQ:'Jakiego języka się uczysz?',step1:'Krok 1/3 — Ojczysty język',step2:'Krok 2/3 — Język do nauki',step3:'Krok 3/3',cont:'Kontynuuj →',back:'← Wstecz',search:'Szukaj…',chooseLang:'Wybierz język',addWord:'Dodaj słowo',noAccount:'Bez konta',signInBtn:'Zaloguj się',signInSub:'Synchronizuj postępy',saveTitle:'Zapisz swoje postępy!',saveDesc:'Utwórz darmowe konto dla swoich słów.',register:'Utwórz konto',skip:'Pomiń',wordAdded:'Słowo dodane!',tabWords:'Słowa',tabPractice:'Ćwiczenia',tabHistory:'Historia',tabStats:'Statystyki',tabGroups:'Grupy'},
-  ar:{nativeQ:'ما هي لغتك الأم؟',learnQ:'ما اللغة التي ستتعلمها؟',step1:'الخطوة 1/3 — لغتك الأم',step2:'الخطوة 2/3 — اللغة التي تتعلمها',step3:'الخطوة 3/3',cont:'متابعة →',back:'→ رجوع',search:'بحث…',chooseLang:'اختر اللغة',addWord:'إضافة كلمة',noAccount:'بدون حساب',signInBtn:'تسجيل الدخول',signInSub:'مزامنة التقدم',saveTitle:'احفظ تقدمك!',saveDesc:'أنشئ حسابًا مجانيًا للحفاظ على كلماتك.',register:'إنشاء حساب',skip:'تخطي',wordAdded:'تمت إضافة الكلمة!',tabWords:'كلمات',tabPractice:'تدريب',tabHistory:'السجل',tabStats:'إحصاء',tabGroups:'مجموعات'},
-  hi:{nativeQ:'आपकी मातृभाषा क्या है?',learnQ:'आप कौन सी भाषा सीखेंगे?',step1:'चरण 1/3 — आपकी मातृभाषा',step2:'चरण 2/3 — सीखने की भाषा',step3:'चरण 3/3',cont:'जारी रखें →',back:'← वापस',search:'खोजें…',chooseLang:'भाषा चुनें',addWord:'शब्द जोड़ें',noAccount:'खाते की ज़रूरत नहीं',signInBtn:'साइन इन',signInSub:'प्रगति सिंक करें',saveTitle:'अपनी प्रगति बचाएं!',saveDesc:'अपने शब्दों को सुरक्षित रखने के लिए मुफ़्त खाता बनाएं।',register:'खाता बनाएं',skip:'छोड़ें',wordAdded:'शब्द जोड़ा गया!',tabWords:'शब्द',tabPractice:'अभ्यास',tabHistory:'इतिहास',tabStats:'आँकड़े',tabGroups:'समूह'},
+  en:{nativeQ:'What is your native language?',learnQ:'What will you learn?',step1:'Step 1 of 3 — Your native language',step2:'Step 2 of 3 — Language to learn',step3:'Step 3 of 3',cont:'Continue →',back:'← Back',search:'Search…',chooseLang:'Choose language to learn',addWord:'Add a word',noAccount:'No account needed',signInBtn:'Sign in',signInSub:'Save & sync progress',saveTitle:'Save your progress!',saveDesc:'Create a free account to keep your words safe.',register:'Create account',skip:'Skip for now',wordAdded:'Word added!',tabWords:'Words',tabTexts:'Texts',tabPractice:'Practice',tabHistory:'History',tabStats:'Stats',tabGroups:'Groups'},
+  ru:{nativeQ:'Какой ваш родной язык?',learnQ:'Какой язык вы учите?',step1:'Шаг 1 из 3 — Родной язык',step2:'Шаг 2 из 3 — Язык для изучения',step3:'Шаг 3 из 3',cont:'Продолжить →',back:'← Назад',search:'Поиск…',chooseLang:'Выберите язык',addWord:'Добавить слово',noAccount:'Без регистрации',signInBtn:'Войти',signInSub:'Синхронизация прогресса',saveTitle:'Сохраните прогресс!',saveDesc:'Создайте бесплатный аккаунт, чтобы слова не потерялись.',register:'Создать аккаунт',skip:'Пропустить',wordAdded:'Слово добавлено!',tabWords:'Слова',tabTexts:'Тексты',tabPractice:'Практика',tabHistory:'История',tabStats:'Статус',tabGroups:'Группы'},
+  es:{nativeQ:'¿Cuál es tu idioma nativo?',learnQ:'¿Qué idioma aprenderás?',step1:'Paso 1/3 — Tu idioma nativo',step2:'Paso 2/3 — Idioma a aprender',step3:'Paso 3/3',cont:'Continuar →',back:'← Atrás',search:'Buscar…',chooseLang:'Elige idioma',addWord:'Añadir palabra',noAccount:'Sin cuenta',signInBtn:'Iniciar sesión',signInSub:'Guardar progreso',saveTitle:'¡Guarda tu progreso!',saveDesc:'Crea una cuenta gratuita para guardar tus palabras.',register:'Crear cuenta',skip:'Omitir',wordAdded:'¡Palabra añadida!',tabWords:'Palabras',tabTexts:'Textos',tabPractice:'Práctica',tabHistory:'Historial',tabStats:'Stats',tabGroups:'Grupos'},
+  fr:{nativeQ:'Quelle est votre langue maternelle?',learnQ:'Quelle langue apprendrez-vous?',step1:'Étape 1/3 — Langue maternelle',step2:'Étape 2/3 — Langue à apprendre',step3:'Étape 3/3',cont:'Continuer →',back:'← Retour',search:'Rechercher…',chooseLang:'Choisissez une langue',addWord:'Ajouter un mot',noAccount:'Sans compte',signInBtn:'Se connecter',signInSub:'Sauvegarder la progression',saveTitle:'Sauvegardez vos progrès!',saveDesc:'Créez un compte gratuit pour ne pas perdre vos mots.',register:'Créer un compte',skip:'Passer',wordAdded:'Mot ajouté!',tabWords:'Mots',tabTexts:'Textes',tabPractice:'Pratique',tabHistory:'Historique',tabStats:'Stats',tabGroups:'Groupes'},
+  de:{nativeQ:'Was ist Ihre Muttersprache?',learnQ:'Welche Sprache lernen Sie?',step1:'Schritt 1/3 — Muttersprache',step2:'Schritt 2/3 — Lernsprache',step3:'Schritt 3/3',cont:'Weiter →',back:'← Zurück',search:'Suchen…',chooseLang:'Lernsprache wählen',addWord:'Wort hinzufügen',noAccount:'Ohne Konto',signInBtn:'Anmelden',signInSub:'Fortschritt synchronisieren',saveTitle:'Fortschritt speichern!',saveDesc:'Erstellen Sie ein kostenloses Konto für Ihre Wörter.',register:'Konto erstellen',skip:'Überspringen',wordAdded:'Wort hinzugefügt!',tabWords:'Wörter',tabTexts:'Texte',tabPractice:'Übung',tabHistory:'Verlauf',tabStats:'Stats',tabGroups:'Gruppen'},
+  zh:{nativeQ:'您的母语是什么?',learnQ:'您要学习哪种语言?',step1:'第1/3步 — 您的母语',step2:'第2/3步 — 学习语言',step3:'第3/3步',cont:'继续 →',back:'← 返回',search:'搜索…',chooseLang:'选择学习语言',addWord:'添加单词',noAccount:'无需账户',signInBtn:'登录',signInSub:'同步进度',saveTitle:'保存您的进度！',saveDesc:'创建免费账户以保留您的单词。',register:'创建账户',skip:'跳过',wordAdded:'单词已添加！',tabWords:'单词',tabTexts:'文本',tabPractice:'练习',tabHistory:'历史',tabStats:'统计',tabGroups:'小组'},
+  ja:{nativeQ:'母語は何ですか？',learnQ:'学ぶ言語は何ですか？',step1:'ステップ1/3 — 母語',step2:'ステップ2/3 — 学習言語',step3:'ステップ3/3',cont:'続ける →',back:'← 戻る',search:'検索…',chooseLang:'学習言語を選択',addWord:'単語を追加',noAccount:'アカウント不要',signInBtn:'サインイン',signInSub:'進捗を同期',saveTitle:'進捗を保存！',saveDesc:'無料アカウントを作成して単語を保存しましょう。',register:'アカウント作成',skip:'後で',wordAdded:'単語が追加されました！',tabWords:'単語',tabTexts:'テキスト',tabPractice:'練習',tabHistory:'履歴',tabStats:'統計',tabGroups:'グループ'},
+  ko:{nativeQ:'모국어가 무엇인가요?',learnQ:'어떤 언어를 배울 건가요?',step1:'1/3단계 — 모국어',step2:'2/3단계 — 학습 언어',step3:'3/3단계',cont:'계속 →',back:'← 뒤로',search:'검색…',chooseLang:'학습 언어 선택',addWord:'단어 추가',noAccount:'계정 불필요',signInBtn:'로그인',signInSub:'진행 상황 동기화',saveTitle:'진행 상황을 저장하세요!',saveDesc:'무료 계정을 만들어 단어를 보관하세요.',register:'계정 만들기',skip:'나중에',wordAdded:'단어가 추가되었습니다!',tabWords:'단어',tabTexts:'텍스트',tabPractice:'연습',tabHistory:'기록',tabStats:'통계',tabGroups:'그룹'},
+  uk:{nativeQ:'Яка ваша рідна мова?',learnQ:'Яку мову ви вивчаєте?',step1:'Крок 1/3 — Рідна мова',step2:'Крок 2/3 — Мова для вивчення',step3:'Крок 3/3',cont:'Продовжити →',back:'← Назад',search:'Пошук…',chooseLang:'Оберіть мову',addWord:'Додати слово',noAccount:'Без реєстрації',signInBtn:'Увійти',signInSub:'Синхронізація прогресу',saveTitle:'Збережіть прогрес!',saveDesc:'Створіть безкоштовний акаунт, щоб не втратити слова.',register:'Створити акаунт',skip:'Пропустити',wordAdded:'Слово додано!',tabWords:'Слова',tabTexts:'Тексти',tabPractice:'Практика',tabHistory:'Історія',tabStats:'Статус',tabGroups:'Групи'},
+  pt:{nativeQ:'Qual é a sua língua materna?',learnQ:'Qual idioma vai aprender?',step1:'Passo 1/3 — Idioma nativo',step2:'Passo 2/3 — Idioma a aprender',step3:'Passo 3/3',cont:'Continuar →',back:'← Voltar',search:'Pesquisar…',chooseLang:'Escolha o idioma',addWord:'Adicionar palavra',noAccount:'Sem conta',signInBtn:'Entrar',signInSub:'Salvar progresso',saveTitle:'Salve seu progresso!',saveDesc:'Crie uma conta gratuita para guardar suas palavras.',register:'Criar conta',skip:'Pular',wordAdded:'Palavra adicionada!',tabWords:'Palavras',tabTexts:'Textos',tabPractice:'Prática',tabHistory:'Histórico',tabStats:'Stats',tabGroups:'Grupos'},
+  tr:{nativeQ:'Ana diliniz nedir?',learnQ:'Hangi dili öğreneceksiniz?',step1:'Adım 1/3 — Ana dil',step2:'Adım 2/3 — Öğrenilecek dil',step3:'Adım 3/3',cont:'Devam →',back:'← Geri',search:'Ara…',chooseLang:'Dil seçin',addWord:'Kelime ekle',noAccount:'Hesap gerekmez',signInBtn:'Giriş yap',signInSub:'İlerlemeyi kaydet',saveTitle:'İlerlemenizi kaydedin!',saveDesc:'Kelimelerinizi korumak için ücretsiz hesap oluşturun.',register:'Hesap oluştur',skip:'Atla',wordAdded:'Kelime eklendi!',tabWords:'Kelimeler',tabTexts:'Metinler',tabPractice:'Pratik',tabHistory:'Geçmiş',tabStats:'İstatistik',tabGroups:'Gruplar'},
+  it:{nativeQ:'Qual è la tua lingua madre?',learnQ:'Quale lingua stai imparando?',step1:'Passo 1/3 — Lingua madre',step2:'Passo 2/3 — Lingua da imparare',step3:'Passo 3/3',cont:'Continua →',back:'← Indietro',search:'Cerca…',chooseLang:'Scegli la lingua',addWord:'Aggiungi parola',noAccount:'Senza account',signInBtn:'Accedi',signInSub:'Salva i progressi',saveTitle:'Salva i tuoi progressi!',saveDesc:'Crea un account gratuito per non perdere le parole.',register:'Crea account',skip:'Salta',wordAdded:'Parola aggiunta!',tabWords:'Parole',tabTexts:'Testi',tabPractice:'Pratica',tabHistory:'Cronologia',tabStats:'Stats',tabGroups:'Gruppi'},
+  pl:{nativeQ:'Jaki jest twój ojczysty język?',learnQ:'Jakiego języka się uczysz?',step1:'Krok 1/3 — Ojczysty język',step2:'Krok 2/3 — Język do nauki',step3:'Krok 3/3',cont:'Kontynuuj →',back:'← Wstecz',search:'Szukaj…',chooseLang:'Wybierz język',addWord:'Dodaj słowo',noAccount:'Bez konta',signInBtn:'Zaloguj się',signInSub:'Synchronizuj postępy',saveTitle:'Zapisz swoje postępy!',saveDesc:'Utwórz darmowe konto dla swoich słów.',register:'Utwórz konto',skip:'Pomiń',wordAdded:'Słowo dodane!',tabWords:'Słowa',tabTexts:'Teksty',tabPractice:'Ćwiczenia',tabHistory:'Historia',tabStats:'Statystyki',tabGroups:'Grupy'},
+  ar:{nativeQ:'ما هي لغتك الأم؟',learnQ:'ما اللغة التي ستتعلمها؟',step1:'الخطوة 1/3 — لغتك الأم',step2:'الخطوة 2/3 — اللغة التي تتعلمها',step3:'الخطوة 3/3',cont:'متابعة →',back:'→ رجوع',search:'بحث…',chooseLang:'اختر اللغة',addWord:'إضافة كلمة',noAccount:'بدون حساب',signInBtn:'تسجيل الدخول',signInSub:'مزامنة التقدم',saveTitle:'احفظ تقدمك!',saveDesc:'أنشئ حسابًا مجانيًا للحفاظ على كلماتك.',register:'إنشاء حساب',skip:'تخطي',wordAdded:'تمت إضافة الكلمة!',tabWords:'كلمات',tabTexts:'نصوص',tabPractice:'تدريب',tabHistory:'السجل',tabStats:'إحصاء',tabGroups:'مجموعات'},
+  hi:{nativeQ:'आपकी मातृभाषा क्या है?',learnQ:'आप कौन सी भाषा सीखेंगे?',step1:'चरण 1/3 — आपकी मातृभाषा',step2:'चरण 2/3 — सीखने की भाषा',step3:'चरण 3/3',cont:'जारी रखें →',back:'← वापस',search:'खोजें…',chooseLang:'भाषा चुनें',addWord:'शब्द जोड़ें',noAccount:'खाते की ज़रूरत नहीं',signInBtn:'साइन इन',signInSub:'प्रगति सिंक करें',saveTitle:'अपनी प्रगति बचाएं!',saveDesc:'अपने शब्दों को सुरक्षित रखने के लिए मुफ़्त खाता बनाएं।',register:'खाता बनाएं',skip:'छोड़ें',wordAdded:'शब्द जोड़ा गया!',tabWords:'शब्द',tabTexts:'पाठ',tabPractice:'अभ्यास',tabHistory:'इतिहास',tabStats:'आँकड़े',tabGroups:'समूह'},
 };
 function t(k){return(I18N[UI_LANG]||I18N.en)[k]||I18N.en[k]||k;}
 
 // ── STATE & BOOTSTRAP ───────────────────────────────────
 function dLang(){const b=(navigator.language||'ru').slice(0,2).toLowerCase();return LANGS.find(l=>l.code===b)?.code||'ru';}
-let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US'};
+let S={scr:'ob',step:1,nl:dLang(),ll:'en',obs:'',user:null,tok:localStorage.getItem('tok')||'',tab:'dict',words:[],filt:'All',sort:'new',srch:'',add:false,addTab:'manual',det:null,pm:null,sess:null,wmode:null,wsrc:'all',wcount:10,ho:false,prof:false,lp:false,hist:[],grps:[],guest:false,guestStep:'add',adm:{tab:'stats',data:null,users:[],cache:[],uSrch:'',loading:false},grpM:null,accent:localStorage.getItem('accent')||'en-US',tx:{mode:'home',loading:false,text:null,tip:null,ai:false,input:'',sel:[],selMode:false}};
 
 // ── API ─────────────────────────────────────────────────
 async function api(path,o={}){
@@ -162,7 +163,8 @@ async function emailAuth(){
     S.tok=d.token;localStorage.setItem('tok',d.token);S.user=fmtU(d.user);S.nl=S.user.nl;S.ll=S.user.ll;
     await loadData();
     for(const w of guestWords){try{const s=await api('/api/words',{method:'POST',body:{word:w.word,translation:w.tr,transcription:w.ts,level:w.lv,example_en:w.ex,example_ru:w.exr,grammar_note:w.gr,hard:w.hard}});saveWord(s);}catch{}}
-    ss({scr:'main',tab:'dict',guest:false,guestStep:'add'});
+    const isNew=S.words.length===0;
+    ss({scr:'main',tab:'dict',guest:false,guestStep:'add',...(isNew?{add:true,addTab:'packs'}:{})});
   }catch(err){showErr(err.message);}
 }
 function enterGuest(){ss({scr:'main',tab:'dict',guest:true,guestStep:'add'});}
@@ -174,9 +176,9 @@ function render(){
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
   const isA=S.user?.role==='admin';
   const tabs=isA
-    ?[{id:'dict',i:'📖',l:t('tabWords')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')},{id:'admin',i:'⚙️',l:'Admin'}]
-    :isT?[{id:'dict',i:'📖',l:t('tabWords')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}]
-    :[{id:'dict',i:'📖',l:t('tabWords')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
+    ?[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')},{id:'admin',i:'⚙️',l:'Admin'}]
+    :isT?[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}]
+    :[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
   const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<button class="ava-btn" onclick="ss({prof:true})"><div class="ava"><img src="'+u.avatar+'"></div><span class="ava-arrow">▾</span></button>':'<button class="ava-btn" onclick="ss({prof:true})"><div class="ava">'+un+'</div><span class="ava-arrow">▾</span></button>';
@@ -186,16 +188,20 @@ function render(){
     +'<nav class="nav" data-user="'+(u?.name||u?.email||'')+'">'
     +tabs.map(tb=>'<button class="nb'+(S.tab===tb.id&&!S.add?' on':'')+'" onclick="swT(\''+tb.id+'\')"><span class="ni">'+tb.i+'</span>'+tb.l+'</button>').join('')
     +'</nav>'
-    +(S.tab==='dict'&&!S.add?'<button class="fab" onclick="ss({add:true,addTab:\'manual\'})">＋</button>':'')
+    +(!S.add&&!S.pm&&!S.wmode?'<div class="fab-group">'
+      +'<button class="fab fab-sm" title="Вставить текст для чтения" onclick="swT(\'texts\');S.tx.mode=\'input\';render()">✂️</button>'
+      +'<button class="fab fab-sm" title="Добавить слова с фото" onclick="ss({add:true,addTab:\'photo\'})">📷</button>'
+      +'<button class="fab" title="Добавить слово" onclick="ss({add:true,addTab:\'manual\'})">＋</button>'
+      +'</div>':'')
     +(S.prof?rProf():'')+(S.lp?rLP():'')+(S.det?rWM():'');
 }
-function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();if(S.tab==='admin')return rAdmin();return rDict();}
+function rMain(){if(S.add)return rAdd();if(S.tab==='dict')return rDict();if(S.tab==='texts')return rTexts();if(S.tab==='practice')return rPrac();if(S.tab==='progress')return rProg();if(S.tab==='history')return rHist();if(S.tab==='groups')return rGrps();if(S.tab==='admin')return rAdmin();return rDict();}
 function swT(t){ss({tab:t,add:false,pm:null,sess:null,det:null});if(t==='admin')admLoad(S.adm.tab);}
 
 // ── RENDER: ONBOARDING ──────────────────────────────────
 function rOb(){if(S.step===1)return ob1();if(S.step===2)return ob2();if(S.step===3)return ob3();if(S.step===4)return ob4();return ob5();}
 function ob1(){
-  const list=LANGS.filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
+  const list=sortByPhone(LANGS).filter(l=>l.name.toLowerCase().includes((S.obs||'').toLowerCase())||l.nameEn.toLowerCase().includes((S.obs||'').toLowerCase()));
   return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(94,255,196,.3))">🌍</div><div class="obl">AI Language <em>Tutor</em></div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step1')+'</div></div>'
     +'<div class="obs2 mb3"><div class="oblbl">'+t('nativeQ')+'</div>'
     +'<div class="obsw"><span class="obsico">🔍</span><input class="obsinp" placeholder="'+t('search')+'" value="'+(S.obs||'')+'" oninput="S.obs=this.value;render()"></div>'
@@ -205,7 +211,7 @@ function ob1(){
 function ob2(){
   return '<div class="ob"><div class="obh"><div style="font-size:52px;margin-bottom:14px">📚</div><div class="obl">'+t('learnQ').replace(/\?/,'? <em>🎯</em>')+'</div><div class="obs" style="color:var(--t3);font-size:12px">'+t('step2')+'</div></div>'
     +'<div class="obs2 mb3"><div class="oblbl">'+t('chooseLang')+'</div>'
-    +'<div class="lg">'+LLANGS.map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
+    +'<div class="lg">'+sortByPhone(LLANGS).map(l=>'<div class="lc'+(S.ll===l.code?' sel':'')+'" onclick="S.ll=\''+l.code+'\';render()"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(S.ll===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div></div>'
     +'<div style="width:100%;position:relative;z-index:1;margin-top:14px;display:flex;gap:9px"><button class="btn bg_ bfu" onclick="ss({step:1})">'+t('back')+'</button><button class="btn bp bfu" style="padding:13px;font-size:14px;border-radius:13px" onclick="ss({step:3})">'+t('cont')+'</button></div></div>';
 }
 function ob3(){
@@ -268,7 +274,7 @@ function rProf(){
   return modal(innerContent, 'ss({prof:false})');
 }
 function rLP(){
-  const isN=S.lp==='n';const list=isN?LANGS:LLANGS;const cur=isN?S.nl:S.ll;
+  const isN=S.lp==='n';const list=sortByPhone(isN?LANGS:LLANGS);const cur=isN?S.nl:S.ll;
   const innerContent=
     '<div class="rb2 mb3"><div class="syn fw7" style="font-size:17px">'+(isN?'Native language':'Learning language')+'</div><button class="btn bg_ bsm" onclick="ss({lp:false})">✕</button></div>'
     +'<div class="lg" style="max-height:320px;overflow-y:auto;gap:6px">'+list.map(l=>'<div class="lc'+(cur===l.code?' sel':'')+'" onclick="selLang(\''+l.code+'\')"><div class="lcf">'+l.flag+'</div><div class="lcn">'+l.name+'</div>'+(cur===l.code?'<div style="font-size:9px;color:var(--ac)">✓</div>':'')+'</div>').join('')+'</div>';
@@ -315,12 +321,20 @@ function rDict(){
   else if(S.sort.startsWith('pack_')){const pid=S.sort.slice(5);const p=WORD_PACKS.find(x=>x.id===pid);if(p)list=list.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()));}
   const guestBanner=S.guest?'<div class="rb" style="background:var(--acD);border-color:var(--ac);margin-bottom:12px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">💾</span><div style="flex:1"><div class="fw6 f12">'+t('saveTitle')+'</div><div class="f11 c2 mt1">'+t('saveDesc')+'</div></div><button class="btn bp bsm" style="font-size:11px;white-space:nowrap" onclick="ss({scr:\'ob\',step:4})">'+t('register')+'</button></div>':'';
   return '<div class="sc">'+guestBanner
-    +'<div class="row mb2" style="gap:8px"><div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
-    +'<select class="inp" style="flex-shrink:0;width:auto;padding:8px 10px;font-size:12px" onchange="S.sort=this.value;render()">'
-    +[['new','Новые'],['az','A → Z'],['za','Z → A'],['lvasc','A1 → C2'],['lvdesc','C2 → A1'],['phrasal','Фразовые глаголы']].map(([v,l])=>'<option value="'+v+'"'+(S.sort===v?' selected':'')+'>'+l+'</option>').join('')
+    +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div class="sw" style="flex:1;margin-bottom:0"><span class="sico">🔍</span><input class="inp sinp" style="width:100%;box-sizing:border-box" placeholder="Search words…" value="'+S.srch+'" oninput="S.srch=this.value;render()"></div>'
+    +'<select class="inp" style="flex-shrink:0;width:auto;font-size:13px;padding:11px 10px" onchange="S.sort=this.value;render()">'
+    +[['new','Новые'],['az','A → Z'],['za','Z → A'],['lvasc','A1 → C2'],['lvdesc','C2 → A1'],['phrasal','Фразовые']].map(([v,l])=>'<option value="'+v+'"'+(S.sort===v?' selected':'')+'>'+l+'</option>').join('')
     +WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>'<option value="pack_'+p.id+'"'+(S.sort==='pack_'+p.id?' selected':'')+'>'+p.icon+' '+p.title+'</option>').join('')
+    +getCustomPacks().filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map((p,i)=>'<option value="custom_'+i+'"'+(S.sort==='custom_'+i?' selected':'')+'>✨ '+p.topic+'</option>').join('')
     +'</select></div>'
-    +(list.length===0?'<div class="empty"><div style="font-size:44px;margin-bottom:10px">📭</div><div class="syn fw7 f13 mb1">No words found</div><div class="f12 c3">Add words with the + button</div></div>'
+    +(list.length===0
+      ? S.words.length===0
+        ? '<div style="margin-top:4px"><div class="f14 fw7 mb3">👋 С чего начать?</div>'
+          +'<div class="mc mb2" onclick="ss({add:true,addTab:\'manual\'})"><div class="mci">✏️</div><div style="flex:1"><div class="fw6 f13">Добавить слово вручную</div><div class="f11 c3 mt1">Введи слово — AI переведёт и объяснит</div></div><span class="c3">›</span></div>'
+          +'<div class="mc mb2" onclick="ss({add:true,addTab:\'photo\'})"><div class="mci">📷</div><div style="flex:1"><div class="fw6 f13">Сфотографировать текст</div><div class="f11 c3 mt1">AI найдёт все слова на фото</div></div><span class="c3">›</span></div>'
+          +'<div class="mc mb2" onclick="ss({add:true,addTab:\'packs\'})"><div class="mci">📦</div><div style="flex:1"><div class="fw6 f13">Выбрать готовый набор</div><div class="f11 c3 mt1">Отель, работа, фразовые глаголы…</div></div><span class="c3">›</span></div>'
+          +'</div>'
+        : '<div class="empty"><div style="font-size:44px;margin-bottom:10px">🔍</div><div class="syn fw7 f13 mb1">Ничего не найдено</div><div class="f12 c3">Попробуй другой запрос или сбрось фильтр</div></div>'
     :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})">'
       +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
       +'<div class="wru">'+w.tr+'</div>'
@@ -368,8 +382,14 @@ function rAddM(){
     +'<div id="ar"></div></div>';
 }
 function rAddP(){
-  return '<div><input type="file" id="pf" accept="image/*" style="display:none" onchange="hPhoto(this)">'
-    +'<label for="pf" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;margin-bottom:12px"><span style="font-size:26px">📷</span> Choose screenshot or photo</label>'
+  const btnStyle='display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 10px;background:var(--sur2);border:2px dashed var(--brd2);border-radius:13px;color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;flex:1;text-align:center';
+  return '<div>'
+    +'<input type="file" id="pfc" accept="image/*" capture="environment" style="display:none" onchange="hPhoto(this)">'
+    +'<input type="file" id="pf" accept="image/*" style="display:none" onchange="hPhoto(this)">'
+    +'<div style="display:flex;gap:10px;margin-bottom:12px">'
+    +'<label for="pfc" style="'+btnStyle+'"><div><span style="font-size:30px;display:block;margin-bottom:4px">📷</span>Камера</div></label>'
+    +'<label for="pf" style="'+btnStyle+'"><div><span style="font-size:30px;display:block;margin-bottom:4px">🖼️</span>Галерея / скрин</div></label>'
+    +'</div>'
     +'<div id="pr"></div></div>';
 }
 let _packSt={},_customPack=null;
@@ -385,6 +405,9 @@ function rAddPacks(){
       :'<div class="row" style="gap:8px"><input id="cpTopic" class="inp" style="flex:1" placeholder="Авиация, кулинария, спорт…" onkeydown="if(event.key===\'Enter\')genCustomPack()">'
         +'<button class="btn bp bsm" onclick="genCustomPack()">✨ AI</button></div>')
     +'</div>';
+  const stickyBar=cp&&cp.words&&!cp.saved
+    ?'<div style="position:sticky;bottom:0;padding:10px 0 0;background:var(--bg);border-top:1px solid var(--brd);margin-top:6px"><div style="display:flex;gap:8px"><button class="btn bp" style="flex:1;padding:12px;font-size:13px" onclick="saveCustomPack()">+ Добавить все ('+cp.words.length+')</button><button class="btn bg_ bsm" onclick="_customPack=null;render()">✕</button></div></div>'
+    :'';
   return '<div>'+customCard+WORD_PACKS.map(p=>{
     const st=_packSt[p.id]||{};
     const already=S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length;
@@ -401,7 +424,7 @@ function rAddPacks(){
         +p.words.slice(0,8).map(w=>'<span class="badge bgr" style="font-size:10px">'+w+'</span>').join('')
         +(p.words.length>8?'<span class="f11 c3" style="align-self:center;margin-left:2px">+'+( p.words.length-8)+' ещё</span>':'')
       +'</div></div>';
-  }).join('')+'</div>';
+  }).join('')+stickyBar+'</div>';
 }
 async function genCustomPack(){
   const topic=ge('cpTopic')?.value?.trim();if(!topic)return;
@@ -410,9 +433,14 @@ async function genCustomPack(){
   catch(e){_customPack=null;alert(e.message);}
   render();
 }
+function getCustomPacks(){try{return JSON.parse(localStorage.getItem('customPacks')||'[]');}catch{return[];}}
+function getTextWords(){try{return JSON.parse(localStorage.getItem('textWords')||'[]');}catch{return[];}}
+function addTextWord(word){const tw=getTextWords().filter(w=>w!==word.toLowerCase());tw.unshift(word.toLowerCase());localStorage.setItem('textWords',JSON.stringify(tw.slice(0,500)));}
+function storeCustomPack(topic,words){const cp=getCustomPacks().filter(p=>p.topic!==topic);cp.unshift({topic,words:words.map(w=>w.word)});localStorage.setItem('customPacks',JSON.stringify(cp.slice(0,10)));}
 async function saveCustomPack(){
   if(!_customPack?.words)return;
   for(const w of _customPack.words){try{const s=await api('/api/words',{method:'POST',body:w});saveWord(s);}catch{}}
+  storeCustomPack(_customPack.topic,_customPack.words);
   _customPack.saved=true;render();
 }
 async function addPack(id){
@@ -513,33 +541,56 @@ function wsBySource(src){
   if(src==='hard')return S.words.filter(w=>w.hard);
   if(src==='new7')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000);
   if(src==='new30')return S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000);
+  if(src==='text'){const tw=new Set(getTextWords());return S.words.filter(w=>tw.has(w.word.toLowerCase()));}
+  if(src&&src.startsWith('last')){const n=parseInt(src.slice(4));const sorted=[...S.words].sort((a,b)=>new Date(b.ca||0)-new Date(a.ca||0));return sorted.slice(0,n);}
   if(src&&src.startsWith('pack_')){const p=WORD_PACKS.find(x=>x.id===src.slice(5));return p?S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())):S.words;}
+  if(src&&src.startsWith('custom_')){const cp=getCustomPacks()[parseInt(src.slice(7))];return cp?S.words.filter(w=>cp.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())):S.words;}
   return S.words;
 }
 function rPrac(){
   if(S.pm==='flash')return rFlash();if(S.pm==='fill')return rFill();if(S.pm==='read')return rRead();if(S.pm==='text')return rTxt();
   if(S.wmode)return rWSel();
-  return '<div class="sc"><div class="sht">Practice</div><div class="shs" style="margin-bottom:16px">Выбери режим тренировки</div>'
-    +'<div class="mc" onclick="ss({wmode:\'flash\'})"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Карточки — вспомни перевод</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="ss({wmode:\'fill\'})"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">Пропущенное слово в предложении</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="ss({wmode:\'read\'})"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Читай AI-текст, нажимай на слова</div></div><span class="c3" style="font-size:17px">›</span></div>'
-    +'<div class="mc" onclick="ss({wmode:\'text\'})"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI пишет историю на твоих словах</div></div><span class="c3" style="font-size:17px">›</span></div>'
+  const streak=S.user?.streak||0;
+  const streakBar=S.guest?'':streak===0
+    ?'<div class="rb mb3" style="background:rgba(255,140,0,.07);border-color:rgba(255,140,0,.35);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔥</span><div><div class="fw6 f13">Начни серию!</div><div class="f12 c3 mt1">Потренируй хотя бы 5 слов сегодня</div></div></div>'
+    :streak>=7?'<div class="rb mb3" style="background:rgba(255,140,0,.07);border-color:rgba(255,140,0,.35);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔥</span><div class="fw6 f13">'+streak+' дней подряд — ты молодец! 💪</div></div>'
+    :streak>=3?'<div class="rb mb3" style="background:rgba(255,140,0,.07);border-color:rgba(255,140,0,.35);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔥</span><div class="fw6 f13">'+streak+' '+( streak===3||streak===4?'дня':'дней')+' подряд! Продолжай!</div></div>'
+    :'';
+  const seenHint=localStorage.getItem('seenPracHint');
+  const hintCard=seenHint?'':'<div class="rb mb3" style="position:relative"><button class="ib" style="position:absolute;top:0;right:0;font-size:16px" onclick="localStorage.setItem(\'seenPracHint\',1);render()">✕</button><div class="fw6 f13 mb1">💡 Как это работает?</div><div class="f12 c2">Выбери режим → выбери слова для тренировки → начни. <strong>Flashcards</strong> — лучший старт, если ты новичок.</div></div>';
+  return '<div class="sc"><div class="sht">Practice</div>'
+    +streakBar+hintCard
+    +'<div class="shs" style="margin-bottom:12px">Выбери режим тренировки</div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'flash\'})"><div class="mci">🃏</div><div style="flex:1"><div class="syn fw7 f13">Flashcards</div><div class="f12 c2 mt1">Увидишь слово — вспомни перевод, потом переверни</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'fill\'})"><div class="mci">✏️</div><div style="flex:1"><div class="syn fw7 f13">Fill the blank</div><div class="f12 c2 mt1">AI даёт предложение — выбери пропущенное слово</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc mb2" onclick="ss({wmode:\'read\'})"><div class="mci">📖</div><div style="flex:1"><div class="syn fw7 f13">AI Reading</div><div class="f12 c2 mt1">Читай текст, нажимай на незнакомые слова</div></div><span class="c3" style="font-size:17px">›</span></div>'
+    +'<div class="mc" onclick="ss({wmode:\'text\'})"><div class="mci">✍️</div><div style="flex:1"><div class="syn fw7 f13">Generate story</div><div class="f12 c2 mt1">AI пишет историю именно на твоих словах</div></div><span class="c3" style="font-size:17px">›</span></div>'
     +'</div>';
 }
 function rWSel(){
   const modes={flash:'🃏 Flashcards',fill:'✏️ Fill the blank',read:'📖 AI Reading',text:'✍️ Generate story'};
   const now=Date.now();
+  const textCnt=(()=>{const tw=new Set(getTextWords());return S.words.filter(w=>tw.has(w.word.toLowerCase())).length;})();
   const sources=[
     ['all','📚','Все слова',S.words.length],
     ['hard','⭐','Сложные слова',S.words.filter(w=>w.hard).length],
-    ['new7','🆕','Новые — последние 7 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000).length],
-    ['new30','📅','Новые — последние 30 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000).length],
+    ['text','📖','Из AI-текстов',textCnt],
+    ['last10','🕐','Последние 10 добавленных',Math.min(10,S.words.length)],
+    ['last20','🕑','Последние 20 добавленных',Math.min(20,S.words.length)],
+    ['last50','🕒','Последние 50 добавленных',Math.min(50,S.words.length)],
+    ['new7','🆕','Добавлены за 7 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<7*86400000).length],
+    ['new30','📅','Добавлены за 30 дней',S.words.filter(w=>w.ca&&(now-new Date(w.ca).getTime())<30*86400000).length],
     ...WORD_PACKS.filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map(p=>[
       'pack_'+p.id, p.icon, p.title, S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length
-    ])
+    ]),
+    ...getCustomPacks().map((p,i)=>[
+      'custom_'+i, '✨', p.topic, S.words.filter(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase())).length
+    ]).filter(([,,, cnt])=>cnt>0)
   ];
   const sel=S.wsrc||'all';
   const selCount=wsBySource(sel).length;
+  const wc=S.wcount||10;
+  const actual=Math.min(wc===0?selCount:wc,selCount);
   return '<div class="sc">'
     +'<div class="rb2 mb3"><button class="btn bg_ bsm" onclick="ss({wmode:null})">← Назад</button>'
     +'<div class="syn fw7 f14">'+(modes[S.wmode]||'Practice')+'</div></div>'
@@ -550,13 +601,18 @@ function rWSel(){
       +(sel===v?'<span style="color:var(--ac);font-size:18px">✓</span>':'<span class="c3" style="font-size:17px">›</span>')
       +'</div>').join('')
     +(selCount<2?'<div class="rb err f12 mt2">Недостаточно слов в выбранной категории (нужно минимум 2)</div>'
-      :'<button class="btn bp bfu mt2" onclick="stM(S.wmode)">Начать · '+selCount+' слов →</button>')
+      :'<div style="margin-top:14px"><div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Сколько слов тренировать?</div>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+        +[[10,'10'],[20,'20'],[30,'30'],[50,'50'],[0,'Все']].map(([v,l])=>'<button class="btn '+(wc===v?'bp':'bg_')+' bsm" style="flex:1;min-width:50px" onclick="S.wcount='+v+';render()">'+l+'</button>').join('')
+        +'</div>'
+        +'<button class="btn bp bfu mt2" onclick="stM(S.wmode)">Начать · '+actual+' слов →</button></div>')
     +'</div>';
 }
 function stM(m){
   const av=wsBySource(S.wsrc);
   S.pm=m;S.wmode=null;
-  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(10,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
+  const wc=S.wcount||10;const wcLimit=wc===0?av.length:wc;
+  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false};
   render();if(m==='fill')lFill();if(m==='read')lRead();if(m==='text')lTxt();
 }
 function rFlash(){
@@ -607,7 +663,9 @@ function rRead(){
   const s=S.sess;
   return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Back</button><button class="btn bs bsm" onclick="lRead()" '+(s.rl?'disabled':'')+'>🔄 New</button></div>'
     +rTip()
-    +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:9px">📄 Tap any word for translation</div>'+(s.rl?ld('AI writing…'):'<div class="rt">'+(s.rt?tappableText(s.rt.text):'')+'</div>')+'</div>'
+    +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">📄 Tap any word for translation</div>'
+    +'<div style="display:flex;gap:14px;font-size:10px;color:var(--t3);margin-bottom:10px;flex-wrap:wrap"><span><span style="color:var(--ac);font-weight:700;border-bottom:1px solid rgba(94,255,196,.4)">word</span> in dict</span><span><span style="border-bottom:1px dashed var(--brd2)">word</span> tap to translate</span></div>'
+    +(s.rl?ld('AI writing…'):'<div class="rt">'+(s.rt?tappableText(s.rt.text):'')+'</div>')+'</div>'
     +(s.rt?.questions&&!s.rl?'<div class="syn fw7 f13 mb2">Questions</div>'
     +s.rt.questions.map((q,qi)=>'<div class="card mb2"><div class="fw6 f13 mb2">'+q.q+'</div><div style="display:flex;flex-direction:column;gap:6px">'
     +q.options.map(opt=>'<button class="opt'+(s.rc?(opt===q.correct?' cor':s.ra[qi]===opt?' wrg':''):'')+'" style="'+((!s.rc&&s.ra[qi]===opt)?'border-color:var(--ac2);color:var(--ac2)':'')+'" onclick="pickR('+qi+',\''+opt.replace(/'/g,"\\'")+'\')"> '+opt+'</button>').join('')
@@ -638,6 +696,7 @@ async function addTipWord(){
   const body={word:tip.w,translation:tip.t,transcription:tip.ts||'',level:tip.lv||'B1',example_en:tip.ex||'',example_ru:'',grammar_note:tip.gr||'',hard:false};
   try{const s=await api('/api/words',{method:'POST',body});saveWord(s);}
   catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:'',gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
+  addTextWord(body.word);
   if(S.sess.tip)S.sess.tip.known=true;render();
 }
 function rTip(){
@@ -684,12 +743,181 @@ async function saveTH(){
   try{const r=await api('/api/history',{method:'POST',body:{text:s.rt.text,words:s.words.map(w=>w.word),type:'read'}});if(!S.hist.find(h=>h.id===r.id))S.hist=[r,...S.hist];}catch{}
   ss({pm:null,sess:null,tab:'history'});
 }
+
+// ── TEXTS TAB ────────────────────────────────────────────
+function txTitle(text){const s=(text||'').trim().split(/[.!?\n]/)[0].trim();return(s.length>65?s.slice(0,62)+'…':s)||text.slice(0,65);}
+function rTexts(){
+  const tx=S.tx;
+  const tw=new Set(getTextWords());
+  const textWords=S.words.filter(w=>tw.has(w.word.toLowerCase()));
+  if(tx.mode==='read'){
+    const selPhrase=(tx.sel||[]).join(' ');
+    return '<div class="sc">'
+      +'<div class="rb2 mb2"><button class="btn bg_ bsm" onclick="S.tx=Object.assign(S.tx,{mode:\'home\',text:null,tip:null,sel:[],selMode:false});render()">← Назад</button>'
+      +'<div style="display:flex;gap:6px">'
+      +(tx.ai?'<button class="btn bs bsm" onclick="lGenTx()" '+(tx.loading?'disabled':'')+'>🔄</button>':'')
+      +'<button class="btn '+(tx.selMode?'bp':'bg_')+' bsm" onclick="S.tx.selMode=!S.tx.selMode;S.tx.sel=[];S.tx.tip=null;render()" title="Выделить фразу">✂️ Фраза</button>'
+      +'</div></div>'
+      +(tx.selMode?'<div class="rb mb2" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<span class="f11 c3">Нажимай слова по очереди:</span>'
+        +(selPhrase?'<span class="fw6 f13" style="flex:1;color:var(--ac)">«'+selPhrase+'»</span>':'<span class="f12 c3" style="flex:1">—</span>')
+        +(selPhrase?'<button class="btn bp bsm" onclick="txTranslatePhrase()">Перевести</button>':'')
+        +(selPhrase?'<button class="btn bg_ bsm" onclick="S.tx.sel=[];render()">✕</button>':'')
+        +'</div>':'')
+      +rTxTip()
+      +'<div class="card mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">'
+      +(tx.selMode?'✂️ Фраза: нажимай слова подряд':'📄 Нажми на слово — увидишь перевод')+'</div>'
+      +'<div style="display:flex;gap:14px;font-size:10px;color:var(--t3);margin-bottom:10px;flex-wrap:wrap">'
+      +'<span><span style="color:var(--ac);font-weight:700;border-bottom:1px solid rgba(94,255,196,.4)">word</span> — в словаре</span>'
+      +'<span><span style="border-bottom:1px dashed var(--brd2)">word</span> — нажми, переведу</span>'
+      +'</div>'
+      +(tx.loading?ld('AI пишет текст…'):tx.text?'<div class="rt">'+tappableTextTx(tx.text)+'</div>':'')
+      +'</div></div>';
+  }
+  const inputSection=tx.mode==='input'
+    ?'<div class="card mb3">'
+      +'<div class="f12 fw6 mb2">Вставь текст для чтения:</div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:10px">'
+        +'<button class="btn bg_ bsm" style="flex:1" onclick="pasteClipboardTx()">📋 Из буфера</button>'
+        +'<label for="txScan" class="btn bg_ bsm" style="flex:1;text-align:center;cursor:pointer;margin:0">📷 Сканировать</label>'
+        +'<input type="file" id="txScan" accept="image/*" capture="environment" style="display:none" onchange="scanTextPhoto(this)">'
+      +'</div>'
+      +(tx.scanLoading?'<div style="margin-bottom:8px">'+ld('Читаю текст с фото…')+'</div>':'')
+      +'<textarea id="txIn" class="inp" style="height:130px;resize:none;font-size:13px;line-height:1.5" placeholder="Вставь любой текст на английском…">'+(tx.input||'')+'</textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn bp" style="flex:1" onclick="startCustomTx()">▶ Читать</button><button class="btn bg_ bsm" onclick="S.tx.mode=\'home\';S.tx.input=\'\';render()">✕</button></div></div>'
+    :'';
+  return '<div class="sc">'
+    +'<div class="sht">Работа с текстом</div>'
+    +'<div style="display:flex;gap:10px;margin-bottom:12px">'
+    +'<div class="mc" style="flex:1;flex-direction:column;align-items:center;padding:16px 10px;text-align:center;gap:0;cursor:pointer" onclick="lGenTx()">'
+      +'<div style="font-size:30px;margin-bottom:6px">🤖</div><div class="fw7 f13">AI Текст</div><div class="f11 c3 mt1">На моих словах</div></div>'
+    +'<div class="mc" style="flex:1;flex-direction:column;align-items:center;padding:16px 10px;text-align:center;gap:0;cursor:pointer'+(tx.mode==='input'?';border-color:var(--ac);background:var(--acD)':'')+'" onclick="S.tx.mode=\'input\';render()">'
+      +'<div style="font-size:30px;margin-bottom:6px">📝</div><div class="fw7 f13">Свой текст</div><div class="f11 c3 mt1">Вставить и читать</div></div>'
+    +'</div>'
+    +inputSection
+    +(S.hist.length
+      ?'<div class="f11 fw7 c3 mb2 mt1" style="text-transform:uppercase;letter-spacing:.7px">Сохранённые тексты · '+S.hist.length+'</div>'
+        +[...S.hist].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).map(h=>{
+          const d=new Date(h.created_at||Date.now());
+          const dateStr=d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+          const title=txTitle(h.text);
+          return '<div class="card mb2" style="cursor:pointer;padding:12px 14px" onclick="openSavedTx('+h.id+')">'
+            +'<div class="rb2 mb1"><div class="fw6 f13" style="flex:1;margin-right:8px">'+title+'</div><div class="f11 c3" style="white-space:nowrap">'+dateStr+'</div></div>'
+            +(h.words?.length?'<div style="display:flex;gap:4px;flex-wrap:wrap">'+(h.words||[]).slice(0,5).map(w=>'<span class="badge bgr" style="font-size:9px">'+w+'</span>').join('')+'</div>':'')
+            +'</div>';
+        }).join('')
+      :'<div class="empty" style="margin-top:16px"><div style="font-size:40px;margin-bottom:8px">📖</div><div class="f13 fw7 mb1">Текстов пока нет</div><div class="f12 c3">Нажми «AI Текст» или вставь свой — они сохранятся здесь</div></div>')
+    +(textWords.length?'<div class="f11 fw7 c3 mt3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Слова из текстов · '+textWords.length+'</div>'
+        +textWords.slice(0,40).map(w=>'<div class="mc mb2" style="padding:10px 12px"><div style="flex:1"><div class="fw6 f13">'+w.word+'</div><div class="f11 c3 mt1">'+w.tr+'</div></div>'+lvl(w.lv)+'</div>').join('')
+      :'')
+    +'</div>';
+}
+async function lGenTx(){
+  S.tx={mode:'read',loading:true,text:null,tip:null,ai:true,input:''};render();
+  const words=S.words.slice(0,6).map(w=>w.word);
+  try{const d=await ai('text',{words});S.tx.text=d.text||'';}
+  catch{S.tx.text='Reading regularly helps you build vocabulary and improves your understanding of the language naturally.';}
+  S.tx.loading=false;render();
+  autoSaveHistory(S.tx.text,words,'read');
+}
+function startCustomTx(){
+  const inp=ge('txIn')?.value?.trim();if(!inp)return;
+  S.tx={mode:'read',loading:false,text:inp,tip:null,ai:false,input:inp};render();
+  const tw=new Set(inp.split(/\W+/).map(w=>w.toLowerCase()).filter(Boolean));
+  const wordsInText=S.words.filter(w=>tw.has(w.word.toLowerCase())).map(w=>w.word);
+  autoSaveHistory(inp,wordsInText,'text');
+}
+function openSavedTx(id){
+  const h=S.hist.find(x=>x.id===id);if(!h)return;
+  S.tx={mode:'read',loading:false,text:h.text,tip:null,ai:false,input:h.text};render();
+}
+function tappableTextTx(text){
+  const selSet=new Set((S.tx.sel||[]).map(w=>w.toLowerCase()));
+  return text.split(/(\s+)/).map(tk=>{
+    const cl=tk.replace(/[.,!?;:'"()\-]/g,'').toLowerCase().trim();
+    if(!cl||cl.length<2)return tk;
+    const isSel=selSet.has(cl);
+    const inDict=S.words.some(w=>w.word.toLowerCase()===cl);
+    const style=isSel
+      ?'background:var(--ac);color:#000;border-radius:3px;padding:0 1px;font-weight:700;cursor:pointer'
+      :inDict?'color:var(--ac);font-weight:600;border-bottom:1px solid rgba(94,255,196,.35);cursor:pointer'
+      :'border-bottom:1px dashed var(--brd2);cursor:pointer';
+    return '<span style="'+style+'" onclick="txTapWord(\''+cl.replace(/'/g,"\\'")+'\')">'+tk+'</span>';
+  }).join('');
+}
+async function txTapWord(word){
+  if(!word||word.length<2)return;
+  if(S.tx.selMode){
+    const sel=S.tx.sel||[];
+    const i=sel.map(w=>w.toLowerCase()).lastIndexOf(word.toLowerCase());
+    if(i>=0)sel.splice(i,1);else sel.push(word);
+    S.tx.sel=sel;S.tx.tip=null;render();return;
+  }
+  const ex=S.words.find(w=>w.word.toLowerCase()===word.toLowerCase());
+  if(ex){S.tx.tip={w:ex.word,t:ex.tr,ts:ex.ts,lv:ex.lv,gr:ex.gr,known:true};render();return;}
+  S.tx.tip={w:word,t:'',ts:'',loading:true,known:false};render();
+  try{const d=await ai('word',{word});S.tx.tip={w:word,t:d.translation,ts:d.transcription,lv:d.level,gr:d.grammar_note,ex:d.example_en,loading:false,known:false};}
+  catch{S.tx.tip={w:word,t:'?',ts:'',loading:false,known:false};}
+  render();
+}
+async function txTranslatePhrase(){
+  const phrase=(S.tx.sel||[]).join(' ');if(!phrase)return;
+  S.tx.tip={w:phrase,t:'',ts:'',loading:true,known:false};render();
+  try{const d=await ai('word',{word:phrase});S.tx.tip={w:phrase,t:d.translation,ts:d.transcription,lv:d.level,gr:d.grammar_note,ex:d.example_en,loading:false,known:false};}
+  catch{S.tx.tip={w:phrase,t:'?',ts:'',loading:false,known:false};}
+  render();
+}
+async function addTxTip(){
+  const tip=S.tx.tip;if(!tip||tip.known||tip.loading)return;
+  const body={word:tip.w,translation:tip.t,transcription:tip.ts||'',level:tip.lv||'B1',example_en:tip.ex||'',example_ru:'',grammar_note:tip.gr||'',hard:false};
+  try{const s=await api('/api/words',{method:'POST',body});saveWord(s);}
+  catch{S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:'',gr:body.grammar_note,hard:false,tp:0,tc:0},...S.words];}
+  addTextWord(body.word);
+  if(S.tx.tip)S.tx.tip.known=true;render();
+}
+function rTxTip(){
+  const tip=S.tx?.tip;if(!tip)return '';
+  return '<div class="card csm mb2" style="border-color:var(--ac)">'
+    +'<div class="rb2 mb1"><div class="row" style="gap:6px"><span class="syn fw7 f13">'+tip.w+'</span>'+(tip.lv?lvl(tip.lv):'')+'</div><button class="ib" onclick="S.tx.tip=null;render()">✕</button></div>'
+    +(tip.loading?ld('Translating…')
+    :'<div class="f13 fw6 ca mb1">'+tip.t+'</div>'
+    +(tip.ts?'<div class="f11 c3 mb1">['+tip.ts+']</div>':'')
+    +(tip.gr?'<div class="f11 c3 mb1">'+tip.gr+'</div>':'')
+    +'<div class="row" style="gap:8px;align-items:center">'+tts(tip.w)
+    +(tip.known?'<span class="f11 c3" style="margin-left:auto">✓ В словаре</span>':'<button class="btn bp bsm" style="margin-left:auto" onclick="addTxTip()">+ Добавить</button>')
+    +'</div>')+'</div>';
+}
+async function pasteClipboardTx(){
+  try{const text=await navigator.clipboard.readText();if(!text)return;S.tx.input=text;const el=ge('txIn');if(el)el.value=text;else render();}
+  catch{alert('Нет доступа к буферу. Вставь текст вручную (удержи поле → Вставить).');}
+}
+async function scanTextPhoto(input){
+  const file=input.files[0];if(!file)return;
+  S.tx.scanLoading=true;render();
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const b64=ev.target.result.split(',')[1];const mt=file.type||'image/jpeg';
+    try{const r=await api('/api/ai/image-text',{method:'POST',body:{imageBase64:b64,mimeType:mt}});
+      S.tx.input=(r.text||'').trim();S.tx.scanLoading=false;render();const el=ge('txIn');if(el)el.value=S.tx.input;}
+    catch(e){S.tx.scanLoading=false;render();alert('Не удалось прочитать текст: '+e.message);}
+  };
+  reader.readAsDataURL(file);
+}
 function rEnd(){
-  const s=S.sess;
-  return '<div class="sc"><button class="btn bg_ bsm mb3" onclick="ss({pm:null,sess:null})">← Back</button>'
-    +'<div class="se"><div class="syn fw7" style="font-size:68px;color:var(--ac);line-height:1">'+s.score+'</div>'
-    +'<div class="syn fw7 f13 mt1">words learned!</div><div class="f12 c3 mt1">of '+s.words.length+' cards</div>'
-    +'<div class="row mt3" style="justify-content:center;gap:9px"><button class="btn bp" onclick="stM(\''+S.pm+'\')">🔄 Again</button><button class="btn bs" onclick="ss({pm:null,sess:null})">← Menu</button></div></div></div>';
+  const s=S.sess;const pm=S.pm;
+  const pct=s.words.length?Math.round(s.score/s.words.length*100):0;
+  const msg=pct===100?'🎉 Отлично! Все верно!':pct>=70?'💪 Хороший результат!':pct>=40?'📈 Продолжай тренироваться!':'🔄 Повтори ещё раз!';
+  const hardCount=S.words.filter(w=>w.hard).length;
+  return '<div class="sc">'
+    +'<div class="se"><div class="syn fw7" style="font-size:72px;color:var(--ac);line-height:1">'+s.score+'<span style="font-size:32px;color:var(--t3)">/'+s.words.length+'</span></div>'
+    +'<div class="fw6 f14 mt2 mb1">'+msg+'</div>'
+    +'<div class="f12 c3 mb4">'+pct+'% правильно</div></div>'
+    +'<div class="f11 fw7 c3 mb2" style="text-transform:uppercase;letter-spacing:.7px">Что дальше?</div>'
+    +'<div class="mc mb2" onclick="stM(\''+pm+'\')"><div class="mci">🔄</div><div style="flex:1"><div class="fw6 f13">Повторить этот набор</div><div class="f11 c3 mt1">Те же слова, новый порядок</div></div></div>'
+    +(hardCount>0?'<div class="mc mb2" onclick="S.wsrc=\'hard\';S.wmode=\''+pm+'\';render()"><div class="mci">⭐</div><div style="flex:1"><div class="fw6 f13">Потренировать сложные</div><div class="f11 c3 mt1">'+hardCount+' слов отмечено звёздочкой</div></div></div>':'')
+    +'<div class="mc mb2" onclick="ss({add:true,addTab:\'manual\'})"><div class="mci">➕</div><div style="flex:1"><div class="fw6 f13">Добавить новые слова</div><div class="f11 c3 mt1">Расширь свой словарь</div></div></div>'
+    +'<div class="mc" onclick="ss({pm:null,sess:null})"><div class="mci">📋</div><div style="flex:1"><div class="fw6 f13">В меню режимов</div><div class="f11 c3 mt1">Выбрать другой тип тренировки</div></div></div>'
+    +'</div>';
 }
 
 // ── RENDER: HISTORY ─────────────────────────────────────
