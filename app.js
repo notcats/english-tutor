@@ -313,11 +313,11 @@ async function fetchAllImgs(){
     if(_imgStop)break;
     try{
       const r=await api('/api/ai/word-image?word='+encodeURIComponent(w.word));
-      if(r.url){w.img=r.url;_imgFetched++;api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});render();}
+      if(r.url){w.img=r.url;_imgFetched++;api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});if(!S.add&&!S.det)render();}
     }catch{}
     await new Promise(res=>setTimeout(res,300));
   }
-  _imgFetching=false;render();
+  _imgFetching=false;if(!S.add&&!S.det)render();
 }
 async function fetchWImg(id,word){
   if(!S.tok)return;
@@ -618,7 +618,7 @@ async function saveW(word){
   catch(e){saveErr=e.message;S.words=[{id:Date.now(),word:body.word,tr:body.translation,ts:body.transcription,lv:body.level,ex:body.example_en,exr:body.example_ru,gr:body.grammar_note,hard:false,tp:0,tc:0,img:null},...S.words];}
   ss({add:false});
   if(saveErr)setTimeout(()=>toast('Ошибка сохранения: '+saveErr),200);
-  if(S.tok){api('/api/ai/word-image?word='+encodeURIComponent(body.word)).then(r=>{if(r.url){const w=S.words.find(x=>x.word===body.word);if(w){w.img=r.url;render();api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});}}}).catch(()=>{});}
+  if(S.tok){api('/api/ai/word-image?word='+encodeURIComponent(body.word)).then(r=>{if(r.url){const w=S.words.find(x=>x.word===body.word);if(w){w.img=r.url;if(!S.add&&!S.det)render();api('/api/words/'+w.id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});}}}).catch(()=>{});}
 }
 async function procList(){
   const raw=ge('wl')?.value?.trim();if(!raw)return;
