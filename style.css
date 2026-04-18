@@ -7,8 +7,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-f
 .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.3px}.logo em{color:var(--ac);font-style:normal}
 .hdr-r{display:flex;align-items:center;gap:6px}
 .streak{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--warn);background:rgba(255,181,71,.1);padding:3px 8px;border-radius:20px}
-.ava{width:30px;height:30px;border-radius:50%;border:2px solid var(--ac);cursor:pointer;background:var(--sur2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ac);flex-shrink:0;overflow:hidden}
+.ava{width:30px;height:30px;border-radius:50%;border:2px solid var(--ac);background:var(--sur2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ac);flex-shrink:0;overflow:hidden}
 .ava img{width:100%;height:100%;object-fit:cover}
+.ava-btn{display:flex;align-items:center;gap:4px;background:var(--sur2);border:1px solid var(--brd2);border-radius:20px;padding:3px 8px 3px 3px;cursor:pointer;color:var(--t1)}
+.ava-arrow{font-size:10px;color:var(--t3);line-height:1}
 .content{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 14px 16px;position:relative;z-index:1;-webkit-overflow-scrolling:touch}
 .content::-webkit-scrollbar{width:3px}.content::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
 .nav{display:flex;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:100;background:rgba(255,255,255,.98);border-top:1px solid var(--brd2);box-shadow:0 -2px 16px rgba(0,0,0,.08);padding:6px 0 max(env(safe-area-inset-bottom),10px)}

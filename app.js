@@ -179,7 +179,7 @@ function render(){
     :[{id:'dict',i:'📖',l:t('tabWords')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
   const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
-    :u?.avatar?'<div class="ava" onclick="ss({prof:true})"><img src="'+u.avatar+'"></div>':'<div class="ava" onclick="ss({prof:true})">'+un+'</div>';
+    :u?.avatar?'<button class="ava-btn" onclick="ss({prof:true})"><div class="ava"><img src="'+u.avatar+'"></div><span class="ava-arrow">▾</span></button>':'<button class="ava-btn" onclick="ss({prof:true})"><div class="ava">'+un+'</div><span class="ava-arrow">▾</span></button>';
   const ln=LLANGS.find(l=>l.code===S.ll)?.name||'English';
   app.innerHTML='<header class="hdr"><div class="logo">AI <em>Dictionary</em></div><div class="hdr-r"><button id="installBtn" class="btn bp bsm" style="display:none;font-size:12px;padding:5px 10px" onclick="installApp()">📲 Install</button>'+(S.guest?'':('<div class="streak">🔥 '+(u?.streak||0)+'</div>'))+av+'</div></header>'
     +'<main class="content" id="mc">'+rMain()+'</main>'
@@ -256,6 +256,7 @@ function rProf(){
     +'<div style="text-align:center;margin-bottom:4px"><div class="syn fw7 f13">'+(u?.name||'User')+'</div><div class="f12 c3">'+(u?.email||'')+'</div>'
     +'<div class="mt1"><span class="badge '+(isT?'byw':'bgr')+'">'+(isT?'👨‍🏫 Teacher':'🎓 Student')+'</span></div></div>'
     +'<div class="divl"></div>'
+    +'<button class="btn bd bfu mb2" onclick="logout()">🚪 Sign out</button>'
     +'<div class="card csm mb2"><div class="rb2 mb1"><span class="f12 fw6">AI requests today</span><span class="f12 c3">'+used+'/'+lim+'</span></div>'
     +'<div style="display:flex;align-items:center;gap:8px">' + progressBar(pct) + '</div></div>'
     +'<div class="card csm mb2"><div class="f12 fw6 mb2">Learning settings</div>'
@@ -263,8 +264,7 @@ function rProf(){
     +'<div class="rb2 mb2"><span class="f12 c2">Learning</span><button class="btn bg_ bsm" onclick="ss({prof:false,lp:\'l\'})">'+(ll?ll.flag+' '+ll.name:'Select')+'</button></div>'
     +(S.ll==='en'?'<div class="rb2"><span class="f12 c2">Акцент</span><div style="display:flex;gap:6px"><button class="btn bsm '+(S.accent==='en-US'?'bp':'bg_')+'" onclick="setAccent(\'en-US\')">🇺🇸 American</button><button class="btn bsm '+(S.accent==='en-GB'?'bp':'bg_')+'" onclick="setAccent(\'en-GB\')">🇬🇧 British</button></div></div>':'')
     +'</div>'
-    +(isT?'<button class="btn bs bfu bsm mb2" onclick="ss({prof:false,tab:\'groups\'})">👥 Manage groups</button>':'')
-    +'<button class="btn bd bfu" onclick="logout()">Sign out</button>';
+    +(isT?'<button class="btn bs bfu bsm mb2" onclick="ss({prof:false,tab:\'groups\'})">👥 Manage groups</button>':'');
   return modal(innerContent, 'ss({prof:false})');
 }
 function rLP(){
