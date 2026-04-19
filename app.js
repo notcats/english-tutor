@@ -132,7 +132,12 @@ function tts(w){
   return '<button class="ttsb" onclick="speak(\''+e+'\')">🔊</button> <button class="ttsb" onclick="speak(\''+e+'\',true)">🐢</button>';
 }
 function ge(id){return document.getElementById(id);}
-function ss(p){Object.assign(S,p);render();}
+let _dictScroll=0;
+function ss(p){
+  if('det' in p&&p.det)_dictScroll=ge('mc')?.scrollTop||0;
+  Object.assign(S,p);render();
+  if('det' in p&&!p.det)requestAnimationFrame(()=>{const mc=ge('mc');if(mc)mc.scrollTop=_dictScroll;});
+}
 function toast(msg,ok){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:9999;background:'+(ok?'var(--ac)':'var(--danger)')+';color:'+(ok?'var(--bg)':'#fff')+';padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;max-width:320px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4)';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 function modal(content, closeAction) {
   return '<div class="ovl" onclick="if(event.target.classList.contains(\'ovl\'))' + closeAction + '">'
@@ -283,9 +288,10 @@ function rLP(){
 }
 function rWM(){
   const w=S.det;if(!w)return '';
+  if(!w.img&&S.tok)setTimeout(()=>fetchWImg(w.id,w.word),100);
   const innerContent=
     '<div class="rb2 mb2"><div><div class="syn fw7" style="font-size:24px">'+w.word+'</div><div class="f12 c3">'+w.ts+'</div></div>'+lvl(w.lv)+'</div>'
-    +(w.img?'<img src="'+w.img+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px">':'')
+    +(w.img?'<img src="'+w.img+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px" onerror="this.style.display=\'none\'">':'<div id="imgPh" style="height:80px;background:var(--sur2);border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px">📷 Загружаю фото…</div>')
     +'<div class="row mb2">'+tts(w.word)+'<button class="btn bg_ bsm" style="margin-left:auto" onclick="fetchWImg('+w.id+',\''+w.word.replace(/'/g,"\\'")+'\')">'+(w.img?'🔄 Обновить фото':'📷 Найти фото')+'</button></div>'
     +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
     +'<div class="fw6 f13">'+w.tr+'</div>'
@@ -325,9 +331,14 @@ async function fetchWImg(id,word){
     const r=await api('/api/ai/word-image?word='+encodeURIComponent(word));
     if(r.url){
       const w=S.words.find(x=>x.id===id);if(w)w.img=r.url;
-      if(S.det&&S.det.id===id)S.det.img=r.url;
+      if(S.det&&S.det.id===id){
+        S.det.img=r.url;
+        // Update placeholder in-place if word detail is open
+        const ph=ge('imgPh');
+        if(ph){const img=document.createElement('img');img.src=r.url;img.style.cssText='width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px';img.onerror=()=>img.remove();ph.replaceWith(img);}
+        else render();
+      } else if(!S.add&&!S.det){render();}
       api('/api/words/'+id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});
-      render();
     }
   }catch{}
 }

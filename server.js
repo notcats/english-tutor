@@ -596,7 +596,7 @@ app.post('/api/ai/extras', auth, aiLimit, async (req, res) => {
     const langs = await getUserLangs(req.user.id);
     const ll = LEARN[langs.learn_lang] || 'English';
     const raw = await callClaude(
-      [{ role: 'user', content: `Word: "${word}" (${ll})\nAll text in native language.\nReturn ONLY JSON:\n{"examples":["s1","s2","s3"],"synonyms":[{"word":"w1","translation":"r1"},{"word":"w2","translation":"r2"},{"word":"w3","translation":"r3"}]}` }],
+      [{ role: 'user', content: `Word: "${word}" (${ll})\nExamples must be complete ${ll} sentences. Synonym translations in native language.\nReturn ONLY JSON:\n{"examples":["${ll} sentence 1","${ll} sentence 2","${ll} sentence 3"],"synonyms":[{"word":"w1","translation":"r1"},{"word":"w2","translation":"r2"},{"word":"w3","translation":"r3"}]}` }],
       getSystemPrompt(req.user.id, langs.native_lang, langs.learn_lang)
     );
     res.json(JSON.parse(raw));
