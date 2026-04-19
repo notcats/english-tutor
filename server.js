@@ -422,11 +422,19 @@ app.delete('/api/words/:id', auth, async (req, res) => {
 app.get('/api/ai/word-image', auth, async (req, res) => {
   const word = req.query.word;
   if (!word) return res.json({ url: null });
-  // Pollinations.ai — free AI image generation, no key needed
-  const prompt = encodeURIComponent(`flat design illustration representing the meaning of "${word}", colorful, cute, educational, no text, no letters, no words, no labels`);
   const defaultSeed = word.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
   const seed = req.query.seed || defaultSeed;
-  res.json({ url: `https://image.pollinations.ai/prompt/${prompt}?width=400&height=300&nologo=true&seed=${seed}&model=flux` });
+  // Ask Groq to write a precise image prompt for this word
+  let imagePrompt = `flat design illustration of "${word}", colorful, educational, no text, no letters`;
+  try {
+    const p = await callClaude(
+      [{ role: 'user', content: `Write a Stable Diffusion image prompt (max 25 words) that visually illustrates the English word "${word}". Describe a concrete scene or object that shows its meaning. Output only the prompt, no explanation.` }],
+      'You write short, vivid image prompts for vocabulary illustrations. Flat design style, no text in image.',
+      80
+    );
+    if (p && p.length > 5) imagePrompt = p.replace(/["']/g, '') + ', flat design, colorful illustration, no text, no letters, no words';
+  } catch {}
+  res.json({ url: `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=400&height=300&nologo=true&seed=${seed}&model=flux` });
 });
 
 app.post('/api/words/reset-images', auth, async (req, res) => {
