@@ -740,7 +740,7 @@ function stM(m){
   const av=wsBySource(S.wsrc);
   S.pm=m;S.wmode=null;
   const wc=S.wcount||10;const wcLimit=wc===0?av.length:wc;
-  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false,startTime:Date.now(),saved:false,typeRes:null,lisOpts:null,lisSel:null,mBatch:0,mCards:null,mSel:null,mDone:null,mErr:null};
+  S.sess={words:[...av].sort(()=>Math.random()-.5).slice(0,Math.min(wcLimit,av.length)),idx:0,score:0,done:false,extra:[],ex:null,load:false,sel:null,flip:false,rt:null,rl:false,ra:{},rc:false,tip:null,gt:null,gl:false,startTime:Date.now(),saved:false,typeRes:null,lisOpts:null,lisSel:null,mBatch:0,mCards:null,mSel:null,mDone:null,mErr:null,mErrPrev:null};
   render();if(m==='fill')lFill();if(m==='read')lRead();if(m==='text')lTxt();
 }
 async function saveSess(){
@@ -1075,10 +1075,11 @@ function levenshtein(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)retur
 function checkType(){
   const s=S.sess;const w=s.words[s.idx];
   const typed=(ge('typeIn')?.value||'').trim().toLowerCase();
+  if(!typed){const inp=ge('typeIn');if(inp)inp.focus();return;}
   const correct=w.word.toLowerCase();
   const ok=typed===correct;
   const dist=levenshtein(typed,correct);
-  const close=!ok&&dist<=1;
+  const close=!ok&&typed.length>0&&dist<=1;
   if(ok||close)s.score++;
   s.typeRes={ok:ok||close,typed,close};render();
 }
@@ -1094,7 +1095,7 @@ function initMatch(){
 function rMatch(){
   const s=S.sess;if(s.done)return rEnd();
   initMatch();
-  const batchStart=s.mBatch*6;const total=s.words.length;
+  const total=s.words.length;
   const done=(s.mBatch*6+(s.mDone?s.mDone.size/2:0));
   const pct=Math.round(done/total*100);
   return '<div class="sc"><div class="rb2 mb2"><button class="btn bg_ bsm" onclick="ss({pm:null,sess:null})">← Назад</button><span class="f12 c3">'+pct+'% · ✅'+s.score+'</span></div>'
@@ -1102,7 +1103,7 @@ function rMatch(){
     +'<div class="f11 c3 mb3 mt2" style="text-align:center;text-transform:uppercase;letter-spacing:.7px">Найди все пары</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
     +s.mCards.map(c=>{
-      const done=s.mDone?.has(c.id);const sel=s.mSel===c.id;const err=s.mErr===c.id;
+      const done=s.mDone?.has(c.id);const sel=s.mSel===c.id;const err=s.mErr===c.id||s.mErrPrev===c.id;
       if(done)return '<div style="height:58px;background:var(--acD);border-radius:10px;border:1.5px solid var(--ac);display:flex;align-items:center;justify-content:center"><span style="color:var(--ac);font-size:18px">✓</span></div>';
       return '<button onclick="tapMatch(\''+c.id+'\')" style="height:58px;padding:6px 8px;background:'+(sel?'var(--ac)':err?'rgba(255,80,80,.15)':'var(--sur2)')+';border-radius:10px;border:1.5px solid '+(err?'var(--danger)':sel?'var(--ac)':'var(--brd2)')+';color:'+(sel?'var(--bg)':'var(--t)')+';font-size:12px;font-weight:600;cursor:pointer;transition:.15s;word-break:break-word;line-height:1.3;width:100%">'+c.text+'</button>';
     }).join('')
@@ -1126,8 +1127,8 @@ function tapMatch(id){
     }
     render();
   } else {
-    const prevSel=s.mSel;s.mSel=null;s.mErr=id;render();
-    setTimeout(()=>{if(S.sess)S.sess.mErr=null;render();},600);
+    const prevSel=s.mSel;s.mErr=id;s.mErrPrev=prevSel;s.mSel=null;render();
+    setTimeout(()=>{if(S.sess&&S.pm==='match'){S.sess.mErr=null;S.sess.mErrPrev=null;render();}},600);
   }
 }
 
@@ -1136,7 +1137,8 @@ function rListen(){
   const s=S.sess;if(s.done)return rEnd();const w=s.words[s.idx];
   if(!s.lisOpts){
     const others=S.words.filter(x=>x.id!==w.id);
-    const dist=others.sort(()=>Math.random()-.5).slice(0,3).map(x=>x.tr);
+    const fallbacks=['to do something','a person or thing','important quality','the way it is'];
+    const dist=[...others.sort(()=>Math.random()-.5).slice(0,3).map(x=>x.tr),...fallbacks].filter(t=>t!==w.tr).slice(0,3);
     s.lisOpts=[w.tr,...dist].sort(()=>Math.random()-.5);s.lisSel=null;
     setTimeout(()=>speak(w.word),400);
   }
@@ -1155,7 +1157,7 @@ function rListen(){
     +'</div>';
 }
 function ansLis(opt){const s=S.sess;if(s.lisSel!==null)return;const w=s.words[s.idx];s.lisSel=opt;if(opt===w.tr)s.score++;render();}
-function nxLis(){const s=S.sess;s.idx++;s.lisOpts=null;s.lisSel=null;if(s.idx>=s.words.length){s.done=true;saveSess();}render();}
+function nxLis(){const s=S.sess;s.idx++;s.lisOpts=null;s.lisSel=null;if(s.idx>=s.words.length){s.done=true;saveSess();render();return;}render();}
 
 function rEnd(){
   const s=S.sess;const pm=S.pm;
