@@ -310,6 +310,12 @@ function rWM(){
 }
 
 let _imgFetching=false,_imgFetched=0,_imgTotal=0,_imgStop=false;
+async function resetAllImgs(){
+  if(!S.tok||!confirm('Обновить все фото в новом стиле? Это займёт несколько минут.'))return;
+  try{await api('/api/words/reset-images',{method:'POST'});}catch{}
+  S.words.forEach(w=>{w.img=null;});
+  fetchAllImgs();
+}
 async function fetchAllImgs(){
   if(_imgFetching)return;
   const missing=S.words.filter(w=>!w.img&&w.id&&S.tok);
@@ -376,10 +382,11 @@ function rDict(){
     +getCustomPacks().filter(p=>S.words.some(w=>p.words.some(pw=>pw.toLowerCase()===w.word.toLowerCase()))).map((p,i)=>'<option value="custom_'+i+'"'+(S.sort==='custom_'+i?' selected':'')+'>✨ '+p.topic+'</option>').join('')
     +'</select></div>'
     +(_imgFetching
-      ?'<div class="rb mb2" style="display:flex;align-items:center;gap:8px"><span class="f12 c3">🖼 Загружаю фото… '+_imgFetched+'/'+_imgTotal+'</span><button class="btn bg_ bsm" onclick="_imgStop=true">✕</button></div>'
-      :S.words.filter(w=>!w.img).length>0&&S.tok
-        ?'<button class="btn bg_ bsm mb2" onclick="fetchAllImgs()" style="width:100%;font-size:12px">🖼 Найти фото для всех слов ('+S.words.filter(w=>!w.img).length+')</button>'
-        :'')
+      ?'<div class="rb mb2" style="display:flex;align-items:center;gap:8px"><span class="f12 c3">🖼 Генерирую фото… '+_imgFetched+'/'+_imgTotal+'</span><button class="btn bg_ bsm" onclick="_imgStop=true">✕</button></div>'
+      :'<div class="row mb2" style="gap:6px">'
+        +(S.words.filter(w=>!w.img).length>0&&S.tok?'<button class="btn bg_ bsm" onclick="fetchAllImgs()" style="flex:1;font-size:12px">🖼 Найти фото ('+S.words.filter(w=>!w.img).length+')</button>':'')
+        +(S.words.length>0&&S.tok?'<button class="btn bg_ bsm" onclick="resetAllImgs()" style="flex:1;font-size:12px">🔄 Обновить все фото</button>':'')
+        +'</div>')
     +(list.length===0
       ? S.words.length===0
         ? '<div style="margin-top:4px"><div class="f14 fw7 mb3">👋 С чего начать?</div>'

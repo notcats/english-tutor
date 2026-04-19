@@ -422,10 +422,15 @@ app.delete('/api/words/:id', auth, async (req, res) => {
 app.get('/api/ai/word-image', auth, async (req, res) => {
   const word = req.query.word;
   if (!word) return res.json({ url: null });
-  // Pollinations.ai — free AI image generation, no key needed, always returns an image
-  const prompt = encodeURIComponent(`simple clean illustration for english vocabulary word "${word}", educational, white background, flat design`);
+  // Pollinations.ai — free AI image generation, no key needed
+  const prompt = encodeURIComponent(`flat design illustration representing the meaning of "${word}", colorful, cute, educational, no text, no letters, no words, no labels`);
   const seed = word.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
   res.json({ url: `https://image.pollinations.ai/prompt/${prompt}?width=400&height=300&nologo=true&seed=${seed}&model=flux` });
+});
+
+app.post('/api/words/reset-images', auth, async (req, res) => {
+  await pool.query('UPDATE words SET image_url=NULL WHERE user_id=$1', [req.user.id]);
+  res.json({ ok: true });
 });
 
 // ── STATS ─────────────────────────────────────────────────────
