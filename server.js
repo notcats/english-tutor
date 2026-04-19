@@ -432,7 +432,7 @@ app.get('/api/ai/word-image', auth, async (req, res) => {
       if (d.urls?.small) return res.json({ url: d.urls.small });
     } catch {}
   }
-  // Only try Wikipedia for single concrete words (not phrases/idioms)
+  // Try Wikipedia REST summary (good for concrete nouns)
   if (!word.includes(' ')) {
     try {
       const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(word)}`);
@@ -440,6 +440,17 @@ app.get('/api/ai/word-image', auth, async (req, res) => {
       if (d.thumbnail?.source) return res.json({ url: d.thumbnail.source });
     } catch {}
   }
+  // Try Openverse (free CC-licensed images, works for any word/phrase)
+  try {
+    const q = word.split(' ').slice(0, 3).join(' ');
+    const r = await fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&page_size=1&mature=false`, {
+      headers: { 'User-Agent': 'AILanguageTutor/1.0' }
+    });
+    const d = await r.json();
+    const img = d.results?.[0];
+    if (img?.thumbnail) return res.json({ url: img.thumbnail });
+    if (img?.url) return res.json({ url: img.url });
+  } catch {}
   res.json({ url: null });
 });
 
@@ -689,8 +700,12 @@ app.post('/api/ai/image', auth, aiLimit, async (req, res) => {
     });
     const d = await r.json();
     if (d.error) return res.status(500).json({ error: d.error.message });
-    const text = (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
-    const json = JSON.parse(text);
+    let text = (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
+    // Extract JSON object if wrapped in extra text
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) text = m[0];
+    let json;
+    try { json = JSON.parse(text); } catch { json = { words: [] }; }
     res.json(json);
   } catch (e) {
     res.status(500).json({ error: e.message });
