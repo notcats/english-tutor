@@ -137,7 +137,8 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_group_members ON group_members(group_id);
     CREATE INDEX IF NOT EXISTS idx_word_cache ON word_cache(word, learn_lang, native_lang);
   `);
-  await pool.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);`);
+  await pool.query(`ALTER TABLE words ADD COLUMN IF NOT EXISTS image_url TEXT;`);
+  await pool.query(`ALTER TABLE words ALTER COLUMN image_url TYPE TEXT;`).catch(()=>{});
   // Clear images from multi-word phrases that may be inappropriate
   try { await pool.query(`UPDATE words SET image_url=NULL WHERE word LIKE '% %' AND image_url IS NOT NULL`); } catch {}
   console.log('✅ DB ready');
@@ -422,9 +423,7 @@ app.delete('/api/words/:id', auth, async (req, res) => {
 app.get('/api/ai/word-image', auth, async (req, res) => {
   const word = req.query.word;
   if (!word) return res.json({ url: null });
-  const defaultSeed = word.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const seed = req.query.seed || defaultSeed;
-  // Ask Groq to write a precise image prompt for this word
+  // Generate image prompt via Groq
   let imagePrompt = `flat design illustration of "${word}", colorful, educational, no text, no letters`;
   try {
     const p = await callClaude(
@@ -434,6 +433,27 @@ app.get('/api/ai/word-image', auth, async (req, res) => {
     );
     if (p && p.length > 5) imagePrompt = p.replace(/["']/g, '') + ', flat design, colorful illustration, no text, no letters, no words';
   } catch {}
+  // Use Gemini Imagen if key available (higher quality)
+  if (process.env.GEMINI_KEY) {
+    try {
+      const gr = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${process.env.GEMINI_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt: imagePrompt }],
+          parameters: { sampleCount: 1, aspectRatio: '4:3', safetySetting: 'block_only_high' }
+        })
+      });
+      const gd = await gr.json();
+      const b64 = gd.predictions?.[0]?.bytesBase64Encoded;
+      if (b64) {
+        // Cache image in DB as data URL to avoid re-generating
+        return res.json({ url: `data:image/png;base64,${b64}` });
+      }
+    } catch {}
+  }
+  // Fallback: Pollinations.ai
+  const seed = req.query.seed || word.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
   res.json({ url: `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=400&height=300&nologo=true&seed=${seed}&model=flux` });
 });
 
