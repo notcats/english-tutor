@@ -291,8 +291,8 @@ function rWM(){
   if(!w.img&&S.tok)setTimeout(()=>fetchWImg(w.id,w.word),100);
   const innerContent=
     '<div class="rb2 mb2"><div><div class="syn fw7" style="font-size:24px">'+w.word+'</div><div class="f12 c3">'+w.ts+'</div></div>'+lvl(w.lv)+'</div>'
-    +(w.img?'<img src="'+w.img+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px" onerror="this.style.display=\'none\'">':'<div id="imgPh" style="height:80px;background:var(--sur2);border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px">📷 Загружаю фото…</div>')
-    +'<div class="row mb2">'+tts(w.word)+'<button class="btn bg_ bsm" style="margin-left:auto" onclick="fetchWImg('+w.id+',\''+w.word.replace(/'/g,"\\'")+'\')">'+(w.img?'🔄 Обновить фото':'📷 Найти фото')+'</button></div>'
+    +(w.img?'<img class="wdet-img" src="'+w.img+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px" onerror="this.style.display=\'none\'">':'<div id="imgPh" class="wdet-img" style="height:80px;background:var(--sur2);border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px">📷 Генерирую фото…</div>')
+    +'<div class="row mb2">'+tts(w.word)+'<button id="wImgBtn" class="btn bg_ bsm" style="margin-left:auto" onclick="fetchWImg('+w.id+',\''+w.word.replace(/'/g,"\\'")+'\')">'+(w.img?'🔄 Обновить фото':'📷 Найти фото')+'</button></div>'
     +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
     +'<div class="fw6 f13">'+w.tr+'</div>'
     +(w.gr?'<div style="margin-top:5px;padding:4px 8px;background:var(--acD);border-radius:7px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')+'</div>'
@@ -327,20 +327,25 @@ async function fetchAllImgs(){
 }
 async function fetchWImg(id,word){
   if(!S.tok)return;
+  const btn=ge('wImgBtn');if(btn){btn.disabled=true;btn.textContent='⏳ Генерирую…';}
   try{
     const r=await api('/api/ai/word-image?word='+encodeURIComponent(word));
     if(r.url){
       const w=S.words.find(x=>x.id===id);if(w)w.img=r.url;
       if(S.det&&S.det.id===id){
         S.det.img=r.url;
-        // Update placeholder in-place if word detail is open
-        const ph=ge('imgPh');
-        if(ph){const img=document.createElement('img');img.src=r.url;img.style.cssText='width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px';img.onerror=()=>img.remove();ph.replaceWith(img);}
-        else render();
+        const target=ge('imgPh')||document.querySelector('.wdet-img');
+        const img=document.createElement('img');
+        img.style.cssText='width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px';
+        img.className='wdet-img';
+        img.onerror=()=>img.remove();
+        img.onload=()=>{if(btn){btn.disabled=false;btn.textContent='🔄 Обновить фото';}};
+        img.src=r.url;
+        if(target)target.replaceWith(img);else{const mc=ge('mc');if(mc)mc.scrollTop=0;render();}
       } else if(!S.add&&!S.det){render();}
       api('/api/words/'+id,{method:'PATCH',body:{image_url:r.url}}).catch(()=>{});
     }
-  }catch{}
+  }catch(e){if(btn){btn.disabled=false;btn.textContent='🔄 Обновить фото';}}
 }
 
 function printWords(){

@@ -1,5 +1,5 @@
 // Minimal SW — no caching, just enables PWA install
-const CACHE = 'aidict-v14';
+const CACHE = 'aidict-v15';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => {

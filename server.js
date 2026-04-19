@@ -422,36 +422,10 @@ app.delete('/api/words/:id', auth, async (req, res) => {
 app.get('/api/ai/word-image', auth, async (req, res) => {
   const word = req.query.word;
   if (!word) return res.json({ url: null });
-  // Try Unsplash if key configured
-  if (process.env.UNSPLASH_KEY) {
-    try {
-      const r = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(word)}&orientation=landscape&content_filter=high`, {
-        headers: { Authorization: `Client-ID ${process.env.UNSPLASH_KEY}` }
-      });
-      const d = await r.json();
-      if (d.urls?.small) return res.json({ url: d.urls.small });
-    } catch {}
-  }
-  // Try Wikipedia REST summary (good for concrete nouns)
-  if (!word.includes(' ')) {
-    try {
-      const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(word)}`);
-      const d = await r.json();
-      if (d.thumbnail?.source) return res.json({ url: d.thumbnail.source });
-    } catch {}
-  }
-  // Try Openverse (free CC-licensed images, works for any word/phrase)
-  try {
-    const q = word.split(' ').slice(0, 3).join(' ');
-    const r = await fetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&page_size=1&mature=false`, {
-      headers: { 'User-Agent': 'AILanguageTutor/1.0' }
-    });
-    const d = await r.json();
-    const img = d.results?.[0];
-    if (img?.thumbnail) return res.json({ url: img.thumbnail });
-    if (img?.url) return res.json({ url: img.url });
-  } catch {}
-  res.json({ url: null });
+  // Pollinations.ai — free AI image generation, no key needed, always returns an image
+  const prompt = encodeURIComponent(`simple clean illustration for english vocabulary word "${word}", educational, white background, flat design`);
+  const seed = word.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  res.json({ url: `https://image.pollinations.ai/prompt/${prompt}?width=400&height=300&nologo=true&seed=${seed}&model=flux` });
 });
 
 // ── STATS ─────────────────────────────────────────────────────
