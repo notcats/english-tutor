@@ -294,7 +294,7 @@ function rWM(){
     +'<div class="row mb2">'+tts(w.word)+'<button id="wImgBtn" class="btn bg_ bsm" style="margin-left:auto" onclick="fetchWImg('+w.id+',\''+w.word.replace(/'/g,"\\'")+'\',true)">'+(w.img?'🔄 Обновить фото':'📷 Найти фото')+'</button></div>'
     +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
     +'<div class="fw6 f13">'+w.tr+'</div>'
-    +(w.gr?'<div style="margin-top:5px;padding:4px 8px;background:var(--acD);border-radius:7px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')+'</div>'
+    +(w.gr?'<div style="margin-top:5px;padding:3px 8px;background:var(--sur2);border-radius:5px;font-size:11px;color:var(--t2)">'+w.gr+'</div>':'')+'</div>'
     +'<div class="card csm mb3"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Example</div>'
     +'<div class="f12 c2 ita" style="line-height:1.7">'+w.ex+'</div><div class="f11 c3 mt1">'+w.exr+'</div>'
     +(w.ex?'<div class="mt1">'+tts(w.ex)+'</div>':'')+'</div>'
@@ -394,15 +394,14 @@ function rDict(){
           +'</div>'
         : '<div class="empty"><div style="font-size:44px;margin-bottom:10px">🔍</div><div class="syn fw7 f13 mb1">Ничего не найдено</div><div class="f12 c3">Попробуй другой запрос или сбрось фильтр</div></div>'
     :'<div class="dict-grid">'+list.map(w=>'<div class="wli" onclick="ss({det:S.words.find(x=>x.id==='+w.id+')})" style="align-items:flex-start">'
-      +(w.img?'<img src="'+w.img+'" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;margin-top:2px">':'')
-      +'<div style="flex:1;min-width:0"><div class="row mb1"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
+      +(w.img?'<img src="'+w.img+'" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;margin-top:1px">':'<div style="width:44px;height:44px;border-radius:8px;background:var(--sur2);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:18px">📖</div>')
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span class="wen">'+w.word+'</span>'+lvl(w.lv)+'</div>'
       +'<div class="wru">'+w.tr+'</div>'
-      +(w.gr?'<div class="wgr">📝 '+w.gr+'</div>':'')
-      +(w.ex?'<div class="wex">"'+w.ex.slice(0,50)+'…"</div>':'')+'</div>'
-      +'<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">'
+      +(w.gr?'<div class="wgr">'+w.gr+'</div>':'')+'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;margin-left:2px">'
       +'<button class="ib" onclick="event.stopPropagation();speak(\''+w.word.replace(/'/g,"\\'")+'\')">🔊</button>'
-      +'<button class="ib" onclick="event.stopPropagation();togH('+w.id+')">'+(w.hard?'⭐':'☆')+'</button>'
-      +'<button class="ib" onclick="event.stopPropagation();delW('+w.id+')">🗑</button>'
+      +'<button class="ib" onclick="event.stopPropagation();togH('+w.id+')">'+(w.hard?'★':'☆')+'</button>'
       +'</div></div>').join('')+'</div>')
     +'</div>';
 }
