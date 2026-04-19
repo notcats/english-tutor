@@ -182,9 +182,8 @@ function render(){
   const isT=S.user?.role==='teacher'||S.user?.role==='admin';
   const isA=S.user?.role==='admin';
   const tabs=isA
-    ?[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')},{id:'admin',i:'⚙️',l:'Admin'}]
-    :isT?[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'groups',i:'👥',l:t('tabGroups')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}]
-    :[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'history',i:'📜',l:t('tabHistory')},{id:'progress',i:'📊',l:t('tabStats')}];
+    ?[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')},{id:'admin',i:'⚙️',l:'Admin'}]
+    :[{id:'dict',i:'📖',l:t('tabWords')},{id:'texts',i:'📄',l:t('tabTexts')},{id:'practice',i:'🏋️',l:t('tabPractice')},{id:'progress',i:'📊',l:t('tabStats')}];
   const u=S.user;const un=(u?.name||'?')[0].toUpperCase();
   const av=S.guest?'<button class="btn bp bsm" style="font-size:12px;padding:6px 12px" onclick="ss({scr:\'ob\',step:4})">'+t('signInBtn')+'</button>'
     :u?.avatar?'<button class="ava-btn" onclick="ss({prof:true})"><div class="ava"><img src="'+u.avatar+'"></div><span class="ava-arrow">▾</span></button>':'<button class="ava-btn" onclick="ss({prof:true})"><div class="ava">'+un+'</div><span class="ava-arrow">▾</span></button>';
@@ -292,7 +291,7 @@ function rWM(){
   const innerContent=
     '<div class="rb2 mb2"><div><div class="syn fw7" style="font-size:24px">'+w.word+'</div><div class="f12 c3">'+w.ts+'</div></div>'+lvl(w.lv)+'</div>'
     +(w.img?'<img class="wdet-img" src="'+w.img+'" style="width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:10px" onerror="this.style.display=\'none\'">':'<div id="imgPh" class="wdet-img" style="height:80px;background:var(--sur2);border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px">📷 Генерирую фото…</div>')
-    +'<div class="row mb2">'+tts(w.word)+'<button id="wImgBtn" class="btn bg_ bsm" style="margin-left:auto" onclick="fetchWImg('+w.id+',\''+w.word.replace(/'/g,"\\'")+'\')">'+(w.img?'🔄 Обновить фото':'📷 Найти фото')+'</button></div>'
+    +'<div class="row mb2">'+tts(w.word)+'<button id="wImgBtn" class="btn bg_ bsm" style="margin-left:auto" onclick="fetchWImg('+w.id+',\''+w.word.replace(/'/g,"\\'")+'\',true)">'+(w.img?'🔄 Обновить фото':'📷 Найти фото')+'</button></div>'
     +'<div class="card csm mb2"><div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Translation</div>'
     +'<div class="fw6 f13">'+w.tr+'</div>'
     +(w.gr?'<div style="margin-top:5px;padding:4px 8px;background:var(--acD);border-radius:7px;font-size:11px;color:var(--ac)">📝 '+w.gr+'</div>':'')+'</div>'
@@ -331,11 +330,12 @@ async function fetchAllImgs(){
   }
   _imgFetching=false;if(!S.add&&!S.det)render();
 }
-async function fetchWImg(id,word){
+async function fetchWImg(id,word,refresh=false){
   if(!S.tok)return;
   const btn=ge('wImgBtn');if(btn){btn.disabled=true;btn.textContent='⏳ Генерирую…';}
   try{
-    const r=await api('/api/ai/word-image?word='+encodeURIComponent(word));
+    const seed=refresh?Date.now():'';
+    const r=await api('/api/ai/word-image?word='+encodeURIComponent(word)+(seed?'&seed='+seed:''));
     if(r.url){
       const w=S.words.find(x=>x.id===id);if(w)w.img=r.url;
       if(S.det&&S.det.id===id){
@@ -383,10 +383,8 @@ function rDict(){
     +'</select></div>'
     +(_imgFetching
       ?'<div class="rb mb2" style="display:flex;align-items:center;gap:8px"><span class="f12 c3">🖼 Генерирую фото… '+_imgFetched+'/'+_imgTotal+'</span><button class="btn bg_ bsm" onclick="_imgStop=true">✕</button></div>'
-      :'<div class="row mb2" style="gap:6px">'
-        +(S.words.filter(w=>!w.img).length>0&&S.tok?'<button class="btn bg_ bsm" onclick="fetchAllImgs()" style="flex:1;font-size:12px">🖼 Найти фото ('+S.words.filter(w=>!w.img).length+')</button>':'')
-        +(S.words.length>0&&S.tok?'<button class="btn bg_ bsm" onclick="resetAllImgs()" style="flex:1;font-size:12px">🔄 Обновить все фото</button>':'')
-        +'</div>')
+      :(S.words.filter(w=>!w.img).length>0&&S.tok?'<button class="btn bg_ bsm mb2" onclick="fetchAllImgs()" style="width:100%;font-size:12px">🖼 Найти фото для всех ('+S.words.filter(w=>!w.img).length+')</button>':'')
+        +(S.words.length>0&&S.user?.role==='admin'?'<button class="btn bg_ bsm mb2" onclick="resetAllImgs()" style="width:100%;font-size:12px">🔄 Обновить все фото</button>':''))
     +(list.length===0
       ? S.words.length===0
         ? '<div style="margin-top:4px"><div class="f14 fw7 mb3">👋 С чего начать?</div>'

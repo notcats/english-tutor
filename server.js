@@ -424,7 +424,8 @@ app.get('/api/ai/word-image', auth, async (req, res) => {
   if (!word) return res.json({ url: null });
   // Pollinations.ai — free AI image generation, no key needed
   const prompt = encodeURIComponent(`flat design illustration representing the meaning of "${word}", colorful, cute, educational, no text, no letters, no words, no labels`);
-  const seed = word.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const defaultSeed = word.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const seed = req.query.seed || defaultSeed;
   res.json({ url: `https://image.pollinations.ai/prompt/${prompt}?width=400&height=300&nologo=true&seed=${seed}&model=flux` });
 });
 
